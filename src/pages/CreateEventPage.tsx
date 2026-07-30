@@ -277,7 +277,7 @@ function CreateEventPage({
     });
 
     setPage(
-      "event-management"
+      "events"
     );
   };
 
@@ -450,7 +450,7 @@ function CreateEventPage({
           </div>
 
           <p className="create-event-note">
-            イベントを作成すると、このイベントが現在のイベントとして設定されます。
+            作成したイベントはイベント一覧に追加されます。現在のイベントは自動では変更されません。
           </p>
         </aside>
 
@@ -460,7 +460,7 @@ function CreateEventPage({
             className="create-event-back"
             onClick={() =>
               setPage(
-                "event-management"
+                "events"
               )
             }
           >
