@@ -31,6 +31,7 @@ export type EventData = {
 
 export type EventStore = {
   events: EventData[];
+
   currentEventId:
     | string
     | null;
@@ -118,11 +119,14 @@ function convertEventSnapshot(
     QuerySnapshot<DocumentData>
 ) {
   return snapshot.docs
-    .map((documentSnapshot) =>
-      convertEventDocument(
-        documentSnapshot.id,
-        documentSnapshot.data()
-      )
+    .map(
+      (
+        documentSnapshot
+      ) =>
+        convertEventDocument(
+          documentSnapshot.id,
+          documentSnapshot.data()
+        )
     )
     .filter(
       (
@@ -136,6 +140,7 @@ export function subscribeToEvents(
   onEventsChanged: (
     events: EventData[]
   ) => void,
+
   onError?: (
     error: Error
   ) => void
@@ -149,7 +154,9 @@ export function subscribeToEvents(
   return onSnapshot(
     eventsCollection,
 
-    (snapshot) => {
+    (
+      snapshot
+    ) => {
       const events =
         convertEventSnapshot(
           snapshot
@@ -160,7 +167,9 @@ export function subscribeToEvents(
       );
     },
 
-    (error) => {
+    (
+      error
+    ) => {
       console.error(
         "Firestoreのイベント一覧を読み込めませんでした。",
         error
@@ -179,6 +188,7 @@ export function subscribeToCurrentEventId(
       | string
       | null
   ) => void,
+
   onError?: (
     error: Error
   ) => void
@@ -193,7 +203,9 @@ export function subscribeToCurrentEventId(
   return onSnapshot(
     currentEventDocument,
 
-    (snapshot) => {
+    (
+      snapshot
+    ) => {
       if (
         !snapshot.exists()
       ) {
@@ -218,7 +230,9 @@ export function subscribeToCurrentEventId(
       );
     },
 
-    (error) => {
+    (
+      error
+    ) => {
       console.error(
         "現在のイベントを読み込めませんでした。",
         error
@@ -271,7 +285,8 @@ export async function saveEventToFirestore(
         serverTimestamp(),
     },
     {
-      merge: true,
+      merge:
+        true,
     }
   );
 }
@@ -297,7 +312,8 @@ export async function setCurrentEventIdInFirestore(
         serverTimestamp(),
     },
     {
-      merge: true,
+      merge:
+        true,
     }
   );
 }
@@ -305,13 +321,22 @@ export async function setCurrentEventIdInFirestore(
 export async function createEventInFirestore(
   eventData: EventData
 ) {
-  await saveEventToFirestore(
-    eventData
-  );
+  /*
+    新しいイベントは一覧へ追加するだけにします。
 
-  await setCurrentEventIdInFirestore(
-    eventData.id
-  );
+    すでに設定されている現在のイベントは
+    変更しません。
+
+    現在のイベントを変更するときは、
+    イベント管理画面から明示的に設定します。
+  */
+  await saveEventToFirestore({
+    ...eventData,
+
+    status:
+      eventData.status ??
+      "scheduled",
+  });
 }
 
 export async function endEventInFirestore(
@@ -344,7 +369,8 @@ export async function endEventInFirestore(
         serverTimestamp(),
     },
     {
-      merge: true,
+      merge:
+        true,
     }
   );
 }
