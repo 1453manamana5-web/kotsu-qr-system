@@ -485,21 +485,33 @@ function TicketDesigner({
       return;
     }
 
-    if (
-      settings.backgroundImage ===
-      ""
-    ) {
-      const confirmed =
-        window.confirm(
-          "背景画像が設定されていません。このまま印刷しますか？"
-        );
+    /*
+      iPad Safariでは、確認ダイアログや非同期処理を挟むと
+      印刷操作がユーザーの直接操作として扱われず、
+      window.print()が無視される場合があります。
 
-      if (!confirmed) {
-        return;
-      }
+      印刷ボタンを押した同じ処理内で、
+     直接window.print()を実行します。
+    */
+    try {
+      window.focus();
+
+      /*
+        印刷用DOMとCSSを確実に再計算させます。
+      */
+      void document.body.offsetHeight;
+
+      window.print();
+    } catch (error) {
+      console.error(
+        "印刷画面を開けませんでした。",
+        error
+      );
+
+      alert(
+        "印刷画面を開けませんでした。Safariで開き直して、もう一度お試しください。"
+      );
     }
-
-    window.print();
   };
 
   if (
