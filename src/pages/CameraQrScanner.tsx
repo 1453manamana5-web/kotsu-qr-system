@@ -81,6 +81,59 @@ function isBackCameraLabel(
   );
 }
 
+function stopAllVideoTracks() {
+  const videoElements =
+    document.querySelectorAll(
+      "video"
+    );
+
+  videoElements.forEach(
+    (videoElement) => {
+      const stream =
+        videoElement.srcObject;
+
+      if (
+        stream instanceof
+        MediaStream
+      ) {
+        stream
+          .getTracks()
+          .forEach(
+            (track) => {
+              try {
+                track.stop();
+              } catch (error) {
+                console.warn(
+                  "映像トラックを停止できませんでした。",
+                  error
+                );
+              }
+            }
+          );
+
+        videoElement.srcObject =
+          null;
+      }
+
+      try {
+        videoElement.pause();
+      } catch {
+        // pauseに対応していない場合は何もしません。
+      }
+
+      videoElement.removeAttribute(
+        "src"
+      );
+
+      try {
+        videoElement.load();
+      } catch {
+        // loadに対応していない場合は何もしません。
+      }
+    }
+  );
+}
+
 async function applyFastCameraSettings(
   scanner: Html5Qrcode
 ) {
@@ -168,6 +221,11 @@ function CameraQrScanner({
   const onScanRef =
     useRef(onScan);
 
+  const scannerRef =
+    useRef<
+      Html5Qrcode | null
+    >(null);
+
   const scanLockedRef =
     useRef(false);
 
@@ -197,16 +255,66 @@ function CameraQrScanner({
   ]);
 
   useEffect(() => {
-    if (!enabled) {
-      return;
-    }
-
     let cancelled =
       false;
 
-    let scanner:
-      | Html5Qrcode
-      | null = null;
+    const stopCamera =
+      async () => {
+        const scanner =
+          scannerRef.current;
+
+        scannerRef.current =
+          null;
+
+        if (
+          scanner !== null
+        ) {
+          try {
+            if (
+              scanner.isScanning
+            ) {
+              await scanner.stop();
+            }
+          } catch (error) {
+            console.warn(
+              "カメラ停止時にエラーが発生しました。",
+              error
+            );
+          }
+
+          try {
+            scanner.clear();
+          } catch (error) {
+            console.warn(
+              "カメラ表示の削除時にエラーが発生しました。",
+              error
+            );
+          }
+        }
+
+        /*
+          html5-qrcodeの停止だけで映像トラックが
+          残る端末があるため、video要素側も明示的に停止します。
+        */
+        stopAllVideoTracks();
+      };
+
+    if (!enabled) {
+      void stopCamera();
+
+      setCameraState(
+        "starting"
+      );
+
+      setErrorMessage("");
+
+      return () => {
+        cancelled =
+          true;
+
+        void stopCamera();
+      };
+    }
 
     scanLockedRef.current =
       false;
@@ -226,6 +334,16 @@ function CameraQrScanner({
     const startCamera =
       async () => {
         try {
+          /*
+            前の画面で残ったカメラがあれば、
+            新しく起動する前に確実に停止します。
+          */
+          await stopCamera();
+
+          if (cancelled) {
+            return;
+          }
+
           const readerElement =
             document.getElementById(
               readerId
@@ -243,7 +361,7 @@ function CameraQrScanner({
           readerElement.innerHTML =
             "";
 
-          scanner =
+          const scanner =
             new Html5Qrcode(
               readerId,
               {
@@ -259,10 +377,15 @@ function CameraQrScanner({
               }
             );
 
+          scannerRef.current =
+            scanner;
+
           const cameras =
             await Html5Qrcode.getCameras();
 
           if (cancelled) {
+            await stopCamera();
+
             return;
           }
 
@@ -304,20 +427,9 @@ function CameraQrScanner({
           await scanner.start(
             preferredCamera.id,
             {
-              /*
-                毎秒18回解析します。
+              fps:
+                18,
 
-                高すぎるfpsはiPad側の負荷が増えるため、
-                速度と安定性のバランスを取っています。
-              */
-              fps: 18,
-
-              /*
-                白いガイドより少し広い範囲を解析します。
-
-                QRが枠の端に寄っても、
-                解析範囲から外れにくくなります。
-              */
               qrbox: (
                 viewfinderWidth,
                 viewfinderHeight
@@ -358,10 +470,6 @@ function CameraQrScanner({
               aspectRatio:
                 16 / 9,
 
-              /*
-                背面カメラは通常反転しないため、
-                反転QRの追加解析を停止して負荷を減らします。
-              */
               disableFlip:
                 true,
             },
@@ -407,10 +515,6 @@ function CameraQrScanner({
               lastScannedTimeRef.current =
                 currentTime;
 
-              /*
-                読み取った瞬間にロックして、
-                同じQRの連続処理を防ぎます。
-              */
               scanLockedRef.current =
                 true;
 
@@ -425,33 +529,25 @@ function CameraQrScanner({
             },
             () => {
               /*
-                読み取り失敗は毎秒何度も発生するため、
-                ログや状態更新を行いません。
+                読み取り失敗は頻繁に発生するため、
+                状態更新やログ出力はしません。
               */
             }
           );
 
           if (cancelled) {
-            if (
-              scanner.isScanning
-            ) {
-              await scanner.stop();
-            }
-
-            scanner.clear();
+            await stopCamera();
 
             return;
           }
 
-          /*
-            カメラ起動後に、
-            対応端末だけ高画質・連続フォーカスを適用します。
-          */
           await applyFastCameraSettings(
             scanner
           );
 
           if (cancelled) {
+            await stopCamera();
+
             return;
           }
 
@@ -463,6 +559,8 @@ function CameraQrScanner({
             "カメラを開始できませんでした。",
             error
           );
+
+          await stopCamera();
 
           if (!cancelled) {
             setCameraState(
@@ -486,38 +584,6 @@ function CameraQrScanner({
 
       scanLockedRef.current =
         true;
-
-      const stopCamera =
-        async () => {
-          if (
-            scanner ===
-            null
-          ) {
-            return;
-          }
-
-          try {
-            if (
-              scanner.isScanning
-            ) {
-              await scanner.stop();
-            }
-          } catch (error) {
-            console.warn(
-              "カメラ停止時にエラーが発生しました。",
-              error
-            );
-          }
-
-          try {
-            scanner.clear();
-          } catch (error) {
-            console.warn(
-              "カメラ表示の削除時にエラーが発生しました。",
-              error
-            );
-          }
-        };
 
       void stopCamera();
     };
