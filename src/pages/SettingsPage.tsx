@@ -218,7 +218,7 @@ function SettingsPage({
       const exportFile = {
         appName:
           "交通研究部QRコード管理システム",
-        version: "1.0.0",
+        version: "1.1.0",
         exportedAt:
           new Date().toISOString(),
         data: exportedStorage,
@@ -428,7 +428,7 @@ function SettingsPage({
           <div className="settings-info-row">
             <span>バージョン情報</span>
 
-            <strong>1.0.0</strong>
+            <strong>1.1.0</strong>
           </div>
 
           <div className="settings-info-row">
