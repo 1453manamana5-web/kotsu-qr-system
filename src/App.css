@@ -1,0 +1,546 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  background: #f5f5f5;
+}
+
+button {
+  font: inherit;
+}
+
+/*
+  ホーム画面
+*/
+.app {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: clamp(
+    14px,
+    1.6vw,
+    25px
+  );
+
+  overflow: hidden;
+}
+
+.app .top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  gap: clamp(
+    18px,
+    2vw,
+    32px
+  );
+
+  flex-shrink: 0;
+}
+
+.app .top > div:first-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.app h1 {
+  font-size: clamp(
+    30px,
+    3.4vw,
+    56px
+  );
+
+  line-height: 1.15;
+  font-weight: 800;
+
+  white-space: nowrap;
+  letter-spacing: -0.04em;
+}
+
+.app .online {
+  margin-top: clamp(
+    6px,
+    0.8vh,
+    10px
+  );
+
+  font-size: clamp(
+    23px,
+    2.4vw,
+    40px
+  );
+
+  line-height: 1.2;
+  font-weight: bold;
+}
+
+.app .event-warning {
+  display: inline-block;
+
+  margin-top: clamp(
+    7px,
+    1vh,
+    15px
+  );
+
+  padding:
+    clamp(
+      5px,
+      0.6vh,
+      8px
+    )
+    clamp(
+      10px,
+      1vw,
+      16px
+    );
+
+  background: #fff35a;
+
+  font-size: clamp(
+    23px,
+    2.4vw,
+    40px
+  );
+
+  line-height: 1.2;
+  font-weight: bold;
+}
+
+.app .event-name {
+  margin-top: clamp(
+    7px,
+    1vh,
+    15px
+  );
+
+  font-size: clamp(
+    23px,
+    2.4vw,
+    40px
+  );
+
+  line-height: 1.2;
+  font-weight: bold;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app .admin {
+  width: clamp(
+    330px,
+    38vw,
+    620px
+  );
+
+  min-height: clamp(
+    120px,
+    16vh,
+    170px
+  );
+
+  flex-shrink: 0;
+
+  padding:
+    clamp(
+      14px,
+      1.8vh,
+      24px
+    )
+    clamp(
+      18px,
+      2vw,
+      30px
+    );
+
+  border: none;
+  border-radius: clamp(
+    24px,
+    2.2vw,
+    35px
+  );
+
+  background: #9966ff;
+  color: #000;
+
+  font-size: clamp(
+    34px,
+    3.4vw,
+    58px
+  );
+
+  line-height: 1.35;
+  font-weight: bold;
+
+  cursor: pointer;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: clamp(
+    4px,
+    0.6vh,
+    10px
+  );
+}
+
+.app .admin:active {
+  transform: scale(0.98);
+}
+
+/*
+  入口・出口エリア
+*/
+.app .main {
+  flex: 1;
+  min-height: 0;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+
+  gap: clamp(
+    18px,
+    2vw,
+    30px
+  );
+
+  margin-top: clamp(
+    14px,
+    1.8vh,
+    30px
+  );
+
+  padding-bottom: env(
+    safe-area-inset-bottom
+  );
+}
+
+.app .line {
+  width: clamp(
+    4px,
+    0.35vw,
+    6px
+  );
+
+  height: 100%;
+
+  flex-shrink: 0;
+  align-self: stretch;
+
+  background: #7a2b00;
+}
+
+.app .entry,
+.app .exit {
+  flex: 1;
+  width: auto;
+  height: auto;
+  min-height: 0;
+
+  border: none;
+
+  border-radius: clamp(
+    28px,
+    2.5vw,
+    40px
+  );
+
+  color: #000;
+  cursor: pointer;
+
+  transition:
+    filter 0.15s ease,
+    transform 0.1s ease,
+    opacity 0.15s ease;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding:
+    clamp(
+      20px,
+      3vh,
+      42px
+    )
+    clamp(
+      16px,
+      2vw,
+      32px
+    );
+}
+
+.app .entry {
+  background: #168ee6;
+}
+
+.app .exit {
+  background: #ffe12b;
+}
+
+.app .entry:not(:disabled):active,
+.app .exit:not(:disabled):active {
+  transform: scale(0.985);
+}
+
+.app .entry:disabled,
+.app .exit:disabled {
+  cursor: not-allowed;
+  filter: brightness(48%);
+  opacity: 0.82;
+}
+
+.app .entry:not(:disabled),
+.app .exit:not(:disabled) {
+  filter: brightness(100%);
+  opacity: 1;
+}
+
+.app .title {
+  margin-top: 0;
+
+  font-size: clamp(
+    54px,
+    6vw,
+    96px
+  );
+
+  line-height: 1.1;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.app .sub {
+  margin-top: clamp(
+    50px,
+    11vh,
+    150px
+  );
+
+  font-size: clamp(
+    34px,
+    4vw,
+    64px
+  );
+
+  line-height: 1.2;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+/*
+  iPad横向き付近
+*/
+@media (
+  orientation: landscape
+) and (
+  max-height: 850px
+) {
+  .app {
+    padding:
+      clamp(
+        12px,
+        1.6vh,
+        18px
+      )
+      clamp(
+        16px,
+        1.8vw,
+        24px
+      );
+  }
+
+  .app h1 {
+    font-size: clamp(
+      29px,
+      3.2vw,
+      46px
+    );
+  }
+
+  .app .online,
+  .app .event-warning,
+  .app .event-name {
+    font-size: clamp(
+      21px,
+      2.25vw,
+      33px
+    );
+  }
+
+  .app .admin {
+    width: clamp(
+      330px,
+      38vw,
+      520px
+    );
+
+    min-height: clamp(
+      105px,
+      17vh,
+      145px
+    );
+
+    font-size: clamp(
+      31px,
+      3.4vw,
+      48px
+    );
+
+    line-height: 1.3;
+  }
+
+  .app .main {
+    margin-top: clamp(
+      10px,
+      1.6vh,
+      18px
+    );
+  }
+
+  .app .entry,
+  .app .exit {
+    padding:
+      clamp(
+        18px,
+        2vh,
+        28px
+      )
+      16px;
+  }
+
+  .app .title {
+    font-size: clamp(
+      48px,
+      5.8vw,
+      78px
+    );
+  }
+
+  .app .sub {
+    margin-top: clamp(
+      35px,
+      8vh,
+      85px
+    );
+
+    font-size: clamp(
+      30px,
+      3.8vw,
+      52px
+    );
+  }
+}
+
+/*
+  横幅が狭い端末
+*/
+@media (
+  max-width: 1000px
+) {
+  .app h1 {
+    font-size: clamp(
+      27px,
+      3.8vw,
+      38px
+    );
+  }
+
+  .app .admin {
+    width: clamp(
+      270px,
+      34vw,
+      360px
+    );
+
+    font-size: clamp(
+      28px,
+      3.6vw,
+      38px
+    );
+  }
+
+  .app .title {
+    font-size: clamp(
+      44px,
+      6.5vw,
+      64px
+    );
+  }
+
+  .app .sub {
+    font-size: clamp(
+      28px,
+      4.5vw,
+      42px
+    );
+  }
+}
+
+/*
+  縦向きでは上下配置
+*/
+@media (
+  orientation: portrait
+) {
+  .app {
+    min-height: 100dvh;
+    overflow: auto;
+  }
+
+  .app .top {
+    flex-direction: column;
+  }
+
+  .app h1 {
+    white-space: normal;
+  }
+
+  .app .admin {
+    width: 100%;
+  }
+
+  .app .main {
+    flex-direction: column;
+  }
+
+  .app .line {
+    width: 100%;
+    height: 4px;
+  }
+
+  .app .entry,
+  .app .exit {
+    min-height: 280px;
+  }
+
+  .app .sub {
+    margin-top: 55px;
+  }
+}

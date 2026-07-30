@@ -1,0 +1,767 @@
+.admin-page {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  box-sizing: border-box;
+  padding:
+    clamp(10px, 1.5vh, 18px)
+    clamp(18px, 2vw, 28px)
+    max(
+      clamp(10px, 1.5vh, 18px),
+      env(safe-area-inset-bottom)
+    );
+
+  background: #f7f7f7;
+  color: #000;
+  overflow: hidden;
+}
+
+/*
+  上部
+*/
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: clamp(16px, 2vw, 24px);
+  flex-shrink: 0;
+}
+
+.admin-header > div:first-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-header h1 {
+  margin: 0;
+
+  font-size: clamp(
+    29px,
+    3.5vw,
+    58px
+  );
+
+  line-height: 1.08;
+  font-weight: 800;
+
+  white-space: nowrap;
+  letter-spacing: -0.035em;
+}
+
+.admin-online {
+  margin-top: clamp(
+    5px,
+    0.8vh,
+    12px
+  );
+
+  font-size: clamp(
+    23px,
+    2.7vw,
+    44px
+  );
+
+  line-height: 1.15;
+  font-weight: bold;
+}
+
+.admin-event-name,
+.admin-warning {
+  width: max-content;
+  max-width: 100%;
+
+  box-sizing: border-box;
+
+  margin-top: clamp(
+    4px,
+    0.7vh,
+    8px
+  );
+
+  padding:
+    clamp(3px, 0.45vh, 5px)
+    clamp(8px, 1vw, 12px);
+
+  font-size: clamp(
+    20px,
+    2.25vw,
+    36px
+  );
+
+  line-height: 1.15;
+  font-weight: bold;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-event-name {
+  background: #dff2ff;
+}
+
+.admin-warning {
+  background: #fff200;
+}
+
+.admin-mode-label {
+  flex-shrink: 0;
+
+  padding:
+    clamp(6px, 0.8vh, 8px)
+    clamp(18px, 2vw, 26px);
+
+  border-radius: clamp(
+    20px,
+    2vw,
+    28px
+  );
+
+  background: #9966ee;
+
+  font-size: clamp(
+    27px,
+    3vw,
+    50px
+  );
+
+  line-height: 1.15;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+/*
+  中央部分
+*/
+.admin-content {
+  flex: 1;
+  min-height: 0;
+
+  display: grid;
+  grid-template-columns:
+    minmax(320px, 42%)
+    minmax(390px, 1fr);
+
+  align-items: stretch;
+
+  gap: clamp(
+    18px,
+    2.2vw,
+    34px
+  );
+
+  margin-top: clamp(
+    8px,
+    1.4vh,
+    16px
+  );
+
+  overflow: hidden;
+}
+
+/*
+  現在の状況
+*/
+.status-panel {
+  min-width: 0;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  box-sizing: border-box;
+
+  padding:
+    clamp(12px, 1.8vh, 22px)
+    clamp(15px, 1.8vw, 26px);
+
+  border-radius: 18px;
+  background: #e2e2e2;
+
+  overflow: hidden;
+}
+
+.status-panel h2 {
+  margin: 0 0 clamp(
+    7px,
+    1.3vh,
+    18px
+  );
+
+  font-size: clamp(
+    29px,
+    3.3vw,
+    56px
+  );
+
+  line-height: 1.05;
+  flex-shrink: 0;
+}
+
+.status-panel > p {
+  margin: 0 0 6px;
+  font-size: clamp(
+    14px,
+    1.5vw,
+    22px
+  );
+  font-weight: bold;
+}
+
+.status-main-list {
+  flex: 1;
+  min-height: 0;
+
+  display: grid;
+  grid-template-rows: repeat(
+    4,
+    minmax(0, 1fr)
+  );
+
+  gap: clamp(
+    5px,
+    0.9vh,
+    12px
+  );
+}
+
+.status-row {
+  min-width: 0;
+  min-height: 0;
+
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: clamp(
+    10px,
+    1.5vw,
+    20px
+  );
+
+  box-sizing: border-box;
+
+  padding:
+    clamp(5px, 0.8vh, 10px)
+    clamp(10px, 1.2vw, 16px);
+
+  border-radius: 14px;
+  background: #f4f4f4;
+}
+
+.status-name {
+  min-width: 0;
+
+  font-size: clamp(
+    23px,
+    2.45vw,
+    42px
+  );
+
+  line-height: 1.05;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.status-value {
+  min-width: clamp(
+    90px,
+    8vw,
+    125px
+  );
+
+  color: #111;
+  text-align: right;
+
+  font-size: clamp(
+    36px,
+    4.2vw,
+    70px
+  );
+
+  line-height: 0.95;
+  white-space: nowrap;
+}
+
+.status-value small {
+  margin-left: 4px;
+  font-size: 0.46em;
+  font-weight: bold;
+}
+
+.status-reception-list {
+  flex-shrink: 0;
+
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: clamp(
+    6px,
+    0.9vw,
+    12px
+  );
+
+  margin-top: clamp(
+    7px,
+    1.1vh,
+    18px
+  );
+
+  padding-top: clamp(
+    7px,
+    1.1vh,
+    18px
+  );
+
+  border-top: 3px solid #c4c4c4;
+}
+
+.status-reception-list .status-row {
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+
+  min-height: clamp(
+    46px,
+    7vh,
+    76px
+  );
+
+  padding:
+    clamp(4px, 0.6vh, 8px)
+    clamp(7px, 0.8vw, 12px);
+}
+
+.reception-row {
+  background: #f4f4f4;
+}
+
+.reception-label {
+  width: max-content;
+  max-width: 100%;
+  min-width: 0;
+
+  box-sizing: border-box;
+
+  padding:
+    clamp(5px, 0.7vh, 9px)
+    clamp(9px, 1vw, 20px);
+
+  border-radius: 999px;
+
+  text-align: center;
+
+  font-size: clamp(
+    19px,
+    2vw,
+    38px
+  );
+
+  line-height: 1.05;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.entry-label {
+  background: #22a9ee;
+  color: #000;
+}
+
+.exit-label {
+  background: #ffe036;
+  color: #000;
+}
+
+.reception-value {
+  min-width: auto;
+
+  font-size: clamp(
+    29px,
+    3.4vw,
+    62px
+  );
+}
+
+/*
+  管理メニュー
+*/
+.admin-menu {
+  min-width: 0;
+  min-height: 0;
+
+  display: grid;
+  grid-template-rows:
+    repeat(5, minmax(0, 1fr));
+
+  gap: clamp(
+    7px,
+    1.3vh,
+    20px
+  );
+
+  box-sizing: border-box;
+
+  padding:
+    clamp(13px, 1.8vh, 24px)
+    clamp(22px, 3vw, 46px);
+
+  border-radius: 18px;
+  background: #444;
+
+  overflow: hidden;
+}
+
+.admin-menu button {
+  width: 100%;
+  min-height: 0;
+
+  padding:
+    clamp(5px, 0.8vh, 12px)
+    clamp(12px, 1.5vw, 20px);
+
+  border: none;
+
+  border-radius: clamp(
+    17px,
+    2vw,
+    28px
+  );
+
+  background: #dedede;
+  color: #000;
+
+  font-size: clamp(
+    28px,
+    3.4vw,
+    58px
+  );
+
+  line-height: 1.05;
+  font-weight: bold;
+
+  cursor: pointer;
+}
+
+.admin-menu button:hover:not(:disabled) {
+  background: #cfcfcf;
+}
+
+.admin-menu button:active:not(:disabled) {
+  transform: scale(0.992);
+}
+
+.admin-menu button:disabled {
+  background: #999;
+  color: #555;
+  cursor: not-allowed;
+}
+
+/*
+  下の戻る・終了ボタン
+*/
+.admin-return-button {
+  flex-shrink: 0;
+  align-self: flex-start;
+
+  min-height: clamp(
+    38px,
+    5.5vh,
+    58px
+  );
+
+  margin-top: clamp(
+    4px,
+    0.8vh,
+    12px
+  );
+
+  padding:
+    clamp(3px, 0.5vh, 6px)
+    4px;
+
+  border: none;
+  background: transparent;
+  color: #000;
+
+  font-size: clamp(
+    24px,
+    2.8vw,
+    47px
+  );
+
+  line-height: 1.1;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.admin-return-button:hover {
+  text-decoration: underline;
+}
+
+/*
+  iPad横向き・画面の高さが低い環境
+*/
+@media (
+  orientation: landscape
+) and (
+  max-height: 850px
+) {
+  .admin-page {
+    padding:
+      9px
+      18px
+      max(
+        8px,
+        env(safe-area-inset-bottom)
+      );
+  }
+
+  .admin-header h1 {
+    font-size: clamp(
+      29px,
+      3.5vw,
+      42px
+    );
+  }
+
+  .admin-online {
+    margin-top: 4px;
+
+    font-size: clamp(
+      22px,
+      2.5vw,
+      30px
+    );
+  }
+
+  .admin-event-name,
+  .admin-warning {
+    margin-top: 3px;
+    padding: 3px 9px;
+
+    font-size: clamp(
+      19px,
+      2.1vw,
+      25px
+    );
+  }
+
+  .admin-mode-label {
+    padding: 6px 18px;
+
+    font-size: clamp(
+      27px,
+      3.1vw,
+      38px
+    );
+  }
+
+  .admin-content {
+    grid-template-columns:
+      minmax(310px, 42%)
+      minmax(380px, 1fr);
+
+    gap: clamp(
+      16px,
+      2vw,
+      24px
+    );
+
+    margin-top: 7px;
+  }
+
+  .status-panel {
+    padding: 10px 14px;
+  }
+
+  .status-panel h2 {
+    margin-bottom: 6px;
+
+    font-size: clamp(
+      28px,
+      3vw,
+      36px
+    );
+  }
+
+  .status-main-list {
+    gap: 5px;
+  }
+
+  .status-row {
+    padding: 4px 10px;
+    border-radius: 11px;
+  }
+
+  .status-name {
+    font-size: clamp(
+      22px,
+      2.3vw,
+      29px
+    );
+  }
+
+  .status-value {
+    min-width: 82px;
+
+    font-size: clamp(
+      34px,
+      3.8vw,
+      46px
+    );
+  }
+
+  .status-reception-list {
+    gap: 6px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top-width: 2px;
+  }
+
+  .status-reception-list .status-row {
+    min-height: 44px;
+    padding: 3px 6px;
+  }
+
+  .reception-label {
+    padding: 5px 8px;
+
+    font-size: clamp(
+      17px,
+      1.85vw,
+      23px
+    );
+  }
+
+  .reception-value {
+    min-width: auto;
+
+    font-size: clamp(
+      28px,
+      3vw,
+      38px
+    );
+  }
+
+  .admin-menu {
+    gap: 7px;
+    padding: 11px 24px;
+  }
+
+  .admin-menu button {
+    border-radius: 18px;
+
+    font-size: clamp(
+      27px,
+      3.15vw,
+      40px
+    );
+  }
+
+  .admin-return-button {
+    min-height: 36px;
+    margin-top: 3px;
+    padding: 2px 0;
+
+    font-size: clamp(
+      23px,
+      2.6vw,
+      31px
+    );
+  }
+}
+
+/*
+  横幅が狭い場合
+*/
+@media (max-width: 800px) {
+  .admin-page {
+    height: auto;
+    min-height: 100dvh;
+    overflow: auto;
+
+    padding: 14px 16px 20px;
+  }
+
+  .admin-header {
+    gap: 12px;
+  }
+
+  .admin-header h1 {
+    white-space: normal;
+  }
+
+  .admin-mode-label {
+    padding: 7px 15px;
+  }
+
+  .admin-content {
+    flex: none;
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .status-panel,
+  .admin-menu {
+    overflow: visible;
+  }
+
+  .status-main-list,
+  .admin-menu {
+    display: grid;
+    grid-template-rows: none;
+  }
+
+  .status-row {
+    min-height: 64px;
+  }
+
+  .status-reception-list {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-menu {
+    padding: 20px;
+  }
+
+  .admin-menu button {
+    min-height: 76px;
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-header {
+    flex-direction: column;
+  }
+
+  .admin-mode-label {
+    align-self: flex-end;
+  }
+
+  .status-panel {
+    padding: 17px 14px;
+  }
+
+  .status-row {
+    gap: 10px;
+    padding: 9px 11px;
+  }
+
+  .status-value {
+    min-width: 90px;
+  }
+
+  .reception-label {
+    min-width: 130px;
+    padding: 8px 12px;
+  }
+}

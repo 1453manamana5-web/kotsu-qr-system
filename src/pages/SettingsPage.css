@@ -1,0 +1,423 @@
+.settings-page {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 10px 22px max(9px, env(safe-area-inset-bottom));
+  color: #000;
+  background: #f7f7f7;
+  overflow: hidden;
+}
+
+.settings-page button,
+.settings-page input,
+.settings-page label {
+  color: #000;
+  -webkit-text-fill-color: #000;
+}
+
+.settings-header {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.settings-header > div:first-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.settings-header h1 {
+  margin: 0;
+  font-size: clamp(31px, 3.5vw, 44px);
+  line-height: 1.08;
+  font-weight: 800;
+  white-space: nowrap;
+  letter-spacing: -0.03em;
+}
+
+.settings-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 5px;
+}
+
+.settings-title-row h2 {
+  margin: 0;
+  font-size: clamp(34px, 4.1vw, 49px);
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.settings-gear {
+  flex-shrink: 0;
+  font-size: clamp(36px, 4.3vw, 51px);
+  line-height: 1;
+}
+
+.settings-mode-label {
+  flex-shrink: 0;
+  padding: 7px 21px;
+  border-radius: 28px;
+  background: #9966ee;
+  font-size: clamp(28px, 3.2vw, 39px);
+  line-height: 1.15;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.settings-content {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 12px;
+  margin-top: 8px;
+  padding-right: 3px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.settings-section,
+.settings-danger-section {
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 12px 15px;
+  border-radius: 17px;
+  background: #e9e9e9;
+}
+
+.settings-section h3,
+.settings-danger-section h3 {
+  margin: 0 0 9px;
+  font-size: clamp(21px, 2.2vw, 28px);
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.settings-info-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 2px solid #ccc;
+  font-size: clamp(16px, 1.7vw, 22px);
+  line-height: 1.1;
+}
+
+.settings-info-row:last-child {
+  border-bottom: none;
+}
+
+.settings-info-row span {
+  white-space: nowrap;
+}
+
+.settings-info-row strong {
+  min-width: 0;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settings-mode-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.settings-mode-buttons button {
+  min-height: 50px;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 18px;
+  font-size: clamp(17px, 1.8vw, 22px);
+  line-height: 1.05;
+  font-weight: bold;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.settings-entry-button { background: #59a8ff; }
+.settings-exit-button { background: #ffe12b; }
+.settings-finish-button { background: #7fbe48; }
+
+.settings-help {
+  margin: 8px 0 0;
+  color: #444;
+  font-size: clamp(13px, 1.35vw, 16px);
+  line-height: 1.4;
+  font-weight: bold;
+}
+
+.settings-device-name {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: clamp(16px, 1.7vw, 21px);
+  font-weight: bold;
+}
+
+.settings-device-name span {
+  white-space: nowrap;
+}
+
+.settings-device-name input {
+  width: 100%;
+  min-height: 46px;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  border: 2px solid #aaa;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 18px;
+}
+
+.settings-switch-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 9px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: #f7f7f7;
+}
+
+.settings-switch-row div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.settings-switch-row strong {
+  font-size: clamp(16px, 1.7vw, 21px);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.settings-switch-row span {
+  color: #555;
+  font-size: clamp(13px, 1.3vw, 16px);
+  line-height: 1.25;
+  font-weight: bold;
+}
+
+.settings-toggle {
+  min-width: 76px;
+  min-height: 40px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: bold;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.settings-toggle.enabled { background: #83d991; }
+.settings-toggle.disabled { background: #bbb; }
+
+.settings-data-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.settings-data-buttons button,
+.settings-import-button {
+  min-height: 48px;
+  box-sizing: border-box;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 15px;
+  font-size: clamp(15px, 1.6vw, 20px);
+  line-height: 1.1;
+  font-weight: bold;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.settings-export-button { background: #83c5f5; }
+
+.settings-import-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #b9a3ec;
+}
+
+.settings-import-button input { display: none; }
+
+.settings-status-reset-button {
+  grid-column: 1 / -1;
+  background: #ffd174;
+}
+
+.settings-danger-section {
+  grid-column: 1 / -1;
+  border: 4px solid #d9423a;
+  background: #ffe5e3;
+}
+
+.settings-danger-section p {
+  margin: 0 0 9px;
+  font-size: clamp(15px, 1.6vw, 20px);
+  line-height: 1.35;
+  font-weight: bold;
+}
+
+.settings-initialize-button {
+  width: 100%;
+  min-height: 58px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 17px;
+  background: #d9423a;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  font-size: clamp(21px, 2.4vw, 30px);
+  line-height: 1.05;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.settings-initialize-button span { font-size: 0.62em; }
+
+.settings-return-button {
+  flex-shrink: 0;
+  align-self: flex-start;
+  min-height: 42px;
+  margin-top: 5px;
+  padding: 3px 0;
+  border: none;
+  background: transparent;
+  font-size: clamp(22px, 2.5vw, 31px);
+  line-height: 1.1;
+  font-weight: bold;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.settings-return-button:active { transform: scale(0.985); }
+
+.settings-reset-background {
+  position: fixed;
+  z-index: 5000;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.settings-reset-window {
+  width: min(650px, 94vw);
+  max-height: 90dvh;
+  box-sizing: border-box;
+  padding: 20px 24px;
+  border: 5px solid #d9423a;
+  border-radius: 26px;
+  background: #fff;
+  color: #000;
+  overflow-y: auto;
+}
+
+.settings-reset-window h2 {
+  margin: 0;
+  color: #c62f28;
+  font-size: clamp(28px, 3.4vw, 41px);
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.settings-reset-question {
+  margin: 15px 0 9px;
+  color: #000;
+  font-size: clamp(21px, 2.5vw, 30px);
+  line-height: 1.15;
+  font-weight: bold;
+  text-align: center;
+}
+
+.settings-reset-warning {
+  margin: 0;
+  color: #b3261e;
+  font-size: clamp(15px, 1.6vw, 19px);
+  line-height: 1.4;
+  font-weight: bold;
+  text-align: center;
+}
+
+.settings-reset-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 17px;
+}
+
+.settings-reset-buttons button {
+  flex: 1;
+  min-height: 48px;
+  border: none;
+  border-radius: 13px;
+  font-size: clamp(17px, 1.8vw, 22px);
+  line-height: 1.1;
+  font-weight: bold;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.settings-reset-confirm {
+  background: #d9423a;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+.settings-reset-cancel { background: #bdbdbd; }
+
+@media (max-width: 900px) and (orientation: portrait) {
+  .settings-page {
+    height: auto;
+    min-height: 100dvh;
+    overflow: auto;
+  }
+
+  .settings-header h1 { white-space: normal; }
+
+  .settings-content {
+    flex: none;
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .settings-danger-section { grid-column: auto; }
+}
+
+@media (max-width: 650px) {
+  .settings-page {
+    height: auto;
+    min-height: 100dvh;
+    padding: 14px 16px 20px;
+    overflow: auto;
+  }
+
+  .settings-mode-buttons { grid-template-columns: 1fr; }
+  .settings-data-buttons { grid-template-columns: 1fr; }
+  .settings-status-reset-button { grid-column: auto; }
+  .settings-reset-buttons { flex-direction: column; }
+}
