@@ -112,6 +112,11 @@ function MemberCardDesigner({
       loadDesignSettings
     );
 
+  const [
+    manualPrintMode,
+    setManualPrintMode,
+  ] = useState(false);
+
   const updateSetting = (
     key: keyof DesignSettings,
     value: string | number
@@ -280,18 +285,130 @@ function MemberCardDesigner({
   };
 
   const printDesign = () => {
-    if (settings.backgroundImage === "") {
-      const confirmed = window.confirm(
-        "背景画像が設定されていません。このまま印刷しますか？"
+    const userAgent =
+      navigator.userAgent;
+
+    const isIPhoneOrIPad =
+      /iPad|iPhone|iPod/i.test(
+        userAgent
       );
 
-      if (!confirmed) {
-        return;
-      }
+    const isIPadDesktopMode =
+      navigator.platform ===
+        "MacIntel" &&
+      navigator.maxTouchPoints >
+        1;
+
+    if (
+      isIPhoneOrIPad ||
+      isIPadDesktopMode
+    ) {
+      setManualPrintMode(
+        true
+      );
+
+      return;
     }
 
     window.print();
   };
+
+  const renderMemberCard =
+    (
+      className:
+        | "member-card-print-area"
+        | "member-card-manual-print-area"
+    ) => (
+      <div
+        className={className}
+        style={cardStyle}
+      >
+        {settings.backgroundImage ===
+          "" && (
+          <div className="member-card-no-background">
+            背景画像を選択してください
+          </div>
+        )}
+
+        <div
+          className="member-card-qr"
+          style={{
+            left: `${settings.qrX}%`,
+            top: `${settings.qrY}%`,
+            width: `${settings.qrSize}%`,
+          }}
+        >
+          <QRCodeSVG
+            value={qrValue}
+            size={500}
+            level="M"
+            marginSize={1}
+          />
+        </div>
+
+        <div
+          className="member-card-name"
+          style={{
+            left: `${settings.nameX}%`,
+            top: `${settings.nameY}%`,
+            fontSize:
+              `${settings.nameSize}px`,
+          }}
+        >
+          {memberName}
+        </div>
+
+        <div
+          className="member-card-number"
+          style={{
+            left: `${settings.numberX}%`,
+            top: `${settings.numberY}%`,
+            fontSize:
+              `${settings.numberSize}px`,
+          }}
+        >
+          {qrNumber}
+        </div>
+      </div>
+    );
+
+  if (manualPrintMode) {
+    return (
+      <div className="member-manual-print-page">
+        <header className="member-manual-print-toolbar">
+          <div>
+            <h2>
+              iPad用印刷画面
+            </h2>
+
+            <p>
+              Safariの共有ボタン
+              （□から上向き矢印）
+              を押して、
+              「プリント」を選択してください。
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() =>
+              setManualPrintMode(
+                false
+              )
+            }
+          >
+            デザイン画面に戻る
+          </button>
+        </header>
+
+        <main className="member-manual-print-content">
+          {renderMemberCard(
+            "member-card-manual-print-area"
+          )}
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="member-designer-background">
@@ -332,55 +449,9 @@ function MemberCardDesigner({
             </div>
 
             <div className="member-card-preview-container">
-              <div
-                className="member-card-print-area"
-                style={cardStyle}
-              >
-                {settings.backgroundImage ===
-                  "" && (
-                  <div className="member-card-no-background">
-                    背景画像を選択してください
-                  </div>
-                )}
-
-                <div
-                  className="member-card-qr"
-                  style={{
-                    left: `${settings.qrX}%`,
-                    top: `${settings.qrY}%`,
-                    width: `${settings.qrSize}%`,
-                  }}
-                >
-                  <QRCodeSVG
-                    value={qrValue}
-                    size={500}
-                    level="M"
-                    marginSize={1}
-                  />
-                </div>
-
-                <div
-                  className="member-card-name"
-                  style={{
-                    left: `${settings.nameX}%`,
-                    top: `${settings.nameY}%`,
-                    fontSize: `${settings.nameSize}px`,
-                  }}
-                >
-                  {memberName}
-                </div>
-
-                <div
-                  className="member-card-number"
-                  style={{
-                    left: `${settings.numberX}%`,
-                    top: `${settings.numberY}%`,
-                    fontSize: `${settings.numberSize}px`,
-                  }}
-                >
-                  {qrNumber}
-                </div>
-              </div>
+              {renderMemberCard(
+                "member-card-print-area"
+              )}
             </div>
           </section>
 

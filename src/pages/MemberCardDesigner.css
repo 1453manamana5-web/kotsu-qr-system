@@ -429,3 +429,165 @@
     background: #fff;
   }
 }
+.member-manual-print-page {
+  position: fixed;
+  z-index: 6000;
+  inset: 0;
+  box-sizing: border-box;
+  overflow: auto;
+  background: #e7e7e7;
+}
+
+.member-manual-print-toolbar {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 22px;
+  box-sizing: border-box;
+  padding: 18px 24px;
+  border-bottom: 2px solid #aaa;
+  background: #fff;
+}
+
+.member-manual-print-toolbar h2 {
+  margin: 0;
+  font-size: clamp(
+    26px,
+    3vw,
+    40px
+  );
+}
+
+.member-manual-print-toolbar p {
+  max-width: 850px;
+  margin: 7px 0 0;
+  font-size: clamp(
+    17px,
+    2vw,
+    23px
+  );
+  font-weight: bold;
+  line-height: 1.5;
+}
+
+.member-manual-print-toolbar button {
+  min-height: 54px;
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 13px;
+  background: #ccc;
+  font-size: 19px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.member-manual-print-content {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  box-sizing: border-box;
+  min-height: calc(
+    100vh - 120px
+  );
+  padding: 24px;
+  background: #e7e7e7;
+}
+
+.member-card-manual-print-area {
+  position: relative;
+  width: var(--print-width);
+  height: var(--print-height);
+  min-width: var(--print-width);
+  min-height: var(--print-height);
+  max-width: var(--print-width);
+  max-height: var(--print-height);
+  box-sizing: border-box;
+  border: 1px solid #888;
+  background-color: #fff;
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  overflow: hidden;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+@media (
+  max-width: 720px
+) {
+  .member-manual-print-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .member-manual-print-toolbar button {
+    width: 100%;
+  }
+
+  .member-manual-print-content {
+    justify-content: flex-start;
+    overflow: auto;
+    padding: 14px;
+  }
+}
+
+@media print {
+  .member-manual-print-toolbar {
+    display: none !important;
+  }
+
+  .member-manual-print-page,
+  .member-manual-print-content {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
+  }
+
+  .member-card-manual-print-area,
+  .member-card-manual-print-area * {
+    visibility: visible !important;
+  }
+
+  .member-card-manual-print-area {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: var(--print-width) !important;
+    height: var(--print-height) !important;
+    min-width: var(--print-width) !important;
+    min-height: var(--print-height) !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background-color: #fff !important;
+    background-position: center !important;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+    overflow: hidden !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  .member-card-manual-print-area
+    .member-card-qr,
+  .member-card-manual-print-area
+    .member-card-name,
+  .member-card-manual-print-area
+    .member-card-number {
+    position: absolute !important;
+  }
+}
