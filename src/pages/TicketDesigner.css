@@ -460,6 +460,117 @@
   }
 }
 
+
+.ticket-manual-print-page {
+  position: fixed;
+  z-index: 6000;
+  inset: 0;
+  box-sizing: border-box;
+  overflow: auto;
+  background: #e7e7e7;
+}
+
+.ticket-manual-print-toolbar {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 22px;
+  box-sizing: border-box;
+  padding: 18px 24px;
+  border-bottom: 2px solid #aaa;
+  background: #fff;
+}
+
+.ticket-manual-print-toolbar h2 {
+  margin: 0;
+  font-size: clamp(
+    26px,
+    3vw,
+    40px
+  );
+}
+
+.ticket-manual-print-toolbar p {
+  max-width: 850px;
+  margin: 7px 0;
+  font-size: clamp(
+    17px,
+    2vw,
+    23px
+  );
+  font-weight: bold;
+  line-height: 1.5;
+}
+
+.ticket-manual-print-toolbar strong {
+  font-size: 18px;
+}
+
+.ticket-manual-print-toolbar button {
+  min-height: 54px;
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 13px;
+  background: #ccc;
+  font-size: 19px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.ticket-manual-print-content {
+  box-sizing: border-box;
+  padding: 22px;
+}
+
+.ticket-manual-print-page
+  .ticket-print-sheet {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: flex-start;
+  align-content: flex-start;
+  justify-content: flex-start;
+  gap: var(--ticket-print-gap);
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  background: #fff;
+}
+
+.ticket-manual-print-page
+  .ticket-print-card {
+  position: relative;
+  flex: 0 0 var(--ticket-print-width);
+  width: var(--ticket-print-width);
+  height: var(--ticket-print-height);
+  min-width: var(--ticket-print-width);
+  min-height: var(--ticket-print-height);
+  max-width: var(--ticket-print-width);
+  max-height: var(--ticket-print-height);
+  box-sizing: border-box;
+  background-color: #fff;
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+@media (
+  max-width: 720px
+) {
+  .ticket-manual-print-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ticket-manual-print-toolbar button {
+    width: 100%;
+  }
+}
+
 @media print {
   @page {
     size: auto;
@@ -498,6 +609,23 @@
   .ticket-designer-window,
   .ticket-designer-empty {
     display: none !important;
+  }
+
+  .ticket-manual-print-toolbar {
+    display: none !important;
+  }
+
+  .ticket-manual-print-page,
+  .ticket-manual-print-content {
+    position: static !important;
+    inset: auto !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
   }
 
   /*

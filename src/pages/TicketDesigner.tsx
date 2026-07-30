@@ -202,6 +202,11 @@ function TicketDesigner({
       : initialIndex
   );
 
+  const [
+    manualPrintMode,
+    setManualPrintMode,
+  ] = useState(false);
+
   const updateSetting = <
     Key extends keyof TicketDesignSettings,
   >(
@@ -485,34 +490,95 @@ function TicketDesigner({
       return;
     }
 
-    /*
-      iPad Safariでは、確認ダイアログや非同期処理を挟むと
-      印刷操作がユーザーの直接操作として扱われず、
-      window.print()が無視される場合があります。
+    const userAgent =
+      navigator.userAgent;
 
-      印刷ボタンを押した同じ処理内で、
-     直接window.print()を実行します。
-    */
-    try {
-      window.focus();
+    const isIPhoneOrIPad =
+      /iPad|iPhone|iPod/i.test(
+        userAgent
+      );
 
+    const isIPadDesktopMode =
+      navigator.platform ===
+        "MacIntel" &&
+      navigator.maxTouchPoints >
+        1;
+
+    if (
+      isIPhoneOrIPad ||
+      isIPadDesktopMode
+    ) {
       /*
-        印刷用DOMとCSSを確実に再計算させます。
+        iPad Safariではwindow.print()が
+       反応しない場合があるため、
+        印刷専用画面を表示します。
+
+        その画面からSafariの共有ボタンを開き、
+        「プリント」を選択します。
       */
-      void document.body.offsetHeight;
-
-      window.print();
-    } catch (error) {
-      console.error(
-        "印刷画面を開けませんでした。",
-        error
+      setManualPrintMode(
+        true
       );
 
-      alert(
-        "印刷画面を開けませんでした。Safariで開き直して、もう一度お試しください。"
-      );
+      return;
     }
+
+    window.print();
   };
+
+  const renderPrintSheet =
+    () => (
+      <div
+        className="ticket-print-sheet"
+        style={printSheetStyle}
+      >
+        {selectedTickets.map(
+          (ticket) => (
+            <div
+              key={ticket.id}
+              className="ticket-print-card"
+              style={{
+                backgroundImage:
+                  settings.backgroundImage ===
+                  ""
+                    ? undefined
+                    : `url("${settings.backgroundImage}")`,
+              }}
+            >
+              <div
+                className="ticket-design-qr"
+                style={{
+                  left: `${settings.qrX}%`,
+                  top: `${settings.qrY}%`,
+                  width: `${settings.qrSize}%`,
+                }}
+              >
+                <QRCodeSVG
+                  value={createTicketQrValue(
+                    ticket
+                  )}
+                  size={500}
+                  level="M"
+                  marginSize={1}
+                />
+              </div>
+
+              <div
+                className="ticket-design-number"
+                style={{
+                  left: `${settings.numberX}%`,
+                  top: `${settings.numberY}%`,
+                  fontSize:
+                    `${settings.numberSize}px`,
+                }}
+              >
+                {ticket.qrNumber}
+              </div>
+            </div>
+          )
+        )}
+      </div>
+    );
 
   if (
     printableTickets.length === 0
@@ -535,6 +601,48 @@ function TicketDesigner({
             閉じる
           </button>
         </section>
+      </div>
+    );
+  }
+
+  if (manualPrintMode) {
+    return (
+      <div className="ticket-manual-print-page">
+        <header className="ticket-manual-print-toolbar">
+          <div>
+            <h2>
+              iPad用印刷画面
+            </h2>
+
+            <p>
+              Safariの共有ボタン
+              （□から上向き矢印）
+              を押して、
+              「プリント」を選択してください。
+            </p>
+
+            <strong>
+              印刷対象：
+              {selectedTickets.length}
+              枚
+            </strong>
+          </div>
+
+          <button
+            type="button"
+            onClick={() =>
+              setManualPrintMode(
+                false
+              )
+            }
+          >
+            デザイン画面に戻る
+          </button>
+        </header>
+
+        <main className="ticket-manual-print-content">
+          {renderPrintSheet()}
+        </main>
       </div>
     );
   }
