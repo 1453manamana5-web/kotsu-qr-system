@@ -26,21 +26,6 @@ type CameraState =
   | "ready"
   | "error";
 
-type ExtendedVideoConstraints =
-  MediaTrackConstraints & {
-    advanced?: Array<
-      MediaTrackConstraintSet & {
-        focusMode?:
-          | string
-          | string[];
-
-        exposureMode?:
-          | string
-          | string[];
-      }
-    >;
-  };
-
 function getErrorMessage(
   error: unknown
 ) {
@@ -66,32 +51,43 @@ function getErrorMessage(
   }
 }
 
-function stopMediaStream(
-  stream:
-    MediaStream |
-    null
+function isBackCameraLabel(
+  label: string
 ) {
+  return /back|rear|environment|背面/i.test(
+    label
+  );
+}
+
+async function getCameraId() {
+  const cameras =
+    await Html5Qrcode.getCameras();
+
   if (
-    stream ===
-    null
+    cameras.length ===
+    0
   ) {
-    return;
+    throw new Error(
+      "使用できるカメラが見つかりませんでした。"
+    );
   }
 
-  stream
-    .getTracks()
-    .forEach(
-      (track) => {
-        try {
-          track.stop();
-        } catch (error) {
-          console.warn(
-            "カメラの映像トラックを停止できませんでした。",
-            error
-          );
-        }
-      }
+  const backCamera =
+    cameras.find(
+      (camera) =>
+        isBackCameraLabel(
+          camera.label
+        )
     );
+
+  const selectedCamera =
+    backCamera ??
+    cameras[
+      cameras.length -
+        1
+    ];
+
+  return selectedCamera.id;
 }
 
 function stopReaderVideoTracks(
@@ -102,119 +98,33 @@ function stopReaderVideoTracks(
       readerId
     );
 
-  if (
-    readerElement ===
-    null
-  ) {
-    return;
-  }
-
   const videoElements =
-    readerElement.querySelectorAll(
+    readerElement?.querySelectorAll(
       "video"
     );
 
-  videoElements.forEach(
+  videoElements?.forEach(
     (videoElement) => {
       const stream =
         videoElement.srcObject;
 
       if (
         stream instanceof
-        MediaStream
+          MediaStream
       ) {
-        stopMediaStream(
-          stream
-        );
+        stream
+          .getTracks()
+          .forEach(
+            (track) => {
+              track.stop();
+            }
+          );
 
         videoElement.srcObject =
           null;
       }
-
-      try {
-        videoElement.pause();
-      } catch {
-        // pauseに対応していない場合は何もしません。
-      }
-
-      videoElement.removeAttribute(
-        "src"
-      );
-
-      try {
-        videoElement.load();
-      } catch {
-        // loadに対応していない場合は何もしません。
-      }
     }
   );
-}
-
-async function stopScannerInstance(
-  scanner:
-    Html5Qrcode |
-    null
-) {
-  if (
-    scanner ===
-    null
-  ) {
-    return;
-  }
-
-  try {
-    if (
-      scanner.isScanning
-    ) {
-      await scanner.stop();
-    }
-  } catch (error) {
-    console.warn(
-      "カメラ停止時にエラーが発生しました。",
-      error
-    );
-  }
-
-  try {
-    scanner.clear();
-  } catch (error) {
-    console.warn(
-      "カメラ表示の削除時にエラーが発生しました。",
-      error
-    );
-  }
-}
-
-async function applyFastCameraSettings(
-  scanner: Html5Qrcode
-) {
-  const fastConstraints:
-    ExtendedVideoConstraints = {
-      advanced: [
-        {
-          focusMode:
-            "continuous",
-
-          exposureMode:
-            "continuous",
-        },
-      ],
-    };
-
-  try {
-    await scanner.applyVideoConstraints(
-      fastConstraints
-    );
-
-    console.log(
-      "高速読み取り用のカメラ設定を適用しました。"
-    );
-  } catch (advancedError) {
-    console.warn(
-      "連続フォーカス設定には対応していないため、端末の標準設定を使用します。",
-      advancedError
-    );
-  }
 }
 
 function CameraQrScanner({
@@ -239,12 +149,6 @@ function CameraQrScanner({
       null
     >(null);
 
-  const activeStreamRef =
-    useRef<
-      MediaStream |
-      null
-    >(null);
-
   const stopPromiseRef =
     useRef<
       Promise<void> |
@@ -253,12 +157,6 @@ function CameraQrScanner({
 
   const scanLockedRef =
     useRef(false);
-
-  const lastScannedValueRef =
-    useRef("");
-
-  const lastScannedTimeRef =
-    useRef(0);
 
   const [
     pageVisible,
@@ -288,17 +186,14 @@ function CameraQrScanner({
     onScan,
   ]);
 
-  const stopCurrentCamera =
+  const stopCamera =
     useCallback(
       async () => {
-        const currentStopPromise =
-          stopPromiseRef.current;
-
         if (
-          currentStopPromise !==
+          stopPromiseRef.current !==
           null
         ) {
-          await currentStopPromise;
+          await stopPromiseRef.current;
           return;
         }
 
@@ -310,21 +205,33 @@ function CameraQrScanner({
             scannerRef.current =
               null;
 
-            await stopScannerInstance(
-              scanner
-            );
+            if (
+              scanner !==
+              null
+            ) {
+              try {
+                if (
+                  scanner.isScanning
+                ) {
+                  await scanner.stop();
+                }
+              } catch (error) {
+                console.warn(
+                  "カメラ停止時にエラーが発生しました。",
+                  error
+                );
+              }
 
-            stopMediaStream(
-              activeStreamRef.current
-            );
+              try {
+                scanner.clear();
+              } catch (error) {
+                console.warn(
+                  "カメラ表示を削除できませんでした。",
+                  error
+                );
+              }
+            }
 
-            activeStreamRef.current =
-              null;
-
-            /*
-              html5-qrcode側に映像が残っている場合に備えて、
-              この読み取り領域内のvideoだけを停止します。
-            */
             stopReaderVideoTracks(
               readerId
             );
@@ -351,39 +258,7 @@ function CameraQrScanner({
     );
 
   useEffect(() => {
-    const handleVisibilityChange =
-      () => {
-        const isVisible =
-          document.visibilityState ===
-          "visible";
-
-        setPageVisible(
-          isVisible
-        );
-
-        if (
-          !isVisible
-        ) {
-          scanLockedRef.current =
-            true;
-
-          void stopCurrentCamera();
-        }
-      };
-
-    const handlePageHide =
-      () => {
-        setPageVisible(
-          false
-        );
-
-        scanLockedRef.current =
-          true;
-
-        void stopCurrentCamera();
-      };
-
-    const handlePageShow =
+    const updateVisibility =
       () => {
         setPageVisible(
           document.visibilityState ===
@@ -393,79 +268,58 @@ function CameraQrScanner({
 
     document.addEventListener(
       "visibilitychange",
-      handleVisibilityChange
-    );
-
-    window.addEventListener(
-      "pagehide",
-      handlePageHide
+      updateVisibility
     );
 
     window.addEventListener(
       "pageshow",
-      handlePageShow
+      updateVisibility
+    );
+
+    window.addEventListener(
+      "pagehide",
+      updateVisibility
     );
 
     return () => {
       document.removeEventListener(
         "visibilitychange",
-        handleVisibilityChange
-      );
-
-      window.removeEventListener(
-        "pagehide",
-        handlePageHide
+        updateVisibility
       );
 
       window.removeEventListener(
         "pageshow",
-        handlePageShow
+        updateVisibility
       );
 
-      void stopCurrentCamera();
+      window.removeEventListener(
+        "pagehide",
+        updateVisibility
+      );
     };
-  }, [
-    stopCurrentCamera,
-  ]);
+  }, []);
 
   useEffect(() => {
     let cancelled =
       false;
 
-    const cameraShouldRun =
-      enabled &&
-      pageVisible;
-
     if (
-      !cameraShouldRun
+      !enabled ||
+      !pageVisible
     ) {
       scanLockedRef.current =
         true;
 
-      void stopCurrentCamera();
-
-      setCameraState(
-        "starting"
-      );
-
-      setErrorMessage("");
+      void stopCamera();
 
       return () => {
         cancelled =
           true;
-
-        void stopCurrentCamera();
       };
     }
 
     scanLockedRef.current =
       false;
-
-    lastScannedValueRef.current =
-      "";
-
-    lastScannedTimeRef.current =
-      0;
 
     setCameraState(
       "starting"
@@ -475,21 +329,11 @@ function CameraQrScanner({
 
     const startCamera =
       async () => {
-        let scanner:
-          Html5Qrcode |
-          null = null;
-
         try {
-          /*
-            前の画面や前回の読み取りで残ったカメラを、
-            新しく起動する前に停止します。
-          */
-          await stopCurrentCamera();
+          await stopCamera();
 
           if (
-            cancelled ||
-            !enabled ||
-            !pageVisible
+            cancelled
           ) {
             return;
           }
@@ -511,7 +355,16 @@ function CameraQrScanner({
           readerElement.innerHTML =
             "";
 
-          scanner =
+          const cameraId =
+            await getCameraId();
+
+          if (
+            cancelled
+          ) {
+            return;
+          }
+
+          const scanner =
             new Html5Qrcode(
               readerId,
               {
@@ -531,30 +384,7 @@ function CameraQrScanner({
             scanner;
 
           await scanner.start(
-            {
-              facingMode: {
-                ideal:
-                  "environment",
-              },
-
-              width: {
-                ideal:
-                  1280,
-              },
-
-              height: {
-                ideal:
-                  720,
-              },
-
-              frameRate: {
-                ideal:
-                  30,
-
-                min:
-                  20,
-              },
-            },
+            cameraId,
             {
               fps:
                 30,
@@ -575,138 +405,34 @@ function CameraQrScanner({
                 return;
               }
 
-              const normalizedValue =
+              const qrValue =
                 decodedText.trim();
 
               if (
-                normalizedValue ===
+                qrValue ===
                 ""
               ) {
                 return;
               }
 
-              const currentTime =
-                Date.now();
-
-              const isSameRecentCode =
-                normalizedValue ===
-                  lastScannedValueRef.current &&
-                currentTime -
-                  lastScannedTimeRef.current <
-                  1200;
-
-              if (
-                isSameRecentCode
-              ) {
-                return;
-              }
-
-              lastScannedValueRef.current =
-                normalizedValue;
-
-              lastScannedTimeRef.current =
-                currentTime;
-
               scanLockedRef.current =
                 true;
 
-              console.log(
-                "QRコードを高速読み取りしました:",
-                normalizedValue
-              );
-
-              /*
-                QRを読み取った瞬間にカメラを停止します。
-                Firebase処理中・成功・失敗画面ではカメラを使いません。
-              */
-              void stopCurrentCamera();
+              void stopCamera();
 
               onScanRef.current(
-                normalizedValue
+                qrValue
               );
             },
             () => {
-              /*
-                QRが写っていないフレームは頻繁に発生するため、
-               状態更新やログ出力はしません。
-              */
+              // QRがないフレームでは何もしません。
             }
           );
 
           if (
-            cancelled ||
-            !enabled ||
-            !pageVisible
+            cancelled
           ) {
-            if (
-              scannerRef.current ===
-              scanner
-            ) {
-              scannerRef.current =
-                null;
-            }
-
-            await stopScannerInstance(
-              scanner
-            );
-
-            stopReaderVideoTracks(
-              readerId
-            );
-
-            return;
-          }
-
-          const currentReaderElement =
-            document.getElementById(
-              readerId
-            );
-
-          const videoElement =
-            currentReaderElement?.querySelector(
-              "video"
-            );
-
-          if (
-            videoElement?.srcObject instanceof
-            MediaStream
-          ) {
-            activeStreamRef.current =
-              videoElement.srcObject;
-          }
-
-          await applyFastCameraSettings(
-            scanner
-          );
-
-          if (
-            cancelled ||
-            !enabled ||
-            !pageVisible
-          ) {
-            if (
-              scannerRef.current ===
-              scanner
-            ) {
-              scannerRef.current =
-                null;
-            }
-
-            await stopScannerInstance(
-              scanner
-            );
-
-            stopMediaStream(
-              activeStreamRef.current
-            );
-
-            activeStreamRef.current =
-              null;
-
-            stopReaderVideoTracks(
-              readerId
-            );
-
+            await stopCamera();
             return;
           }
 
@@ -719,23 +445,10 @@ function CameraQrScanner({
             error
           );
 
-          if (
-            scanner !==
-              null &&
-            scannerRef.current !==
-              scanner
-          ) {
-            await stopScannerInstance(
-              scanner
-            );
-          }
-
-          await stopCurrentCamera();
+          await stopCamera();
 
           if (
-            !cancelled &&
-            enabled &&
-            pageVisible
+            !cancelled
           ) {
             setCameraState(
               "error"
@@ -759,13 +472,13 @@ function CameraQrScanner({
       scanLockedRef.current =
         true;
 
-      void stopCurrentCamera();
+      void stopCamera();
     };
   }, [
     enabled,
     pageVisible,
     readerId,
-    stopCurrentCamera,
+    stopCamera,
   ]);
 
   return (
@@ -788,11 +501,11 @@ function CameraQrScanner({
         "starting" && (
         <div className="camera-qr-message">
           <strong>
-            背面カメラを起動しています
+            カメラを起動しています
           </strong>
 
           <span>
-            高速読み取りの準備中です
+            QRコードを準備してください
           </span>
         </div>
       )}
