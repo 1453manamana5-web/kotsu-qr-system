@@ -8,6 +8,7 @@ import {
   QRCodeSVG,
 } from "qrcode.react";
 
+import OnlineStatus from "./OnlineStatus";
 import TicketDesigner from "./TicketDesigner";
 
 import {
@@ -71,6 +72,344 @@ function createTicketQrValue(
     ticket.qrNumber,
     ticket.authToken,
   ].join(":");
+}
+
+function TicketIcon() {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+    >
+      <path
+        d="M9 19C13 19 16 16 16 12H48C48 16 51 19 55 19V45C51 45 48 48 48 52H16C16 48 13 45 9 45V19Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinejoin="round"
+      />
+
+      <path
+        d="M32 16V22"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M32 29V35"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M32 42V48"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      aria-hidden="true"
+    >
+      <path
+        d="M16 7V25"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M7 16H25"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function PaletteIcon() {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+    >
+      <path
+        d="M32 8C18 8 8 18 8 31C8 43 17 52 28 54C32 55 36 53 36 49C36 46 34 44 34 41C34 38 37 36 40 36H48C54 36 58 31 57 25C55 15 45 8 32 8Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinejoin="round"
+      />
+
+      <circle
+        cx="21"
+        cy="24"
+        r="3"
+        fill="currentColor"
+      />
+
+      <circle
+        cx="32"
+        cy="18"
+        r="3"
+        fill="currentColor"
+      />
+
+      <circle
+        cx="43"
+        cy="23"
+        r="3"
+        fill="currentColor"
+      />
+
+      <circle
+        cx="19"
+        cy="36"
+        r="3"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      aria-hidden="true"
+    >
+      <circle
+        cx="14"
+        cy="14"
+        r="8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+      />
+
+      <path
+        d="M20 20L27 27"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function FilterIcon() {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      aria-hidden="true"
+    >
+      <path
+        d="M5 8H27"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M9 16H23"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M13 24H19"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function QrIcon() {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+    >
+      <rect
+        x="8"
+        y="8"
+        width="18"
+        height="18"
+        rx="2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+
+      <rect
+        x="38"
+        y="8"
+        width="18"
+        height="18"
+        rx="2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+
+      <rect
+        x="8"
+        y="38"
+        width="18"
+        height="18"
+        rx="2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+
+      <path
+        d="M39 38H47V46H55V55H46V50H38V42"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      <path
+        d="M32 10V22"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M31 31H43"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M31 39V54"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      aria-hidden="true"
+    >
+      <path
+        d="M25 16H8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M14 9L7 16L14 23"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      aria-hidden="true"
+    >
+      <path
+        d="M9 9L23 23"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M23 9L9 23"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function PrintIcon() {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+    >
+      <path
+        d="M19 23V9H45V23"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinejoin="round"
+      />
+
+      <path
+        d="M17 47H11V25H53V47H47"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinejoin="round"
+      />
+
+      <rect
+        x="18"
+        y="38"
+        width="28"
+        height="17"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+
+      <circle
+        cx="45"
+        cy="31"
+        r="2.5"
+        fill="currentColor"
+      />
+    </svg>
+  );
 }
 
 function TicketsPage({
@@ -140,14 +479,6 @@ function TicketsPage({
     setShowDesigner,
   ] = useState(false);
 
-  /*
-    Firestoreのチケット一覧を
-    リアルタイムで受信します。
-
-    入口・出口・別の管理端末で
-    状態が変わると、この一覧も
-   自動的に更新されます。
-  */
   useEffect(() => {
     setTicketsLoading(true);
     setTicketsError("");
@@ -200,13 +531,6 @@ function TicketsPage({
     };
   }, [eventName]);
 
-  /*
-    選択中のチケットは、
-    最新のFirestoreデータから取得します。
-
-    別端末で状態が変わった場合も
-    QR表示画面へ反映されます。
-  */
   const selectedTicket =
     selectedTicketId ===
       null
@@ -309,7 +633,9 @@ function TicketsPage({
           `${createCount}枚のチケットを新規発行しますか？`
         );
 
-      if (!confirmed) {
+      if (
+        !confirmed
+      ) {
         return;
       }
 
@@ -325,7 +651,10 @@ function TicketsPage({
           length:
             createCount,
         },
-        (_, index) => ({
+        (
+          _,
+          index
+        ) => ({
           id:
             createSafeRandomId(),
 
@@ -437,7 +766,9 @@ function TicketsPage({
           `${ticket.qrNumber}を無効にしますか？`
         );
 
-      if (!confirmed) {
+      if (
+        !confirmed
+      ) {
         return;
       }
 
@@ -456,7 +787,9 @@ function TicketsPage({
           `${ticket.qrNumber}を未使用状態へ戻しますか？`
         );
 
-      if (!confirmed) {
+      if (
+        !confirmed
+      ) {
         return;
       }
 
@@ -475,7 +808,9 @@ function TicketsPage({
           `${ticket.qrNumber}を完全に削除しますか？`
         );
 
-      if (!confirmed) {
+      if (
+        !confirmed
+      ) {
         return;
       }
 
@@ -484,7 +819,9 @@ function TicketsPage({
           "削除したチケットは元に戻せません。\n本当に削除しますか？"
         );
 
-      if (!finalConfirmed) {
+      if (
+        !finalConfirmed
+      ) {
         return;
       }
 
@@ -617,202 +954,345 @@ function TicketsPage({
 
   return (
     <div className="tickets-page">
+      <div className="tickets-background tickets-background-one" />
+
+      <div className="tickets-background tickets-background-two" />
+
       <header className="tickets-header">
-        <div>
+        <div className="tickets-header-main">
           <h1>
             交通研究部QRコード管理システム
           </h1>
 
-          <div className="tickets-title-row">
-            <h2>
-              チケット管理
-            </h2>
+          <div className="tickets-header-meta">
+            <OnlineStatus />
 
-            <div className="tickets-event-name">
-              イベント名　
-              {eventName ||
-                "未設定"}
+            <span
+              className="tickets-header-divider"
+              aria-hidden="true"
+            />
+
+            <div
+              className={`tickets-event-pill ${
+                eventName.trim() ===
+                ""
+                  ? "tickets-event-pill-warning"
+                  : ""
+              }`}
+            >
+              <span>
+                EVENT
+              </span>
+
+              <strong>
+                {eventName ||
+                  "イベント未設定"}
+              </strong>
             </div>
           </div>
         </div>
 
         <div className="tickets-mode-label">
-          管理モード
+          <span className="tickets-mode-icon">
+            <TicketIcon />
+          </span>
+
+          <span className="tickets-mode-copy">
+            <small>
+              TICKET MANAGEMENT
+            </small>
+
+            <strong>
+              チケット管理
+            </strong>
+          </span>
         </div>
       </header>
 
       <main className="tickets-content">
         <aside className="tickets-side-panel">
-          <button
-            type="button"
-            className="tickets-create-button"
-            disabled={
-              saving ||
-              eventName.trim() ===
-                ""
-            }
-            onClick={() => {
-              setCreateCount(
-                10
-              );
+          <section className="tickets-action-panel">
+            <div className="tickets-panel-heading">
+              <div>
+                <span className="tickets-panel-eyebrow">
+                  TICKET TOOLS
+                </span>
 
-              setShowCreateWindow(
-                true
-              );
-            }}
-          >
-            <span>＋</span>
-            チケットを新規作成
-          </button>
+                <h2>
+                  チケット操作
+                </h2>
+              </div>
+            </div>
 
-          <button
-            type="button"
-            className="tickets-design-button"
-            onClick={
-              openAllTicketDesigner
-            }
-            disabled={
-              tickets.length ===
-                0 ||
-              saving
-            }
-          >
-            チケットデザイン
-            <br />
-            ・まとめて印刷
-          </button>
+            <button
+              type="button"
+              className="tickets-create-button"
+              disabled={
+                saving ||
+                eventName.trim() ===
+                  ""
+              }
+              onClick={() => {
+                setCreateCount(
+                  10
+                );
 
-          <section className="tickets-summary">
-            <h3>
-              チケット状況
-            </h3>
-
-            <div className="tickets-summary-row">
-              <span>
-                発行済み
+                setShowCreateWindow(
+                  true
+                );
+              }}
+            >
+              <span className="tickets-action-icon">
+                <PlusIcon />
               </span>
 
-              <strong>
+              <span className="tickets-action-copy">
+                <small>
+                  CREATE TICKETS
+                </small>
+
+                <strong>
+                  チケットを新規発行
+                </strong>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="tickets-design-button"
+              onClick={
+                openAllTicketDesigner
+              }
+              disabled={
+                tickets.length ===
+                  0 ||
+                saving
+              }
+            >
+              <span className="tickets-action-icon">
+                <PaletteIcon />
+              </span>
+
+              <span className="tickets-action-copy">
+                <small>
+                  DESIGN & PRINT
+                </small>
+
+                <strong>
+                  デザイン・まとめて印刷
+                </strong>
+              </span>
+            </button>
+          </section>
+
+          <section className="tickets-summary-panel">
+            <div className="tickets-summary-heading">
+              <div>
+                <span className="tickets-panel-eyebrow">
+                  TICKET STATUS
+                </span>
+
+                <h2>
+                  チケット状況
+                </h2>
+              </div>
+
+              <strong className="tickets-total-count">
                 {tickets.length}
-                枚
+
+                <small>
+                  枚
+                </small>
               </strong>
             </div>
 
-            <div className="tickets-summary-row">
-              <span>
-                未使用
-              </span>
+            <div className="tickets-summary-grid">
+              <div className="tickets-summary-card tickets-summary-unused">
+                <span>
+                  未使用
+                </span>
 
-              <strong>
-                {unusedCount}
-                枚
-              </strong>
+                <strong>
+                  {unusedCount}
+
+                  <small>
+                    枚
+                  </small>
+                </strong>
+              </div>
+
+              <div className="tickets-summary-card tickets-summary-inside">
+                <span>
+                  入場中
+                </span>
+
+                <strong>
+                  {insideCount}
+
+                  <small>
+                    枚
+                  </small>
+                </strong>
+              </div>
+
+              <div className="tickets-summary-card tickets-summary-used">
+                <span>
+                  使用済み
+                </span>
+
+                <strong>
+                  {usedCount}
+
+                  <small>
+                    枚
+                  </small>
+                </strong>
+              </div>
+
+              <div className="tickets-summary-card tickets-summary-invalid">
+                <span>
+                  無効
+                </span>
+
+                <strong>
+                  {invalidCount}
+
+                  <small>
+                    枚
+                  </small>
+                </strong>
+              </div>
             </div>
 
-            <div className="tickets-summary-row">
-              <span>
-                入場中
-              </span>
+            <div
+              className={`tickets-data-state ${
+                ticketsError !== ""
+                  ? "tickets-data-error"
+                  : ticketsLoading
+                    ? "tickets-data-loading"
+                    : "tickets-data-live"
+              }`}
+            >
+              <span />
 
-              <strong>
-                {insideCount}
-                枚
-              </strong>
-            </div>
-
-            <div className="tickets-summary-row">
-              <span>
-                使用済み
-              </span>
-
-              <strong>
-                {usedCount}
-                枚
-              </strong>
-            </div>
-
-            <div className="tickets-summary-row">
-              <span>
-                無効
-              </span>
-
-              <strong>
-                {invalidCount}
-                枚
-              </strong>
+              {ticketsError !== ""
+                ? "読み込みエラー"
+                : ticketsLoading
+                  ? "Firebaseから読込中"
+                  : "リアルタイム同期中"}
             </div>
           </section>
         </aside>
 
         <section className="tickets-list-area">
-          <div className="tickets-list-tools">
-            <div className="tickets-list-count">
-              表示件数　
-              {
-                filteredTickets.length
-              }
-              件
+          <div className="tickets-list-header">
+            <div>
+              <span className="tickets-panel-eyebrow">
+                ALL TICKETS
+              </span>
+
+              <h2>
+                チケット一覧
+              </h2>
             </div>
 
-            <select
-              className="tickets-status-filter"
-              value={
-                statusFilter
-              }
-              disabled={
-                ticketsLoading
-              }
-              onChange={(
-                event
-              ) =>
-                setStatusFilter(
-                  event.target
-                    .value as
-                    | "すべて"
-                    | TicketStatus
-                )
-              }
-            >
-              <option value="すべて">
-                すべての状態
-              </option>
+            <div className="tickets-list-count">
+              <span>
+                表示件数
+              </span>
 
-              <option value="未使用">
-                未使用
-              </option>
+              <strong>
+                {
+                  filteredTickets.length
+                }
 
-              <option value="入場中">
-                入場中
-              </option>
+                <small>
+                  件
+                </small>
+              </strong>
+            </div>
+          </div>
 
-              <option value="使用済み">
-                使用済み
-              </option>
+          <div className="tickets-list-tools">
+            <label className="tickets-search-box">
+              <span>
+                <SearchIcon />
+              </span>
 
-              <option value="無効">
-                無効
-              </option>
-            </select>
+              <input
+                type="search"
+                className="tickets-search"
+                value={
+                  searchText
+                }
+                disabled={
+                  ticketsLoading
+                }
+                onChange={(
+                  event
+                ) =>
+                  setSearchText(
+                    event.target
+                      .value
+                  )
+                }
+                placeholder="QR番号を検索"
+              />
+            </label>
 
-            <input
-              type="search"
-              className="tickets-search"
-              value={
-                searchText
-              }
-              disabled={
-                ticketsLoading
-              }
-              onChange={(
-                event
-              ) =>
-                setSearchText(
-                  event.target
-                    .value
-                )
-              }
-              placeholder="QR番号を検索"
-            />
+            <label className="tickets-filter-box">
+              <span>
+                <FilterIcon />
+              </span>
+
+              <select
+                className="tickets-status-filter"
+                value={
+                  statusFilter
+                }
+                disabled={
+                  ticketsLoading
+                }
+                onChange={(
+                  event
+                ) =>
+                  setStatusFilter(
+                    event.target
+                      .value as
+                      | "すべて"
+                      | TicketStatus
+                  )
+                }
+              >
+                <option value="すべて">
+                  すべての状態
+                </option>
+
+                <option value="未使用">
+                  未使用
+                </option>
+
+                <option value="入場中">
+                  入場中
+                </option>
+
+                <option value="使用済み">
+                  使用済み
+                </option>
+
+                <option value="無効">
+                  無効
+                </option>
+              </select>
+            </label>
+
+            {saving && (
+              <div className="tickets-saving-label">
+                <span />
+
+                保存しています
+              </div>
+            )}
           </div>
 
           <div className="tickets-table-wrapper">
@@ -842,23 +1322,41 @@ function TicketsPage({
                         3
                       }
                     >
-                      Firebaseからチケット情報を読み込んでいます…
+                      <span className="tickets-empty-icon">
+                        <TicketIcon />
+                      </span>
+
+                      <strong>
+                        チケット情報を読み込んでいます
+                      </strong>
+
+                      <small>
+                        Firebaseと通信しています
+                      </small>
                     </td>
                   </tr>
                 ) : ticketsError !==
                   "" ? (
                   <tr>
                     <td
-                      className="tickets-empty-message"
+                      className="tickets-empty-message tickets-error-message"
                       colSpan={
                         3
                       }
                     >
-                      チケット情報を読み込めませんでした
-                      <br />
-                      {
-                        ticketsError
-                      }
+                      <span className="tickets-empty-symbol">
+                        !
+                      </span>
+
+                      <strong>
+                        チケット情報を読み込めませんでした
+                      </strong>
+
+                      <small>
+                        {
+                          ticketsError
+                        }
+                      </small>
                     </td>
                   </tr>
                 ) : filteredTickets.length ===
@@ -870,7 +1368,17 @@ function TicketsPage({
                         3
                       }
                     >
-                      該当するチケットがありません
+                      <span className="tickets-empty-icon">
+                        <SearchIcon />
+                      </span>
+
+                      <strong>
+                        該当するチケットがありません
+                      </strong>
+
+                      <small>
+                        検索条件や状態フィルターを変更してください
+                      </small>
                     </td>
                   </tr>
                 ) : (
@@ -884,9 +1392,15 @@ function TicketsPage({
                         }
                       >
                         <td className="tickets-qr-number">
-                          {
-                            ticket.qrNumber
-                          }
+                          <span className="tickets-row-qr-icon">
+                            <QrIcon />
+                          </span>
+
+                          <strong>
+                            {
+                              ticket.qrNumber
+                            }
+                          </strong>
                         </td>
 
                         <td>
@@ -1003,38 +1517,63 @@ function TicketsPage({
         </section>
       </main>
 
-      <button
-        type="button"
-        className="tickets-return-button"
-        disabled={
-          saving
-        }
-        onClick={() =>
-          setPage(
-            "admin"
-          )
-        }
-      >
-        前のページに戻る
-      </button>
+      <footer className="tickets-footer">
+        <button
+          type="button"
+          className="tickets-return-button"
+          disabled={
+            saving
+          }
+          onClick={() =>
+            setPage(
+              "admin"
+            )
+          }
+        >
+          <span>
+            <BackIcon />
+          </span>
+
+          管理モードに戻る
+        </button>
+      </footer>
 
       {showCreateWindow && (
-        <div className="tickets-modal-background">
-          <section className="tickets-create-window">
+        <div
+          className="tickets-modal-background"
+          role="presentation"
+        >
+          <section
+            className="tickets-create-window"
+            role="dialog"
+            aria-modal="true"
+            aria-label="チケットを新規作成"
+          >
             <header className="tickets-create-header">
-              <div>
-                <h2>
-                  チケットを新規作成
-                </h2>
+              <div className="tickets-modal-title">
+                <span className="tickets-modal-title-icon">
+                  <PlusIcon />
+                </span>
 
-                <p>
-                  複数枚のQRチケットをまとめて発行します。
-                </p>
+                <div>
+                  <small>
+                    CREATE TICKETS
+                  </small>
+
+                  <h2>
+                    チケットを新規発行
+                  </h2>
+
+                  <p>
+                    複数枚のQRチケットをまとめて発行します。
+                  </p>
+                </div>
               </div>
 
               <button
                 type="button"
                 className="tickets-modal-close"
+                aria-label="閉じる"
                 disabled={
                   saving
                 }
@@ -1044,78 +1583,58 @@ function TicketsPage({
                   )
                 }
               >
-                ×
+                <CloseIcon />
               </button>
             </header>
 
             <label className="tickets-count-input">
-              発行枚数
-
-              <input
-                type="number"
-                min="1"
-                max={
-                  MAX_CREATE_COUNT
-                }
-                value={
-                  createCount
-                }
-                disabled={
-                  saving
-                }
-                onChange={(
-                  event
-                ) =>
-                  setCreateCount(
-                    Number(
-                      event
-                        .target
-                        .value
-                    )
-                  )
-                }
-              />
-
               <span>
-                枚
+                発行枚数
               </span>
+
+              <div>
+                <input
+                  type="number"
+                  min="1"
+                  max={
+                    MAX_CREATE_COUNT
+                  }
+                  value={
+                    createCount
+                  }
+                  disabled={
+                    saving
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setCreateCount(
+                      Number(
+                        event
+                          .target
+                          .value
+                      )
+                    )
+                  }
+                />
+
+                <strong>
+                  枚
+                </strong>
+              </div>
+
+              <small>
+                一度に最大
+                {MAX_CREATE_COUNT}
+                枚まで発行できます
+              </small>
             </label>
 
             <div className="tickets-create-preview">
-              <h3>
-                発行予定
-              </h3>
-
-              <p>
-                最初の番号
-
-                <strong>
-                  TK
-                  {String(
-                    nextTicketNumber
-                  ).padStart(
-                    6,
-                    "0"
-                  )}
-                </strong>
-              </p>
-
-              <p>
-                最後の番号
-
-                <strong>
-                  TK
-                  {String(
-                    lastCreateNumber
-                  ).padStart(
-                    6,
-                    "0"
-                  )}
-                </strong>
-              </p>
-
-              <p>
-                発行枚数
+              <div className="tickets-create-preview-heading">
+                <span>
+                  発行予定
+                </span>
 
                 <strong>
                   {Math.max(
@@ -1124,25 +1643,58 @@ function TicketsPage({
                   )}
                   枚
                 </strong>
+              </div>
+
+              <div className="tickets-create-number-range">
+                <div>
+                  <small>
+                    最初の番号
+                  </small>
+
+                  <strong>
+                    TK
+                    {String(
+                      nextTicketNumber
+                    ).padStart(
+                      6,
+                      "0"
+                    )}
+                  </strong>
+                </div>
+
+                <span>
+                  →
+                </span>
+
+                <div>
+                  <small>
+                    最後の番号
+                  </small>
+
+                  <strong>
+                    TK
+                    {String(
+                      lastCreateNumber
+                    ).padStart(
+                      6,
+                      "0"
+                    )}
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="tickets-create-note">
+              <span>
+                i
+              </span>
+
+              <p>
+                発行したチケットはFirebaseへ保存され、入口・出口・管理端末へリアルタイムで反映されます。
               </p>
             </div>
 
             <div className="tickets-create-buttons">
-              <button
-                type="button"
-                className="tickets-create-confirm"
-                disabled={
-                  saving
-                }
-                onClick={() => {
-                  void createTickets();
-                }}
-              >
-                {saving
-                  ? "発行しています…"
-                  : "チケットを発行"}
-              </button>
-
               <button
                 type="button"
                 className="tickets-create-cancel"
@@ -1157,6 +1709,23 @@ function TicketsPage({
               >
                 キャンセル
               </button>
+
+              <button
+                type="button"
+                className="tickets-create-confirm"
+                disabled={
+                  saving
+                }
+                onClick={() => {
+                  void createTickets();
+                }}
+              >
+                <PlusIcon />
+
+                {saving
+                  ? "発行しています…"
+                  : "チケットを発行"}
+              </button>
             </div>
           </section>
         </div>
@@ -1166,6 +1735,7 @@ function TicketsPage({
         null && (
         <div
           className="tickets-modal-background"
+          role="presentation"
           onClick={() =>
             setSelectedTicketId(
               null
@@ -1174,6 +1744,9 @@ function TicketsPage({
         >
           <section
             className="ticket-qr-window"
+            role="dialog"
+            aria-modal="true"
+            aria-label="チケットQRコード"
             onClick={(
               event
             ) =>
@@ -1182,19 +1755,32 @@ function TicketsPage({
           >
             <button
               type="button"
-              className="tickets-modal-close"
+              className="tickets-modal-close ticket-qr-modal-close"
+              aria-label="閉じる"
               onClick={() =>
                 setSelectedTicketId(
                   null
                 )
               }
             >
-              ×
+              <CloseIcon />
             </button>
 
-            <h2>
-              チケットQRコード
-            </h2>
+            <div className="ticket-qr-heading">
+              <span className="ticket-qr-heading-icon">
+                <QrIcon />
+              </span>
+
+              <div>
+                <small>
+                  TICKET QR CODE
+                </small>
+
+                <h2>
+                  チケットQRコード
+                </h2>
+              </div>
+            </div>
 
             <div className="ticket-qr-code">
               <QRCodeSVG
@@ -1218,10 +1804,16 @@ function TicketsPage({
             <div
               className={`ticket-qr-status ticket-status-${selectedTicket.status}`}
             >
+              <span />
+
               {
                 selectedTicket.status
               }
             </div>
+
+            <p className="ticket-qr-help">
+              このQRコードを入口・出口受付で読み取れます。
+            </p>
 
             <div className="ticket-qr-action-buttons">
               <button
@@ -1233,6 +1825,8 @@ function TicketsPage({
                   )
                 }
               >
+                <PrintIcon />
+
                 デザインに貼って印刷
               </button>
 
