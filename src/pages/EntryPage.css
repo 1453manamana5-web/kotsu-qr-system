@@ -2048,3 +2048,114 @@
       1.8s;
   }
 }
+/*
+  iPad横向きでカメラ領域をさらに広くする
+*/
+@media (
+  orientation: landscape
+) and (
+  max-height: 850px
+) {
+  .entry-reception-page {
+    padding-top: 13px;
+    padding-bottom:
+      max(
+        11px,
+        env(
+          safe-area-inset-bottom
+        )
+      );
+  }
+
+  .entry-header-meta {
+    margin-top: 5px;
+  }
+
+  .entry-reception-mode {
+    min-height: 61px;
+  }
+
+  .entry-reception-main {
+    margin-top: 8px;
+  }
+
+  .entry-waiting-panel {
+    gap: 6px;
+  }
+
+  .entry-scanner-card-header {
+    min-height: 49px;
+
+    padding:
+      5px
+      16px;
+  }
+
+  .entry-scanner-heading-icon {
+    width: 35px;
+    height: 35px;
+  }
+
+  .entry-scanner-heading-copy strong {
+    font-size:
+      clamp(
+        16px,
+        1.75vw,
+        21px
+      );
+  }
+
+  .entry-scanner-ready {
+    padding:
+      5px
+      10px;
+  }
+
+  .entry-scanner-wrapper {
+    padding: 5px;
+  }
+
+  .entry-scanner-wrapper
+    .camera-qr-scanner {
+    border-width: 2px;
+  }
+
+  .entry-scan-instruction {
+    min-height: 52px;
+
+    padding:
+      5px
+      14px;
+  }
+
+  .entry-scan-instruction-number {
+    width: 34px;
+    height: 34px;
+  }
+
+  .entry-scan-instruction-copy strong {
+    font-size:
+      clamp(
+        16px,
+        1.85vw,
+        22px
+      );
+  }
+
+  .entry-scan-instruction-copy small {
+    font-size:
+      clamp(
+        11px,
+        1.1vw,
+        14px
+      );
+  }
+
+  .entry-reception-footer {
+    margin-top: 6px;
+  }
+
+  .entry-reception-footer button {
+    min-height: 44px;
+  }
+}
