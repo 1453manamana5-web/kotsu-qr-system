@@ -1982,3 +1982,116 @@
     animation-duration: 1.8s;
   }
 }
+/*
+  iPad横向きで管理者認証の
+  カメラ領域を広くする
+*/
+@media (
+  orientation: landscape
+) and (
+  max-height: 850px
+) {
+  .admin-auth-page {
+    padding-top: 13px;
+
+    padding-bottom:
+      max(
+        11px,
+        env(
+          safe-area-inset-bottom
+        )
+      );
+  }
+
+  .admin-auth-header-meta {
+    margin-top: 5px;
+  }
+
+  .admin-auth-mode {
+    min-height: 61px;
+  }
+
+  .admin-auth-main {
+    margin-top: 8px;
+  }
+
+  .admin-auth-waiting-panel {
+    gap: 6px;
+  }
+
+  .admin-auth-scanner-card-header {
+    min-height: 49px;
+
+    padding:
+      5px
+      16px;
+  }
+
+  .admin-auth-scanner-heading-icon {
+    width: 35px;
+    height: 35px;
+  }
+
+  .admin-auth-scanner-heading-copy strong {
+    font-size:
+      clamp(
+        16px,
+        1.75vw,
+        21px
+      );
+  }
+
+  .admin-auth-scanner-ready {
+    padding:
+      5px
+      10px;
+  }
+
+  .admin-auth-scanner-wrapper {
+    padding: 5px;
+  }
+
+  .admin-auth-scanner-wrapper
+    .camera-qr-scanner {
+    border-width: 2px;
+  }
+
+  .admin-auth-instruction {
+    min-height: 52px;
+
+    padding:
+      5px
+      14px;
+  }
+
+  .admin-auth-instruction-number {
+    width: 34px;
+    height: 34px;
+  }
+
+  .admin-auth-instruction-copy strong {
+    font-size:
+      clamp(
+        16px,
+        1.85vw,
+        22px
+      );
+  }
+
+  .admin-auth-instruction-copy small {
+    font-size:
+      clamp(
+        11px,
+        1.1vw,
+        14px
+      );
+  }
+
+  .admin-auth-footer {
+    margin-top: 6px;
+  }
+
+  .admin-auth-return-button {
+    min-height: 44px;
+  }
+}
