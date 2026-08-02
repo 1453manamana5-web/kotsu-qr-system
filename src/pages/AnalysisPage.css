@@ -1702,3 +1702,122 @@
     animation-duration: 1.8s;
   }
 }
+/* 右側の分析情報を少し大きくする */
+.analysis-summary-card span {
+  font-size: clamp(
+    15px,
+    1.55vw,
+    21px
+  );
+}
+
+.analysis-summary-card span::before {
+  font-size: clamp(
+    9px,
+    0.85vw,
+    12px
+  );
+}
+
+.analysis-summary-card strong {
+  font-size: clamp(
+    36px,
+    4.2vw,
+    64px
+  );
+}
+
+.analysis-small-card span {
+  font-size: clamp(
+    14px,
+    1.4vw,
+    20px
+  );
+}
+
+.analysis-small-card strong {
+  font-size: clamp(
+    32px,
+    3.7vw,
+    52px
+  );
+}
+
+.analysis-detail-card p {
+  font-size: clamp(
+    13px,
+    1.35vw,
+    18px
+  );
+}
+
+.analysis-detail-card strong {
+  font-size: clamp(
+    16px,
+    1.65vw,
+    23px
+  );
+}
+
+/* iPad横向きでも小さくなりすぎないようにする */
+@media (
+  orientation: landscape
+) and (
+  max-height: 850px
+) {
+  .analysis-summary-card span {
+    font-size: clamp(
+      13px,
+      1.25vw,
+      17px
+    );
+  }
+
+  .analysis-summary-card span::before {
+    font-size: clamp(
+      8px,
+      0.75vw,
+      10px
+    );
+  }
+
+  .analysis-summary-card strong {
+    font-size: clamp(
+      31px,
+      3.55vw,
+      45px
+    );
+  }
+
+  .analysis-small-card span {
+    font-size: clamp(
+      12px,
+      1.15vw,
+      16px
+    );
+  }
+
+  .analysis-small-card strong {
+    font-size: clamp(
+      27px,
+      3.05vw,
+      39px
+    );
+  }
+
+  .analysis-detail-card p {
+    font-size: clamp(
+      12px,
+      1.1vw,
+      15px
+    );
+  }
+
+  .analysis-detail-card strong {
+    font-size: clamp(
+      14px,
+      1.3vw,
+      18px
+    );
+  }
+}

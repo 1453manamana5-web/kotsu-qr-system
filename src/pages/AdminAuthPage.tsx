@@ -119,7 +119,9 @@ function AdminAuthPage({
           );
 
           setScannerSession(
-            (currentSession) =>
+            (
+              currentSession
+            ) =>
               currentSession + 1
           );
         },
@@ -155,7 +157,8 @@ function AdminAuthPage({
           );
 
         if (
-          parsedQr === null
+          parsedQr ===
+          null
         ) {
           setAuthenticatedMemberName(
             ""
@@ -196,7 +199,8 @@ function AdminAuthPage({
             );
 
           if (
-            member === null
+            member ===
+            null
           ) {
             setAuthenticatedMemberName(
               ""
@@ -274,11 +278,18 @@ function AdminAuthPage({
         </div>
 
         <div className="admin-auth-mode-label">
-          管理モード
+          管理者認証
         </div>
       </header>
 
-      <main className="admin-auth-main">
+      <main
+        className="admin-auth-main"
+        aria-live="polite"
+        aria-busy={
+          authState ===
+          "processing"
+        }
+      >
         {authState ===
           "waiting" && (
           <section className="admin-auth-waiting">
@@ -307,13 +318,21 @@ function AdminAuthPage({
         {authState ===
           "processing" && (
           <section className="admin-auth-result">
+            <div className="admin-auth-processing-icon">
+              <span />
+            </div>
+
             <h2>
               認証中
             </h2>
 
             <p>
-              Firebaseへ確認しています…
+              部員情報を確認しています
             </p>
+
+            <strong>
+              そのままお待ちください
+            </strong>
           </section>
         )}
 
@@ -351,7 +370,7 @@ function AdminAuthPage({
             </h2>
 
             <p>
-              登録された部員QRコードではありません
+              登録された部員QRではありません
             </p>
 
             <strong>
@@ -363,11 +382,14 @@ function AdminAuthPage({
 
       <footer className="admin-auth-footer">
         <div className="admin-auth-event">
-          イベント名　
-          <span>
-            {eventName ||
-              "未設定"}
+          <span className="admin-auth-event-label">
+            CURRENT EVENT
           </span>
+
+          <strong>
+            {eventName ||
+              "イベント未設定"}
+          </strong>
         </div>
 
         <button

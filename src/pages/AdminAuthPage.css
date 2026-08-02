@@ -1,58 +1,176 @@
 .admin-auth-page {
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  min-height: 0;
+  --auth-purple: #8057d6;
+  --auth-purple-dark: #5634aa;
+  --auth-purple-light: #eee7ff;
+  --auth-green: #36a965;
+  --auth-red: #d74c4c;
+  --auth-text: #172033;
+  --auth-sub-text: #6f7a8d;
+
+  position: relative;
 
   display: flex;
   flex-direction: column;
 
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 620px;
+
   box-sizing: border-box;
 
   padding:
-    clamp(8px, 1.2vh, 14px)
-    clamp(16px, 1.8vw, 26px)
+    clamp(20px, 3vh, 32px)
+    clamp(24px, 3.8vw, 54px)
     max(
-      clamp(8px, 1.2vh, 14px),
+      clamp(18px, 2.7vh, 30px),
       env(safe-area-inset-bottom)
     );
 
-  color: #000;
-  background: #e9b7f5;
-
   overflow: hidden;
 
+  background:
+    radial-gradient(
+      circle at 95% 3%,
+      rgba(205, 179, 255, 0.52),
+      transparent 31%
+    ),
+    radial-gradient(
+      circle at 3% 100%,
+      rgba(188, 170, 232, 0.22),
+      transparent 33%
+    ),
+    linear-gradient(
+      145deg,
+      #fbfaff 0%,
+      #f4f1fa 54%,
+      #f8f4ff 100%
+    );
+
+  color: var(--auth-text);
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "SF Pro Text",
+    "Hiragino Sans",
+    "Yu Gothic UI",
+    "Yu Gothic",
+    sans-serif;
+
   transition:
-    background-color
-    0.15s
-    ease;
+    background 240ms ease;
 }
 
-.admin-auth-page.success {
-  background: #b98aee;
-}
-
-.admin-auth-page.error {
-  background: #e53935;
+.admin-auth-page *,
+.admin-auth-page *::before,
+.admin-auth-page *::after {
+  box-sizing: border-box;
 }
 
 .admin-auth-page button {
-  color: #000;
-  -webkit-text-fill-color: #000;
+  font-family: inherit;
 }
 
+.admin-auth-page::before {
+  position: absolute;
+
+  top: -330px;
+  right: -240px;
+
+  width: 660px;
+  height: 660px;
+
+  border:
+    86px solid
+    rgba(255, 255, 255, 0.23);
+
+  border-radius: 50%;
+
+  content: "";
+
+  pointer-events: none;
+}
+
+.admin-auth-page::after {
+  position: absolute;
+
+  bottom: -430px;
+  left: -310px;
+
+  width: 710px;
+  height: 710px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(123, 88, 198, 0.1);
+
+  content: "";
+
+  pointer-events: none;
+}
+
+/*
+  認証結果に応じた背景
+*/
+.admin-auth-page.processing {
+  background:
+    radial-gradient(
+      circle at 50% 25%,
+      rgba(199, 174, 255, 0.55),
+      transparent 39%
+    ),
+    linear-gradient(
+      145deg,
+      #faf8ff,
+      #eee7fb
+    );
+}
+
+.admin-auth-page.success {
+  background:
+    radial-gradient(
+      circle at 50% 22%,
+      rgba(157, 231, 183, 0.5),
+      transparent 40%
+    ),
+    linear-gradient(
+      145deg,
+      #f8fdf9,
+      #e7f6ed
+    );
+}
+
+.admin-auth-page.error {
+  background:
+    radial-gradient(
+      circle at 50% 22%,
+      rgba(255, 180, 180, 0.48),
+      transparent 40%
+    ),
+    linear-gradient(
+      145deg,
+      #fffafa,
+      #fae8e8
+    );
+}
+
+/*
+  ヘッダー
+*/
 .admin-auth-header {
-  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
 
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
 
-  gap: clamp(
-    14px,
-    2vw,
-    24px
-  );
+  flex-shrink: 0;
+
+  gap: clamp(20px, 3vw, 42px);
 }
 
 .admin-auth-title-area {
@@ -63,135 +181,367 @@
 .admin-auth-title-area h1 {
   margin: 0;
 
-  font-size: clamp(
-    28px,
-    3.3vw,
-    52px
-  );
+  color: #111827;
 
-  line-height: 1.05;
+  font-size:
+    clamp(
+      30px,
+      3.35vw,
+      50px
+    );
+
   font-weight: 800;
+  line-height: 1.06;
+
+  letter-spacing: -0.045em;
 
   white-space: nowrap;
-
-  letter-spacing:
-    -0.035em;
 }
 
+.admin-auth-title-area
+  .online-status {
+  margin-top:
+    clamp(
+      9px,
+      1.3vh,
+      14px
+    );
+}
+
+/*
+  右上ラベル
+*/
 .admin-auth-mode-label {
+  display: flex;
+  align-items: center;
+
+  width:
+    clamp(
+      245px,
+      27vw,
+      370px
+    );
+
+  min-height:
+    clamp(
+      72px,
+      9vh,
+      94px
+    );
+
   flex-shrink: 0;
 
   padding:
-    clamp(
-      6px,
-      0.8vh,
-      8px
-    )
+    12px
     clamp(
       18px,
       2vw,
+      25px
+    );
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.34
+    );
+
+  border-radius:
+    clamp(
+      20px,
+      2.2vw,
       28px
     );
 
-  border-radius: clamp(
-    20px,
-    2vw,
-    28px
-  );
+  background:
+    linear-gradient(
+      135deg,
+      #b088f3 0%,
+      #8057d6 53%,
+      #5734aa 100%
+    );
 
-  background: #9966ee;
+  box-shadow:
+    0 15px 32px
+    rgba(87, 52, 170, 0.27),
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.36);
 
-  font-size: clamp(
-    26px,
-    2.9vw,
-    45px
-  );
+  color: #ffffff;
 
-  line-height: 1.15;
-  font-weight: bold;
+  font-size:
+    clamp(
+      21px,
+      2.25vw,
+      32px
+    );
+
+  font-weight: 850;
+
+  letter-spacing: -0.04em;
 
   white-space: nowrap;
 }
 
+.admin-auth-mode-label::before {
+  display: grid;
+
+  width:
+    clamp(
+      42px,
+      4.2vw,
+      56px
+    );
+
+  height:
+    clamp(
+      42px,
+      4.2vw,
+      56px
+    );
+
+  flex-shrink: 0;
+
+  margin-right:
+    clamp(
+      10px,
+      1.2vw,
+      16px
+    );
+
+  place-items: center;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.25);
+
+  border-radius:
+    clamp(
+      13px,
+      1.5vw,
+      18px
+    );
+
+  background:
+    rgba(255, 255, 255, 0.15);
+
+  font-size: 0.8em;
+
+  content: "◆";
+}
+
+/*
+  メイン
+*/
 .admin-auth-main {
-  flex: 1;
-  min-height: 0;
+  position: relative;
+  z-index: 2;
 
   display: flex;
   justify-content: center;
   align-items: stretch;
 
-  margin-top: clamp(
-    4px,
-    0.7vh,
-    8px
-  );
+  min-height: 0;
+  flex: 1;
+
+  margin-top:
+    clamp(
+      15px,
+      2.2vh,
+      24px
+    );
 
   overflow: hidden;
 }
 
+/*
+  QR待機画面
+*/
 .admin-auth-waiting {
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-
   display: grid;
 
   grid-template-rows:
     minmax(0, 1fr)
     auto;
 
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+
   align-items: center;
   justify-items: center;
 
-  gap: clamp(
-    4px,
-    0.8vh,
-    9px
-  );
+  gap:
+    clamp(
+      11px,
+      1.5vh,
+      17px
+    );
 
   overflow: hidden;
 }
 
 .admin-auth-scanner-wrapper {
-  width: 100%;
-  height: 100%;
-
-  min-width: 0;
-  min-height: 0;
+  position: relative;
 
   display: flex;
   justify-content: center;
   align-items: center;
 
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+
+  padding:
+    clamp(
+      13px,
+      1.8vw,
+      21px
+    );
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.95);
+
+  border-radius:
+    clamp(
+      25px,
+      3vw,
+      39px
+    );
+
+  background:
+    rgba(255, 255, 255, 0.84);
+
+  box-shadow:
+    0 20px 48px
+    rgba(48, 42, 75, 0.13);
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+
   overflow: hidden;
+}
+
+.admin-auth-scanner-wrapper::before {
+  position: absolute;
+  z-index: 3;
+
+  top:
+    clamp(
+      18px,
+      2.4vw,
+      29px
+    );
+
+  left:
+    clamp(
+      18px,
+      2.4vw,
+      29px
+    );
+
+  padding:
+    7px 12px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(30, 24, 49, 0.72);
+
+  color: #ffffff;
+
+  font-size:
+    clamp(
+      10px,
+      1vw,
+      14px
+    );
+
+  font-weight: 800;
+
+  letter-spacing: 0.09em;
+
+  content: "ADMIN QR SCAN";
+
+  pointer-events: none;
+}
+
+.admin-auth-scanner-wrapper::after {
+  position: absolute;
+  z-index: 2;
+
+  inset:
+    clamp(
+      13px,
+      1.8vw,
+      21px
+    );
+
+  border:
+    2px solid
+    rgba(151, 106, 229, 0.35);
+
+  border-radius:
+    clamp(
+      19px,
+      2.3vw,
+      30px
+    );
+
+  content: "";
+
+  pointer-events: none;
 }
 
 .admin-auth-scanner-wrapper
   .camera-qr-scanner {
-  width: min(
-    92vw,
-    1180px
-  );
+  width:
+    min(
+      88vw,
+      1180px
+    );
 
-  height: min(
-    56vh,
-    630px
-  );
+  height:
+    min(
+      57vh,
+      630px
+    );
 
   max-width: 100%;
   max-height: 100%;
 
+  flex-shrink: 1;
+
   aspect-ratio: 16 / 9;
 
-  flex-shrink: 1;
+  border-radius:
+    clamp(
+      18px,
+      2.2vw,
+      29px
+    );
+
+  overflow: hidden;
+
+  box-shadow:
+    0 14px 34px
+    rgba(29, 26, 46, 0.23);
 }
 
 .admin-auth-scanner-wrapper
   .camera-qr-reader {
   width: 100% !important;
   height: 100% !important;
+
+  background: #16131d;
 }
 
 .admin-auth-scanner-wrapper
@@ -229,398 +579,928 @@
   object-fit: cover !important;
 }
 
+/*
+  読み取り案内
+*/
 .admin-auth-instruction {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
   flex-shrink: 0;
+
+  min-height:
+    clamp(
+      51px,
+      6.8vh,
+      65px
+    );
+
+  gap:
+    clamp(
+      9px,
+      1.1vw,
+      13px
+    );
 
   margin: 0;
 
-  font-size: clamp(
-    27px,
-    3.5vw,
-    51px
-  );
+  padding:
+    9px
+    clamp(
+      17px,
+      2.2vw,
+      28px
+    );
 
-  line-height: 1.05;
-  font-weight: bold;
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.92);
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 255, 255, 0.82);
+
+  box-shadow:
+    0 10px 25px
+    rgba(45, 39, 70, 0.09);
+
+  color: #3d315b;
+
+  font-size:
+    clamp(
+      17px,
+      1.9vw,
+      27px
+    );
+
+  font-weight: 800;
+  line-height: 1.1;
 
   text-align: center;
+
   white-space: nowrap;
 }
 
+.admin-auth-instruction::before {
+  display: grid;
+
+  width:
+    clamp(
+      29px,
+      3vw,
+      39px
+    );
+
+  height:
+    clamp(
+      29px,
+      3vw,
+      39px
+    );
+
+  place-items: center;
+
+  border-radius:
+    clamp(
+      9px,
+      1vw,
+      12px
+    );
+
+  background: #eee7ff;
+
+  color: #7951c8;
+
+  font-size: 0.9em;
+
+  content: "▦";
+}
+
+/*
+  認証結果カード
+*/
 .admin-auth-result {
-  width: 100%;
+  position: relative;
 
   align-self: center;
 
+  width:
+    min(
+      760px,
+      calc(100% - 24px)
+    );
+
+  padding:
+    clamp(
+      30px,
+      4.5vh,
+      53px
+    )
+    clamp(
+      28px,
+      4.2vw,
+      56px
+    );
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.94);
+
+  border-radius:
+    clamp(
+      30px,
+      4vw,
+      50px
+    );
+
+  background:
+    rgba(255, 255, 255, 0.9);
+
+  box-shadow:
+    0 28px 70px
+    rgba(38, 33, 59, 0.18);
+
   text-align: center;
+
+  backdrop-filter:
+    blur(22px);
+
+  -webkit-backdrop-filter:
+    blur(22px);
+
+  overflow: hidden;
 }
 
+.admin-auth-result::before {
+  position: absolute;
+
+  top: -100px;
+  right: -90px;
+
+  width: 250px;
+  height: 250px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(130, 87, 214, 0.08);
+
+  content: "";
+}
+
+.admin-auth-page.success
+  .admin-auth-result::before {
+  background:
+    rgba(54, 169, 101, 0.1);
+}
+
+.admin-auth-page.error
+  .admin-auth-result::before {
+  background:
+    rgba(215, 76, 76, 0.1);
+}
+
+/*
+  成功・失敗アイコン
+*/
 .admin-auth-result-icon {
-  font-size: clamp(
-    90px,
-    12vw,
-    190px
-  );
+  display: grid;
 
-  line-height: 0.9;
-  font-weight: bold;
+  width:
+    clamp(
+      96px,
+      11vw,
+      148px
+    );
+
+  height:
+    clamp(
+      96px,
+      11vw,
+      148px
+    );
+
+  margin: 0 auto;
+
+  place-items: center;
+
+  border-radius:
+    clamp(
+      29px,
+      3.5vw,
+      45px
+    );
+
+  font-size:
+    clamp(
+      58px,
+      7vw,
+      91px
+    );
+
+  font-weight: 800;
+  line-height: 1;
+
+  box-shadow:
+    0 17px 38px
+    rgba(40, 45, 60, 0.14);
 }
 
+.admin-auth-page.success
+  .admin-auth-result-icon {
+  background:
+    linear-gradient(
+      145deg,
+      #63d48e,
+      #32a862
+    );
+
+  color: #ffffff;
+}
+
+.admin-auth-page.error
+  .admin-auth-result-icon {
+  background:
+    linear-gradient(
+      145deg,
+      #f27676,
+      #d54848
+    );
+
+  color: #ffffff;
+}
+
+/*
+  認証中アイコン
+*/
+.admin-auth-processing-icon {
+  display: grid;
+
+  width:
+    clamp(
+      96px,
+      11vw,
+      148px
+    );
+
+  height:
+    clamp(
+      96px,
+      11vw,
+      148px
+    );
+
+  margin: 0 auto;
+
+  place-items: center;
+
+  border-radius:
+    clamp(
+      29px,
+      3.5vw,
+      45px
+    );
+
+  background:
+    linear-gradient(
+      145deg,
+      #b58cf1,
+      #7f56d4
+    );
+
+  box-shadow:
+    0 17px 38px
+    rgba(91, 57, 163, 0.23);
+}
+
+.admin-auth-processing-icon span {
+  width:
+    clamp(
+      43px,
+      4.8vw,
+      62px
+    );
+
+  height:
+    clamp(
+      43px,
+      4.8vw,
+      62px
+    );
+
+  border:
+    clamp(
+      5px,
+      0.55vw,
+      7px
+    )
+    solid
+    rgba(255, 255, 255, 0.34);
+
+  border-top-color:
+    #ffffff;
+
+  border-radius: 50%;
+
+  animation:
+    admin-auth-spin
+    0.8s
+    linear
+    infinite;
+}
+
+@keyframes admin-auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/*
+  結果文字
+*/
 .admin-auth-result h2 {
   margin:
     clamp(
-      8px,
-      1.2vh,
-      18px
+      18px,
+      2.5vh,
+      29px
     )
     0
     0;
 
-  font-size: clamp(
-    52px,
-    7vw,
-    104px
-  );
+  color: #172033;
 
-  line-height: 1.05;
+  font-size:
+    clamp(
+      42px,
+      5.6vw,
+      78px
+    );
+
+  font-weight: 850;
+  line-height: 1.02;
+
+  letter-spacing: -0.055em;
+}
+
+.admin-auth-page.success
+  .admin-auth-result h2 {
+  color: #237847;
+}
+
+.admin-auth-page.error
+  .admin-auth-result h2 {
+  color: #b63838;
 }
 
 .admin-auth-result p {
   margin:
     clamp(
-      10px,
-      1.6vh,
-      24px
+      12px,
+      1.8vh,
+      21px
     )
     0
     0;
 
-  font-size: clamp(
-    32px,
-    4.4vw,
-    68px
-  );
+  color: #344054;
 
-  line-height: 1.1;
-  font-weight: bold;
+  font-size:
+    clamp(
+      24px,
+      3.2vw,
+      45px
+    );
+
+  font-weight: 800;
+  line-height: 1.15;
+
+  overflow-wrap: anywhere;
 }
 
 .admin-auth-result strong {
   display: block;
 
-  margin-top: clamp(
-    8px,
-    1.3vh,
-    18px
-  );
+  margin-top:
+    clamp(
+      10px,
+      1.5vh,
+      18px
+    );
 
-  font-size: clamp(
-    22px,
-    2.8vw,
-    42px
-  );
+  padding:
+    10px
+    15px;
 
-  line-height: 1.15;
+  border-radius:
+    clamp(
+      13px,
+      1.5vw,
+      18px
+    );
+
+  background: #f0ecf9;
+
+  color: #6c5b8f;
+
+  font-size:
+    clamp(
+      14px,
+      1.6vw,
+      22px
+    );
+
+  font-weight: 750;
+  line-height: 1.3;
 }
 
+.admin-auth-page.success
+  .admin-auth-result strong {
+  background: #e3f5e9;
+
+  color: #3f7957;
+}
+
+.admin-auth-page.error
+  .admin-auth-result strong {
+  background: #fae5e5;
+
+  color: #9d4c4c;
+}
+
+/*
+  フッター
+*/
 .admin-auth-footer {
-  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
 
   display: grid;
+
   grid-template-columns:
     minmax(0, 1fr)
     auto;
 
   align-items: center;
 
-  gap: clamp(
-    12px,
-    2vw,
-    20px
-  );
+  flex-shrink: 0;
 
-  margin-top: clamp(
-    3px,
-    0.5vh,
-    7px
-  );
-}
-
-.admin-auth-event {
-  min-width: 0;
-
-  justify-self: start;
-
-  font-size: clamp(
-    19px,
-    2.3vw,
-    34px
-  );
-
-  line-height: 1.1;
-  font-weight: bold;
-
-  white-space: nowrap;
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.admin-auth-event span {
-  font-weight: 800;
-}
-
-.admin-auth-cancel-button {
-  min-height: clamp(
-    45px,
-    6.2vh,
-    59px
-  );
-
-  justify-self: end;
-
-  padding:
+  gap:
     clamp(
-      6px,
-      0.8vh,
-      9px
-    )
-    clamp(
-      16px,
+      12px,
       2vw,
       22px
     );
 
-  border: none;
+  margin-top:
+    clamp(
+      10px,
+      1.6vh,
+      17px
+    );
+}
 
-  border-radius: clamp(
-    15px,
-    1.8vw,
-    20px
-  );
+.admin-auth-event {
+  display: flex;
+  flex-direction: column;
 
-  font-size: clamp(
-    19px,
-    2.2vw,
-    31px
-  );
+  min-width: 0;
 
+  justify-self: start;
+
+  padding:
+    8px
+    14px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.92);
+
+  border-radius:
+    clamp(
+      14px,
+      1.7vw,
+      20px
+    );
+
+  background:
+    rgba(255, 255, 255, 0.78);
+
+  box-shadow:
+    0 8px 22px
+    rgba(45, 39, 70, 0.08);
+}
+
+.admin-auth-event-label {
+  color: #8b839b;
+
+  font-size:
+    clamp(
+      8px,
+      0.78vw,
+      11px
+    );
+
+  font-weight: 850;
+
+  letter-spacing: 0.14em;
+}
+
+.admin-auth-event strong {
+  min-width: 0;
+
+  margin-top: 3px;
+
+  color: #344054;
+
+  font-size:
+    clamp(
+      14px,
+      1.55vw,
+      21px
+    );
+
+  font-weight: 800;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+/*
+  戻るボタン
+*/
+.admin-auth-cancel-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+
+  min-height:
+    clamp(
+      49px,
+      6.6vh,
+      63px
+    );
+
+  justify-self: end;
+
+  gap:
+    clamp(
+      8px,
+      1vw,
+      12px
+    );
+
+  padding:
+    8px
+    clamp(
+      17px,
+      2.2vw,
+      28px
+    );
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.94);
+
+  border-radius:
+    clamp(
+      15px,
+      1.8vw,
+      21px
+    );
+
+  box-shadow:
+    0 10px 25px
+    rgba(45, 39, 70, 0.1);
+
+  color: #344054;
+
+  font-size:
+    clamp(
+      16px,
+      1.8vw,
+      24px
+    );
+
+  font-weight: 800;
   line-height: 1.1;
-  font-weight: bold;
 
   white-space: nowrap;
 
   cursor: pointer;
 
   transition:
-    background-color
-    0.15s
-    ease,
-    transform
-    0.1s
-    ease;
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    filter 150ms ease;
+}
+
+.admin-auth-cancel-button::before {
+  font-size: 1.22em;
+
+  content: "←";
+}
+
+.admin-auth-cancel-home {
+  background:
+    rgba(238, 231, 255, 0.94);
+
+  color: #6647aa;
+}
+
+.admin-auth-cancel-entry {
+  background:
+    rgba(219, 245, 227, 0.94);
+
+  color: #287849;
+}
+
+.admin-auth-cancel-exit {
+  background:
+    rgba(255, 242, 185, 0.95);
+
+  color: #866711;
+}
+
+.admin-auth-cancel-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.admin-auth-cancel-button:active:not(:disabled) {
+  transform: scale(0.985);
 }
 
 .admin-auth-cancel-button:disabled {
-  color: #333;
-  -webkit-text-fill-color: #333;
-
-  opacity: 0.65;
+  opacity: 0.48;
 
   cursor: not-allowed;
 }
 
-.admin-auth-cancel-button:active {
-  transform: scale(
-    0.98
-  );
+/*
+  フォーカス
+*/
+.admin-auth-page
+  button:focus-visible {
+  outline:
+    5px solid
+    rgba(121, 79, 205, 0.2);
+
+  outline-offset: 3px;
 }
 
-.admin-auth-cancel-home {
-  background: #9966ee;
-}
-
-.admin-auth-cancel-home:hover {
-  background: #8653df;
-}
-
-.admin-auth-cancel-entry {
-  background: #4fc06a;
-}
-
-.admin-auth-cancel-entry:hover {
-  background: #3eaa59;
-}
-
-.admin-auth-cancel-exit {
-  background: #ffe036;
-}
-
-.admin-auth-cancel-exit:hover {
-  background: #ebca20;
-}
-
+/*
+  iPad横向き
+*/
 @media (
   orientation: landscape
 ) and (
   max-height: 850px
 ) {
   .admin-auth-page {
+    min-height: 100dvh;
+
     padding:
-      7px
-      16px
+      18px
+      clamp(
+        22px,
+        3.5vw,
+        38px
+      )
       max(
-        7px,
-        env(
-          safe-area-inset-bottom
-        )
+        15px,
+        env(safe-area-inset-bottom)
       );
   }
 
   .admin-auth-title-area h1 {
-    font-size: clamp(
-      28px,
-      3.2vw,
-      40px
-    );
+    font-size:
+      clamp(
+        29px,
+        3.25vw,
+        40px
+      );
   }
 
   .admin-auth-mode-label {
-    padding:
-      6px
-      18px;
+    width:
+      clamp(
+        235px,
+        27vw,
+        300px
+      );
 
-    font-size: clamp(
-      25px,
-      2.8vw,
-      35px
-    );
+    min-height: 66px;
+
+    padding:
+      9px
+      15px;
+
+    border-radius: 20px;
+
+    font-size:
+      clamp(
+        19px,
+        2.15vw,
+        26px
+      );
+  }
+
+  .admin-auth-mode-label::before {
+    width: 39px;
+    height: 39px;
+
+    border-radius: 12px;
   }
 
   .admin-auth-main {
-    margin-top: 3px;
+    margin-top: 13px;
   }
 
-  .admin-auth-waiting {
-    grid-template-rows:
-      minmax(
-        0,
-        1fr
-      )
-      auto;
+  .admin-auth-scanner-wrapper {
+    padding: 11px;
 
-    gap: 3px;
+    border-radius: 23px;
+  }
+
+  .admin-auth-scanner-wrapper::after {
+    inset: 11px;
+
+    border-radius: 18px;
   }
 
   .admin-auth-scanner-wrapper
     .camera-qr-scanner {
-    width: min(
-      94vw,
-      1160px
-    );
+    width:
+      min(
+        93vw,
+        1160px
+      );
 
-    height: min(
-      59vh,
-      640px
-    );
+    height:
+      min(
+        58vh,
+        640px
+      );
 
-    max-width: 100%;
-    max-height: 100%;
-
-    aspect-ratio: 16 / 9;
+    border-radius: 18px;
   }
 
   .admin-auth-scanner-wrapper
     .camera-qr-corners {
-    width: min(
-      48%,
-      390px
-    );
+    width:
+      min(
+        48%,
+        390px
+      );
 
-    max-width: calc(
-      100% - 70px
-    );
+    max-width:
+      calc(
+        100% - 70px
+      );
 
-    max-height: calc(
-      100% - 55px
-    );
+    max-height:
+      calc(
+        100% - 55px
+      );
   }
 
   .admin-auth-scanner-wrapper
     .camera-qr-line {
-    width: min(
-      44%,
-      350px
-    );
+    width:
+      min(
+        44%,
+        350px
+      );
 
-    max-width: calc(
-      100% - 90px
-    );
+    max-width:
+      calc(
+        100% - 90px
+      );
   }
 
   .admin-auth-instruction {
-    font-size: clamp(
-      25px,
-      3.2vw,
-      39px
-    );
+    min-height: 48px;
+
+    padding:
+      7px
+      17px;
+
+    font-size:
+      clamp(
+        15px,
+        1.65vw,
+        21px
+      );
+  }
+
+  .admin-auth-result {
+    width:
+      min(
+        650px,
+        calc(100% - 40px)
+      );
+
+    padding:
+      24px
+      34px;
+
+    border-radius: 31px;
+  }
+
+  .admin-auth-result-icon,
+  .admin-auth-processing-icon {
+    width: 88px;
+    height: 88px;
+
+    border-radius: 27px;
   }
 
   .admin-auth-result-icon {
-    font-size: clamp(
-      90px,
-      11vw,
-      145px
-    );
+    font-size: 54px;
+  }
+
+  .admin-auth-processing-icon span {
+    width: 41px;
+    height: 41px;
   }
 
   .admin-auth-result h2 {
-    font-size: clamp(
-      50px,
-      6vw,
-      78px
-    );
+    margin-top: 15px;
+
+    font-size:
+      clamp(
+        38px,
+        4.8vw,
+        59px
+      );
   }
 
   .admin-auth-result p {
-    font-size: clamp(
-      31px,
-      4vw,
-      52px
-    );
+    margin-top: 9px;
+
+    font-size:
+      clamp(
+        21px,
+        2.7vw,
+        34px
+      );
   }
 
   .admin-auth-result strong {
-    font-size: clamp(
-      21px,
-      2.6vw,
-      34px
-    );
+    margin-top: 9px;
+
+    font-size:
+      clamp(
+        12px,
+        1.3vw,
+        17px
+      );
+  }
+
+  .admin-auth-footer {
+    margin-top: 9px;
   }
 
   .admin-auth-event {
-    font-size: clamp(
-      18px,
-      2vw,
-      27px
-    );
+    padding:
+      6px
+      11px;
+  }
+
+  .admin-auth-event strong {
+    font-size:
+      clamp(
+        13px,
+        1.35vw,
+        17px
+      );
   }
 
   .admin-auth-cancel-button {
-    min-height: 43px;
+    min-height: 47px;
 
     padding:
-      5px
+      6px
       16px;
 
-    font-size: clamp(
-      19px,
-      2.1vw,
-      27px
-    );
+    border-radius: 15px;
+
+    font-size:
+      clamp(
+        15px,
+        1.65vw,
+        20px
+      );
   }
 }
 
+/*
+  縦向き
+*/
 @media (
   orientation: portrait
 ) {
@@ -631,64 +1511,88 @@
     overflow: auto;
   }
 
+  .admin-auth-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .admin-auth-title-area h1 {
     white-space: normal;
   }
 
+  .admin-auth-mode-label {
+    width: 100%;
+  }
+
   .admin-auth-main {
-    min-height: 550px;
+    min-height: 600px;
+
+    overflow: visible;
   }
 
   .admin-auth-waiting {
     display: flex;
-    flex-direction: column;
     justify-content: center;
+    flex-direction: column;
+
+    overflow: visible;
   }
 
   .admin-auth-scanner-wrapper {
-    flex: none;
     height: auto;
+    flex: none;
   }
 
   .admin-auth-scanner-wrapper
     .camera-qr-scanner {
-    width: min(
-      92vw,
-      720px
-    );
+    width:
+      min(
+        88vw,
+        720px
+      );
 
-    height: min(
-      69vw,
-      540px
-    );
+    height:
+      min(
+        66vw,
+        540px
+      );
 
     aspect-ratio: 4 / 3;
   }
-
-  .admin-auth-footer {
-    grid-template-columns:
-      1fr
-      auto;
-  }
 }
 
+/*
+  スマートフォン
+*/
 @media (
-  max-width: 650px
+  max-width: 680px
 ) {
-  .admin-auth-header {
-    gap: 10px;
+  .admin-auth-page {
+    padding:
+      16px
+      16px
+      max(
+        20px,
+        env(safe-area-inset-bottom)
+      );
   }
 
-  .admin-auth-mode-label {
-    font-size: 21px;
+  .admin-auth-scanner-wrapper {
+    padding: 9px;
+  }
+
+  .admin-auth-scanner-wrapper::after {
+    inset: 9px;
   }
 
   .admin-auth-scanner-wrapper
     .camera-qr-scanner {
-    width: 94vw;
+    width: 100%;
   }
 
   .admin-auth-instruction {
+    width: 100%;
+
     white-space: normal;
   }
 
@@ -698,10 +1602,30 @@
 
   .admin-auth-event,
   .admin-auth-cancel-button {
+    width: 100%;
+
     justify-self: stretch;
   }
 
   .admin-auth-cancel-button {
     width: 100%;
+  }
+}
+
+/*
+  動きを減らす
+*/
+@media (
+  prefers-reduced-motion:
+    reduce
+) {
+  .admin-auth-page,
+  .admin-auth-cancel-button {
+    transition: none;
+  }
+
+  .admin-auth-processing-icon
+    span {
+    animation-duration: 1.8s;
   }
 }
