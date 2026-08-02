@@ -13,6 +13,81 @@ type HomePageProps = {
   eventName: string;
 };
 
+const SUCCESS_SOUND_PATH =
+  "/sounds/hankyu_style_gate_triple.wav";
+
+const SUCCESS_SOUND_ELEMENT_ID =
+  "qr-reception-success-sound";
+
+function getReceptionSuccessSound() {
+  const existingSound =
+    document.getElementById(
+      SUCCESS_SOUND_ELEMENT_ID
+    );
+
+  if (
+    existingSound instanceof
+      HTMLAudioElement
+  ) {
+    return existingSound;
+  }
+
+  const successSound =
+    new Audio(
+      SUCCESS_SOUND_PATH
+    );
+
+  successSound.id =
+    SUCCESS_SOUND_ELEMENT_ID;
+
+  successSound.preload =
+    "auto";
+
+  document.body.appendChild(
+    successSound
+  );
+
+  return successSound;
+}
+
+function prepareReceptionSuccessSound() {
+  const successSound =
+    getReceptionSuccessSound();
+
+  successSound.pause();
+
+  successSound.currentTime =
+    0;
+
+  successSound.volume =
+    0;
+
+  void successSound
+    .play()
+    .then(
+      () => {
+        successSound.pause();
+
+        successSound.currentTime =
+          0;
+
+        successSound.volume =
+          1;
+      }
+    )
+    .catch(
+      (error) => {
+        successSound.volume =
+          1;
+
+        console.warn(
+          "受付成功音を有効化できませんでした。",
+          error
+        );
+      }
+    );
+}
+
 function EntryIcon() {
   return (
     <svg
@@ -220,6 +295,8 @@ function HomePage({
         return;
       }
 
+      prepareReceptionSuccessSound();
+
       setPage(
         "entry"
       );
@@ -232,6 +309,8 @@ function HomePage({
       ) {
         return;
       }
+
+      prepareReceptionSuccessSound();
 
       setPage(
         "exit"
