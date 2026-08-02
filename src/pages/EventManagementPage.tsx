@@ -4,6 +4,8 @@ import {
   useState,
 } from "react";
 
+import OnlineStatus from "./OnlineStatus";
+
 import "./EventManagementPage.css";
 
 type EventStatus =
@@ -159,14 +161,22 @@ function loadTickets(
         )
       );
 
-    if (savedData === null) {
+    if (
+      savedData === null
+    ) {
       return [];
     }
 
     const parsedData: unknown =
-      JSON.parse(savedData);
+      JSON.parse(
+        savedData
+      );
 
-    if (!Array.isArray(parsedData)) {
+    if (
+      !Array.isArray(
+        parsedData
+      )
+    ) {
       return [];
     }
 
@@ -214,14 +224,22 @@ function loadMembers(
         )
       );
 
-    if (savedData === null) {
+    if (
+      savedData === null
+    ) {
       return [];
     }
 
     const parsedData: unknown =
-      JSON.parse(savedData);
+      JSON.parse(
+        savedData
+      );
 
-    if (!Array.isArray(parsedData)) {
+    if (
+      !Array.isArray(
+        parsedData
+      )
+    ) {
       return [];
     }
 
@@ -263,15 +281,24 @@ function loadActivityLogs(
         )
       );
 
-    if (savedData === null) {
+    if (
+      savedData === null
+    ) {
       return [];
     }
 
     const parsedData: unknown =
-      JSON.parse(savedData);
+      JSON.parse(
+        savedData
+      );
 
-    return Array.isArray(parsedData)
-      ? (parsedData as ActivityLog[])
+    return Array.isArray(
+      parsedData
+    )
+      ? (
+          parsedData as
+            ActivityLog[]
+        )
       : [];
   } catch (error) {
     console.error(
@@ -290,10 +317,14 @@ function forceEveryoneToExit(
     new Date().toISOString();
 
   const tickets =
-    loadTickets(eventName);
+    loadTickets(
+      eventName
+    );
 
   const members =
-    loadMembers(eventName);
+    loadMembers(
+      eventName
+    );
 
   const currentLogs =
     loadActivityLogs(
@@ -321,7 +352,8 @@ function forceEveryoneToExit(
         "入場中"
           ? {
               ...ticket,
-              status: "使用済み",
+              status:
+                "使用済み",
             }
           : ticket
     );
@@ -335,7 +367,8 @@ function forceEveryoneToExit(
         "入室中"
           ? {
               ...member,
-              status: "退出済み",
+              status:
+                "退出済み",
             }
           : member
     );
@@ -344,12 +377,20 @@ function forceEveryoneToExit(
     ActivityLog[] =
     insideTickets.map(
       (ticket) => ({
-        id: createActivityId(),
-        type: "ticket-exit",
+        id:
+          createActivityId(),
+
+        type:
+          "ticket-exit",
+
         qrNumber:
           ticket.qrNumber,
-        timestamp: endedAt,
-        source: "manual",
+
+        timestamp:
+          endedAt,
+
+        source:
+          "manual",
       })
     );
 
@@ -357,12 +398,20 @@ function forceEveryoneToExit(
     ActivityLog[] =
     insideMembers.map(
       (member) => ({
-        id: createActivityId(),
-        type: "member-exit",
+        id:
+          createActivityId(),
+
+        type:
+          "member-exit",
+
         qrNumber:
           member.qrNumber,
-        timestamp: endedAt,
-        source: "manual",
+
+        timestamp:
+          endedAt,
+
+        source:
+          "manual",
       })
     );
 
@@ -509,7 +558,7 @@ function getStatusOrder(
   return 2;
 }
 
-function formatListDate(
+function getEventDateParts(
   date: string
 ) {
   const parts =
@@ -518,12 +567,27 @@ function formatListDate(
   if (
     parts.length !== 3
   ) {
-    return date;
+    return {
+      month: "",
+      day: date,
+    };
   }
 
-  return `${Number(
-    parts[1]
-  )}/${Number(parts[2])}`;
+  return {
+    month:
+      String(
+        Number(
+          parts[1]
+        )
+      ),
+
+    day:
+      String(
+        Number(
+          parts[2]
+        )
+      ),
+  };
 }
 
 function formatFullDate(
@@ -545,25 +609,37 @@ function formatFullDate(
   return new Intl.DateTimeFormat(
     "ja-JP",
     {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      weekday: "short",
+      year:
+        "numeric",
+
+      month:
+        "long",
+
+      day:
+        "numeric",
+
+      weekday:
+        "short",
     }
-  ).format(dateObject);
+  ).format(
+    dateObject
+  );
 }
 
 function formatEndedAt(
   endedAt?: string
 ) {
   if (
-    endedAt === undefined
+    endedAt ===
+    undefined
   ) {
     return "";
   }
 
   const endedDate =
-    new Date(endedAt);
+    new Date(
+      endedAt
+    );
 
   if (
     !Number.isFinite(
@@ -576,14 +652,305 @@ function formatEndedAt(
   return new Intl.DateTimeFormat(
     "ja-JP",
     {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
+      year:
+        "numeric",
+
+      month:
+        "long",
+
+      day:
+        "numeric",
+
+      hour:
+        "2-digit",
+
+      minute:
+        "2-digit",
+
+      hour12:
+        false,
     }
-  ).format(endedDate);
+  ).format(
+    endedDate
+  );
+}
+
+function EventManagementIcon() {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+    >
+      <rect
+        x="9"
+        y="14"
+        width="46"
+        height="41"
+        rx="7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+
+      <path
+        d="M9 27H55"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+
+      <path
+        d="M21 8V20"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M43 8V20"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M24 41L30 47L42 35"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      aria-hidden="true"
+    >
+      <path
+        d="M16 7V25"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M7 16H25"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+    >
+      <rect
+        x="10"
+        y="15"
+        width="44"
+        height="39"
+        rx="7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+
+      <path
+        d="M10 27H54"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+
+      <path
+        d="M21 9V20"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M43 9V20"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+    >
+      <circle
+        cx="32"
+        cy="32"
+        r="23"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+
+      <path
+        d="M32 18V33L43 40"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ListIcon() {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+    >
+      <path
+        d="M24 17H54"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M24 32H54"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M24 47H54"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <circle
+        cx="12"
+        cy="17"
+        r="3"
+        fill="currentColor"
+      />
+
+      <circle
+        cx="12"
+        cy="32"
+        r="3"
+        fill="currentColor"
+      />
+
+      <circle
+        cx="12"
+        cy="47"
+        r="3"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function ArrowIcon() {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      aria-hidden="true"
+    >
+      <path
+        d="M7 16H24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M18 9L25 16L18 23"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      aria-hidden="true"
+    >
+      <path
+        d="M25 16H8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M14 9L7 16L14 23"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      aria-hidden="true"
+    >
+      <path
+        d="M9 9L23 23"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M23 9L9 23"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
 }
 
 function EventManagementPage({
@@ -610,11 +977,14 @@ function EventManagementPage({
 
   useEffect(() => {
     const timer =
-      window.setInterval(() => {
-        setCurrentTime(
-          Date.now()
-        );
-      }, 1000);
+      window.setInterval(
+        () => {
+          setCurrentTime(
+            Date.now()
+          );
+        },
+        1000
+      );
 
     return () => {
       window.clearInterval(
@@ -625,7 +995,9 @@ function EventManagementPage({
 
   const sortedEvents =
     useMemo(() => {
-      return [...events].sort(
+      return [
+        ...events,
+      ].sort(
         (
           firstEvent,
           secondEvent
@@ -651,7 +1023,8 @@ function EventManagementPage({
             );
 
           if (
-            orderDifference !== 0
+            orderDifference !==
+            0
           ) {
             return orderDifference;
           }
@@ -660,13 +1033,15 @@ function EventManagementPage({
             createEventDateTime(
               firstEvent.date,
               firstEvent.startTime
-            )?.getTime() ?? 0;
+            )?.getTime() ??
+            0;
 
           const secondDate =
             createEventDateTime(
               secondEvent.date,
               secondEvent.startTime
-            )?.getTime() ?? 0;
+            )?.getTime() ??
+            0;
 
           if (
             firstStatus ===
@@ -697,17 +1072,49 @@ function EventManagementPage({
     ) ?? null;
 
   const selectedStatus =
-    selectedEvent === null
+    selectedEvent ===
+    null
       ? null
       : getDisplayStatus(
           selectedEvent,
           currentTime
         );
 
+  const activeEventCount =
+    sortedEvents.filter(
+      (event) =>
+        getDisplayStatus(
+          event,
+          currentTime
+        ) ===
+        "開催中"
+    ).length;
+
+  const scheduledEventCount =
+    sortedEvents.filter(
+      (event) =>
+        getDisplayStatus(
+          event,
+          currentTime
+        ) ===
+        "開催前"
+    ).length;
+
+  const endedEventCount =
+    sortedEvents.filter(
+      (event) =>
+        getDisplayStatus(
+          event,
+          currentTime
+        ) ===
+        "終了"
+    ).length;
+
   const handleSelectCurrent =
     () => {
       if (
-        selectedEvent === null ||
+        selectedEvent ===
+          null ||
         selectedStatus ===
           "終了"
       ) {
@@ -726,7 +1133,9 @@ function EventManagementPage({
           `${selectedEvent.name}を現在のイベントに設定しますか？`
         );
 
-      if (!confirmed) {
+      if (
+        !confirmed
+      ) {
         return;
       }
 
@@ -738,7 +1147,8 @@ function EventManagementPage({
   const handleForceEnd =
     () => {
       if (
-        selectedEvent === null ||
+        selectedEvent ===
+          null ||
         selectedStatus ===
           "終了"
       ) {
@@ -779,10 +1189,14 @@ function EventManagementPage({
             "",
             "入場中の来場者と部員は、全員退出扱いになります。",
             "終了後もイベント一覧と分析データは残ります。",
-          ].join("\n")
+          ].join(
+            "\n"
+          )
         );
 
-      if (!confirmed) {
+      if (
+        !confirmed
+      ) {
         return;
       }
 
@@ -791,7 +1205,9 @@ function EventManagementPage({
           "この操作は元に戻せません。\n本当に強制終了しますか？"
         );
 
-      if (!finalConfirmed) {
+      if (
+        !finalConfirmed
+      ) {
         return;
       }
 
@@ -811,7 +1227,9 @@ function EventManagementPage({
             "",
             `来場者 ${exitResult.ticketCount}人を退出扱いにしました。`,
             `部員 ${exitResult.memberCount}人を退出扱いにしました。`,
-          ].join("\n")
+          ].join(
+            "\n"
+          )
         );
       } catch (error) {
         console.error(
@@ -828,7 +1246,8 @@ function EventManagementPage({
   const handleDelete =
     () => {
       if (
-        selectedEvent === null
+        selectedEvent ===
+        null
       ) {
         return;
       }
@@ -838,7 +1257,9 @@ function EventManagementPage({
           `${selectedEvent.name}をイベント一覧から削除しますか？`
         );
 
-      if (!confirmed) {
+      if (
+        !confirmed
+      ) {
         return;
       }
 
@@ -847,7 +1268,9 @@ function EventManagementPage({
           "一覧から完全に削除します。\n本当によろしいですか？"
         );
 
-      if (!finalConfirmed) {
+      if (
+        !finalConfirmed
+      ) {
         return;
       }
 
@@ -862,193 +1285,379 @@ function EventManagementPage({
 
   return (
     <div className="event-management-page">
+      <div className="event-management-background event-management-background-one" />
+
+      <div className="event-management-background event-management-background-two" />
+
       <header className="event-management-header">
-        <div>
+        <div className="event-management-header-main">
           <h1>
             交通研究部QRコード管理システム
           </h1>
 
-          <h2>
-            イベント管理
-          </h2>
+          <div className="event-management-header-meta">
+            <OnlineStatus />
+
+            <span
+              className="event-management-header-divider"
+              aria-hidden="true"
+            />
+
+            <span className="event-management-page-name">
+              EVENT MANAGEMENT
+            </span>
+          </div>
         </div>
 
         <div className="event-management-mode">
-          管理モード
+          <span className="event-management-mode-icon">
+            <EventManagementIcon />
+          </span>
+
+          <span className="event-management-mode-copy">
+            <small>
+              MANAGEMENT
+            </small>
+
+            <strong>
+              イベント管理
+            </strong>
+          </span>
         </div>
       </header>
 
       <main className="event-management-main">
-        <button
-          type="button"
-          className="create-event-button"
-          onClick={() =>
-            setPage(
-              "create-event"
-            )
-          }
-        >
-          <span className="plus">
-            ＋
-          </span>
-
-          イベントを新規作成
-        </button>
-
-        <section className="event-list-section">
-          <div className="event-list-heading">
-            <h3>
-              イベント一覧
-            </h3>
-
-            <span>
-              {events.length}件
+        <section className="event-management-summary">
+          <div className="event-summary-heading">
+            <span className="event-summary-icon">
+              <ListIcon />
             </span>
+
+            <div>
+              <span className="event-summary-eyebrow">
+                EVENT LIST
+              </span>
+
+              <h2>
+                イベント一覧
+              </h2>
+            </div>
           </div>
 
-          <div className="event-table">
-            <div className="event-table-row event-table-header">
-              <div>
-                イベント
-              </div>
+          <div className="event-summary-counts">
+            <div className="event-summary-count event-summary-active">
+              <span>
+                開催中
+              </span>
 
-              <div>
-                日付
-              </div>
-
-              <div>
-                状態
-              </div>
+              <strong>
+                {activeEventCount}
+              </strong>
             </div>
 
-            <div className="event-table-scroll">
-              {sortedEvents.length ===
-              0 ? (
-                <div className="event-empty-message">
+            <div className="event-summary-count event-summary-scheduled">
+              <span>
+                開催前
+              </span>
+
+              <strong>
+                {scheduledEventCount}
+              </strong>
+            </div>
+
+            <div className="event-summary-count event-summary-ended">
+              <span>
+                終了
+              </span>
+
+              <strong>
+                {endedEventCount}
+              </strong>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="create-event-button"
+            onClick={() =>
+              setPage(
+                "create-event"
+              )
+            }
+          >
+            <span className="create-event-button-icon">
+              <PlusIcon />
+            </span>
+
+            <span className="create-event-button-copy">
+              <small>
+                NEW EVENT
+              </small>
+
+              <strong>
+                イベントを新規作成
+              </strong>
+            </span>
+          </button>
+        </section>
+
+        <section className="event-list-section">
+          <div className="event-list-section-header">
+            <div>
+              <span>
+                ALL EVENTS
+              </span>
+
+              <h3>
+                登録済みイベント
+              </h3>
+            </div>
+
+            <strong>
+              {events.length}
+
+              <small>
+                件
+              </small>
+            </strong>
+          </div>
+
+          <div className="event-list-scroll">
+            {sortedEvents.length ===
+            0 ? (
+              <div className="event-empty-message">
+                <span className="event-empty-icon">
+                  <CalendarIcon />
+                </span>
+
+                <strong>
                   イベントがありません
-                </div>
-              ) : (
-                sortedEvents.map(
-                  (event) => {
-                    const status =
-                      getDisplayStatus(
-                        event,
-                        currentTime
-                      );
+                </strong>
 
-                    const statusClass =
-                      getStatusClassName(
-                        status
-                      );
+                <p>
+                  上の「イベントを新規作成」から、最初のイベントを登録してください。
+                </p>
+              </div>
+            ) : (
+              sortedEvents.map(
+                (event) => {
+                  const status =
+                    getDisplayStatus(
+                      event,
+                      currentTime
+                    );
 
-                    const isCurrent =
-                      event.id ===
-                      currentEventId;
+                  const statusClass =
+                    getStatusClassName(
+                      status
+                    );
 
-                    return (
-                      <button
-                        type="button"
-                        className={`event-table-row event-table-item ${
-                          isCurrent
-                            ? "current-event-row"
-                            : ""
-                        }`}
-                        key={
+                  const isCurrent =
+                    event.id ===
+                    currentEventId;
+
+                  const dateParts =
+                    getEventDateParts(
+                      event.date
+                    );
+
+                  return (
+                    <button
+                      type="button"
+                      className={`event-list-card ${
+                        isCurrent
+                          ? "event-list-card-current"
+                          : ""
+                      }`}
+                      key={
+                        event.id
+                      }
+                      onClick={() =>
+                        setSelectedEventId(
                           event.id
-                        }
-                        onClick={() =>
-                          setSelectedEventId(
-                            event.id
-                          )
-                        }
-                      >
-                        <div className="event-name-cell">
-                          <span>
+                        )
+                      }
+                    >
+                      <span className="event-list-calendar">
+                        <span className="event-list-calendar-month">
+                          {
+                            dateParts.month
+                          }
+                          月
+                        </span>
+
+                        <strong>
+                          {
+                            dateParts.day
+                          }
+                        </strong>
+                      </span>
+
+                      <span className="event-list-information">
+                        <span className="event-list-name-row">
+                          <strong className="event-list-name">
                             {
                               event.name
                             }
-                          </span>
+                          </strong>
 
                           {isCurrent && (
-                            <small>
+                            <span className="event-current-label">
                               現在のイベント
-                            </small>
+                            </span>
                           )}
-                        </div>
+                        </span>
 
-                        <div>
-                          {formatListDate(
-                            event.date
-                          )}
-                        </div>
+                        <span className="event-list-details">
+                          <span>
+                            <CalendarIcon />
 
-                        <div>
-                          <span
-                            className={`event-status-label ${statusClass}`}
-                          >
-                            {status}
+                            {formatFullDate(
+                              event.date
+                            )}
                           </span>
-                        </div>
-                      </button>
-                    );
-                  }
-                )
-              )}
-            </div>
+
+                          <span>
+                            <ClockIcon />
+
+                            {
+                              event.startTime
+                            }
+                            {" ～ "}
+                            {
+                              event.endTime
+                            }
+                          </span>
+                        </span>
+                      </span>
+
+                      <span
+                        className={`event-status-label ${statusClass}`}
+                      >
+                        <span
+                          aria-hidden="true"
+                        />
+
+                        {status}
+                      </span>
+
+                      <span className="event-list-arrow">
+                        <ArrowIcon />
+                      </span>
+                    </button>
+                  );
+                }
+              )
+            )}
           </div>
         </section>
+      </main>
 
-        {selectedEvent !==
-          null &&
-          selectedStatus !==
-            null && (
-          <div
-            className="event-detail-modal-background"
-            role="presentation"
-            onMouseDown={(event) => {
-              if (
-                event.target ===
-                event.currentTarget
-              ) {
-                setSelectedEventId(
-                  null
-                );
-              }
-            }}
+      <footer className="event-management-footer">
+        <button
+          type="button"
+          className="event-management-back"
+          onClick={() =>
+            setPage(
+              "admin"
+            )
+          }
+        >
+          <span>
+            <BackIcon />
+          </span>
+
+          管理モードに戻る
+        </button>
+      </footer>
+
+      {selectedEvent !==
+        null &&
+        selectedStatus !==
+          null && (
+        <div
+          className="event-detail-modal-background"
+          role="presentation"
+          onMouseDown={(
+            event
+          ) => {
+            if (
+              event.target ===
+              event.currentTarget
+            ) {
+              setSelectedEventId(
+                null
+              );
+            }
+          }}
+        >
+          <section
+            className="event-detail-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label="イベント詳細"
           >
-            <section
-              className="event-detail-panel"
-              role="dialog"
-              aria-modal="true"
-              aria-label="イベント詳細"
-            >
-              <div className="event-detail-title-row">
+            <div className="event-detail-header">
+              <div>
+                <span className="event-detail-eyebrow">
+                  EVENT DETAILS
+                </span>
+
                 <h3>
                   イベント詳細
                 </h3>
+              </div>
 
+              <div className="event-detail-header-actions">
                 <span
                   className={`event-detail-status ${getStatusClassName(
                     selectedStatus
                   )}`}
                 >
+                  <span
+                    aria-hidden="true"
+                  />
+
                   {
                     selectedStatus
                   }
                 </span>
+
+                <button
+                  type="button"
+                  className="event-detail-close-icon"
+                  aria-label="イベント詳細を閉じる"
+                  onClick={() =>
+                    setSelectedEventId(
+                      null
+                    )
+                  }
+                >
+                  <CloseIcon />
+                </button>
               </div>
+            </div>
 
-              {selectedEvent.id ===
-                currentEventId && (
-                <div className="current-event-notice">
-                  現在このイベントが受付に使用されています
-                </div>
-              )}
-
-              <div className="event-detail-row">
+            {selectedEvent.id ===
+              currentEventId && (
+              <div className="current-event-notice">
                 <span>
-                  イベント名
+                  ●
                 </span>
+
+                現在このイベントが受付に使用されています
+              </div>
+            )}
+
+            <div className="event-detail-name-card">
+              <span className="event-detail-name-icon">
+                <EventManagementIcon />
+              </span>
+
+              <div>
+                <small>
+                  EVENT NAME
+                </small>
 
                 <strong>
                   {
@@ -1056,124 +1665,134 @@ function EventManagementPage({
                   }
                 </strong>
               </div>
+            </div>
 
-              <div className="event-detail-row">
-                <span>
-                  開催日
+            <div className="event-detail-grid">
+              <div className="event-detail-information-card">
+                <span className="event-detail-information-icon">
+                  <CalendarIcon />
                 </span>
 
-                <strong>
-                  {formatFullDate(
-                    selectedEvent.date
-                  )}
-                </strong>
+                <div>
+                  <small>
+                    開催日
+                  </small>
+
+                  <strong>
+                    {formatFullDate(
+                      selectedEvent.date
+                    )}
+                  </strong>
+                </div>
               </div>
 
-              <div className="event-detail-row">
-                <span>
-                  受付時間
+              <div className="event-detail-information-card">
+                <span className="event-detail-information-icon">
+                  <ClockIcon />
                 </span>
 
-                <strong>
-                  {
-                    selectedEvent.startTime
-                  }
-                  {" ～ "}
-                  {
-                    selectedEvent.endTime
-                  }
-                </strong>
+                <div>
+                  <small>
+                    受付時間
+                  </small>
+
+                  <strong>
+                    {
+                      selectedEvent.startTime
+                    }
+                    {" ～ "}
+                    {
+                      selectedEvent.endTime
+                    }
+                  </strong>
+                </div>
               </div>
 
               {selectedEvent.endedAt !==
                 undefined && (
-                <div className="event-detail-row">
-                  <span>
-                    強制終了日時
+                <div className="event-detail-information-card event-detail-ended-card">
+                  <span className="event-detail-information-icon">
+                    <ClockIcon />
                   </span>
 
-                  <strong>
-                    {formatEndedAt(
-                      selectedEvent.endedAt
-                    )}
-                  </strong>
+                  <div>
+                    <small>
+                      強制終了日時
+                    </small>
+
+                    <strong>
+                      {formatEndedAt(
+                        selectedEvent.endedAt
+                      )}
+                    </strong>
+                  </div>
                 </div>
               )}
+            </div>
 
-              <div className="event-detail-actions">
+            <div className="event-detail-actions">
+              <button
+                type="button"
+                className="event-detail-close"
+                onClick={() =>
+                  setSelectedEventId(
+                    null
+                  )
+                }
+              >
+                閉じる
+              </button>
+
+              {selectedStatus !==
+                "終了" && (
                 <button
                   type="button"
-                  className="event-detail-close"
-                  onClick={() =>
-                    setSelectedEventId(
-                      null
-                    )
-                  }
-                >
-                  閉じる
-                </button>
-
-                {selectedStatus !==
-                  "終了" && (
-                  <button
-                    type="button"
-                    className="event-select-button"
-                    disabled={
-                      selectedEvent.id ===
-                      currentEventId
-                    }
-                    onClick={
-                      handleSelectCurrent
-                    }
-                  >
-                    {selectedEvent.id ===
-                    currentEventId
-                      ? "現在選択中"
-                      : "現在のイベントに設定"}
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  className="event-force-end-button"
+                  className="event-select-button"
                   disabled={
-                    selectedStatus ===
-                    "終了"
+                    selectedEvent.id ===
+                    currentEventId
                   }
                   onClick={
-                    handleForceEnd
+                    handleSelectCurrent
                   }
                 >
-                  {selectedStatus ===
+                  {selectedEvent.id ===
+                  currentEventId
+                    ? "現在選択中"
+                    : "現在のイベントに設定"}
+                </button>
+              )}
+
+              <button
+                type="button"
+                className="event-force-end-button"
+                disabled={
+                  selectedStatus ===
                   "終了"
-                    ? "イベント終了済み"
-                    : "イベントを強制終了"}
-                </button>
+                }
+                onClick={
+                  handleForceEnd
+                }
+              >
+                {selectedStatus ===
+                "終了"
+                  ? "イベント終了済み"
+                  : "イベントを強制終了"}
+              </button>
 
-                <button
-                  type="button"
-                  className="event-delete-button"
-                  onClick={
-                    handleDelete
-                  }
-                >
-                  イベントを削除する
-                </button>
-              </div>
-            </section>
-          </div>
-        )}
-      </main>
-
-      <button
-        type="button"
-        className="event-management-back"
-        onClick={() =>
-          setPage("admin")
-        }
-      >
-        前のページに戻る
-      </button>
+              <button
+                type="button"
+                className="event-delete-button"
+                onClick={
+                  handleDelete
+                }
+              >
+                イベントを削除
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
