@@ -1,11 +1,18 @@
 .admin-auth-page {
-  --auth-purple: #8057d6;
-  --auth-purple-dark: #5634aa;
-  --auth-purple-light: #eee7ff;
-  --auth-green: #36a965;
-  --auth-red: #d74c4c;
-  --auth-text: #172033;
-  --auth-sub-text: #6f7a8d;
+  --admin-purple: #8655dc;
+  --admin-purple-dark: #6234bd;
+  --admin-purple-light: #eee6ff;
+  --admin-blue: #1478ed;
+  --admin-blue-dark: #0862cf;
+  --admin-text: #111827;
+  --admin-sub-text: #667085;
+  --admin-border:
+    rgba(
+      255,
+      255,
+      255,
+      0.9
+    );
 
   position: relative;
 
@@ -17,37 +24,54 @@
   height: 100dvh;
   min-height: 620px;
 
+  overflow: hidden;
+
   box-sizing: border-box;
 
   padding:
-    clamp(20px, 3vh, 32px)
-    clamp(24px, 3.8vw, 54px)
+    clamp(
+      20px,
+      3vh,
+      32px
+    )
+    clamp(
+      24px,
+      3.8vw,
+      54px
+    )
     max(
-      clamp(18px, 2.7vh, 30px),
-      env(safe-area-inset-bottom)
+      clamp(
+        18px,
+        2.7vh,
+        30px
+      ),
+      env(
+        safe-area-inset-bottom
+      )
     );
 
-  overflow: hidden;
+  color:
+    var(
+      --admin-text
+    );
 
   background:
     radial-gradient(
-      circle at 95% 3%,
-      rgba(205, 179, 255, 0.52),
+      circle at 95% 5%,
+      rgba(
+        214,
+        190,
+        255,
+        0.62
+      ),
       transparent 31%
-    ),
-    radial-gradient(
-      circle at 3% 100%,
-      rgba(188, 170, 232, 0.22),
-      transparent 33%
     ),
     linear-gradient(
       145deg,
-      #fbfaff 0%,
-      #f4f1fa 54%,
-      #f8f4ff 100%
+      #fcfaff 0%,
+      #f4effb 57%,
+      #faf7ff 100%
     );
-
-  color: var(--auth-text);
 
   font-family:
     -apple-system,
@@ -60,7 +84,8 @@
     sans-serif;
 
   transition:
-    background 240ms ease;
+    background 180ms ease,
+    color 180ms ease;
 }
 
 .admin-auth-page *,
@@ -73,87 +98,110 @@
   font-family: inherit;
 }
 
-.admin-auth-page::before {
-  position: absolute;
-
-  top: -330px;
-  right: -240px;
-
-  width: 660px;
-  height: 660px;
-
-  border:
-    86px solid
-    rgba(255, 255, 255, 0.23);
-
-  border-radius: 50%;
-
-  content: "";
-
-  pointer-events: none;
-}
-
-.admin-auth-page::after {
-  position: absolute;
-
-  bottom: -430px;
-  left: -310px;
-
-  width: 710px;
-  height: 710px;
-
-  border-radius: 50%;
-
-  background:
-    rgba(123, 88, 198, 0.1);
-
-  content: "";
-
-  pointer-events: none;
-}
-
 /*
-  認証結果に応じた背景
+  成功・失敗・処理中の背景
 */
-.admin-auth-page.processing {
-  background:
-    radial-gradient(
-      circle at 50% 25%,
-      rgba(199, 174, 255, 0.55),
-      transparent 39%
-    ),
-    linear-gradient(
-      145deg,
-      #faf8ff,
-      #eee7fb
-    );
-}
-
 .admin-auth-page.success {
   background:
     radial-gradient(
-      circle at 50% 22%,
-      rgba(157, 231, 183, 0.5),
-      transparent 40%
+      circle at 85% 0%,
+      rgba(
+        255,
+        255,
+        255,
+        0.28
+      ),
+      transparent 32%
     ),
     linear-gradient(
       145deg,
-      #f8fdf9,
-      #e7f6ed
+      #44d36a 0%,
+      #2fc45a 48%,
+      #20ad4b 100%
     );
 }
 
 .admin-auth-page.error {
   background:
     radial-gradient(
-      circle at 50% 22%,
-      rgba(255, 180, 180, 0.48),
-      transparent 40%
+      circle at 85% 0%,
+      rgba(
+        255,
+        255,
+        255,
+        0.23
+      ),
+      transparent 32%
     ),
     linear-gradient(
       145deg,
-      #fffafa,
-      #fae8e8
+      #f15151 0%,
+      #e83e3e 50%,
+      #d82f2f 100%
+    );
+}
+
+.admin-auth-page.processing {
+  background:
+    radial-gradient(
+      circle at 90% 5%,
+      rgba(
+        214,
+        190,
+        255,
+        0.65
+      ),
+      transparent 31%
+    ),
+    linear-gradient(
+      145deg,
+      #faf7ff 0%,
+      #eee7fa 55%,
+      #f8f4fc 100%
+    );
+}
+
+/*
+  背景装飾
+*/
+.admin-auth-background-circle {
+  position: absolute;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+}
+
+.admin-auth-background-circle-one {
+  top: -290px;
+  right: -220px;
+
+  width: 610px;
+  height: 610px;
+
+  border:
+    82px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.15
+    );
+}
+
+.admin-auth-background-circle-two {
+  bottom: -390px;
+  left: -280px;
+
+  width: 640px;
+  height: 640px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.1
     );
 }
 
@@ -170,15 +218,20 @@
 
   flex-shrink: 0;
 
-  gap: clamp(20px, 3vw, 42px);
+  gap:
+    clamp(
+      20px,
+      3vw,
+      42px
+    );
 }
 
-.admin-auth-title-area {
+.admin-auth-header-main {
   min-width: 0;
   flex: 1;
 }
 
-.admin-auth-title-area h1 {
+.admin-auth-header h1 {
   margin: 0;
 
   color: #111827;
@@ -198,8 +251,32 @@
   white-space: nowrap;
 }
 
-.admin-auth-title-area
-  .online-status {
+.admin-auth-page.success
+  .admin-auth-header h1,
+.admin-auth-page.error
+  .admin-auth-header h1 {
+  color:
+    rgba(
+      12,
+      25,
+      23,
+      0.88
+    );
+}
+
+.admin-auth-header-meta {
+  display: flex;
+  align-items: center;
+
+  min-width: 0;
+
+  gap:
+    clamp(
+      10px,
+      1.4vw,
+      16px
+    );
+
   margin-top:
     clamp(
       9px,
@@ -208,18 +285,120 @@
     );
 }
 
+.admin-auth-header-meta
+  .connection-status {
+  flex-shrink: 0;
+
+  font-size:
+    clamp(
+      14px,
+      1.35vw,
+      19px
+    );
+}
+
+.admin-auth-header-divider {
+  width: 1px;
+  height: 22px;
+
+  flex-shrink: 0;
+
+  background:
+    rgba(
+      75,
+      85,
+      99,
+      0.2
+    );
+}
+
+.admin-auth-current-event {
+  display: flex;
+  align-items: baseline;
+
+  min-width: 0;
+
+  gap: 8px;
+
+  color: #566176;
+}
+
+.admin-auth-current-event-label {
+  flex-shrink: 0;
+
+  color: #8a94a6;
+
+  font-size:
+    clamp(
+      11px,
+      1vw,
+      14px
+    );
+
+  font-weight: 800;
+
+  letter-spacing: 0.13em;
+}
+
+.admin-auth-current-event strong {
+  overflow: hidden;
+
+  font-size:
+    clamp(
+      14px,
+      1.4vw,
+      20px
+    );
+
+  font-weight: 750;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.admin-auth-page.success
+  .admin-auth-header-divider,
+.admin-auth-page.error
+  .admin-auth-header-divider {
+  background:
+    rgba(
+      17,
+      24,
+      39,
+      0.18
+    );
+}
+
+.admin-auth-page.success
+  .admin-auth-current-event,
+.admin-auth-page.success
+  .admin-auth-current-event-label,
+.admin-auth-page.error
+  .admin-auth-current-event,
+.admin-auth-page.error
+  .admin-auth-current-event-label {
+  color:
+    rgba(
+      13,
+      30,
+      25,
+      0.68
+    );
+}
+
 /*
-  右上ラベル
+  管理者認証ラベル
 */
-.admin-auth-mode-label {
+.admin-auth-mode {
   display: flex;
   align-items: center;
 
   width:
     clamp(
-      245px,
-      27vw,
-      370px
+      225px,
+      25vw,
+      330px
     );
 
   min-height:
@@ -231,12 +410,19 @@
 
   flex-shrink: 0;
 
+  gap:
+    clamp(
+      10px,
+      1.3vw,
+      16px
+    );
+
   padding:
     12px
     clamp(
-      18px,
+      16px,
       2vw,
-      25px
+      24px
     );
 
   border:
@@ -245,7 +431,7 @@
       255,
       255,
       255,
-      0.34
+      0.3
     );
 
   border-radius:
@@ -258,19 +444,84 @@
   background:
     linear-gradient(
       135deg,
-      #b088f3 0%,
-      #8057d6 53%,
-      #5734aa 100%
+      #b784f4 0%,
+      #8655dc 52%,
+      #6536bf 100%
     );
 
   box-shadow:
     0 15px 32px
-    rgba(87, 52, 170, 0.27),
+    rgba(
+      112,
+      59,
+      195,
+      0.27
+    ),
     inset 0 1px 0
-    rgba(255, 255, 255, 0.36);
+    rgba(
+      255,
+      255,
+      255,
+      0.28
+    );
 
   color: #ffffff;
+}
 
+.admin-auth-mode-icon {
+  display: grid;
+
+  width:
+    clamp(
+      40px,
+      4vw,
+      54px
+    );
+
+  height:
+    clamp(
+      40px,
+      4vw,
+      54px
+    );
+
+  flex-shrink: 0;
+
+  place-items: center;
+}
+
+.admin-auth-mode-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.admin-auth-mode-copy {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  line-height: 1;
+}
+
+.admin-auth-mode-copy small {
+  margin-bottom: 5px;
+
+  font-size:
+    clamp(
+      10px,
+      0.95vw,
+      13px
+    );
+
+  font-weight: 800;
+
+  letter-spacing: 0.16em;
+
+  opacity: 0.82;
+}
+
+.admin-auth-mode-copy strong {
   font-size:
     clamp(
       21px,
@@ -278,58 +529,11 @@
       32px
     );
 
-  font-weight: 850;
+  font-weight: 800;
 
   letter-spacing: -0.04em;
 
   white-space: nowrap;
-}
-
-.admin-auth-mode-label::before {
-  display: grid;
-
-  width:
-    clamp(
-      42px,
-      4.2vw,
-      56px
-    );
-
-  height:
-    clamp(
-      42px,
-      4.2vw,
-      56px
-    );
-
-  flex-shrink: 0;
-
-  margin-right:
-    clamp(
-      10px,
-      1.2vw,
-      16px
-    );
-
-  place-items: center;
-
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.25);
-
-  border-radius:
-    clamp(
-      13px,
-      1.5vw,
-      18px
-    );
-
-  background:
-    rgba(255, 255, 255, 0.15);
-
-  font-size: 0.8em;
-
-  content: "◆";
 }
 
 /*
@@ -348,7 +552,7 @@
 
   margin-top:
     clamp(
-      15px,
+      14px,
       2.2vh,
       24px
     );
@@ -357,191 +561,353 @@
 }
 
 /*
-  QR待機画面
+  待機画面
 */
-.admin-auth-waiting {
+.admin-auth-waiting-panel {
   display: grid;
-
-  grid-template-rows:
-    minmax(0, 1fr)
-    auto;
 
   width: 100%;
   height: 100%;
-  min-width: 0;
   min-height: 0;
 
-  align-items: center;
-  justify-items: center;
+  grid-template-rows:
+    minmax(
+      0,
+      1fr
+    )
+    auto;
 
   gap:
     clamp(
-      11px,
-      1.5vh,
-      17px
+      12px,
+      1.8vh,
+      18px
     );
-
-  overflow: hidden;
 }
 
-.admin-auth-scanner-wrapper {
-  position: relative;
-
+.admin-auth-scanner-card {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
 
   width: 100%;
-  height: 100%;
-  min-width: 0;
   min-height: 0;
 
-  padding:
-    clamp(
-      13px,
-      1.8vw,
-      21px
-    );
+  overflow: hidden;
 
   border:
     1px solid
-    rgba(255, 255, 255, 0.95);
+    var(
+      --admin-border
+    );
 
   border-radius:
     clamp(
-      25px,
-      3vw,
-      39px
+      23px,
+      2.6vw,
+      34px
     );
 
   background:
-    rgba(255, 255, 255, 0.84);
-
-  box-shadow:
-    0 20px 48px
-    rgba(48, 42, 75, 0.13);
-
-  backdrop-filter:
-    blur(18px);
-
-  -webkit-backdrop-filter:
-    blur(18px);
-
-  overflow: hidden;
-}
-
-.admin-auth-scanner-wrapper::before {
-  position: absolute;
-  z-index: 3;
-
-  top:
-    clamp(
-      18px,
-      2.4vw,
-      29px
+    rgba(
+      255,
+      255,
+      255,
+      0.88
     );
 
-  left:
+  box-shadow:
+    0 18px 42px
+    rgba(
+      74,
+      52,
+      108,
+      0.13
+    );
+
+  backdrop-filter:
+    blur(16px);
+
+  -webkit-backdrop-filter:
+    blur(16px);
+}
+
+.admin-auth-scanner-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  flex-shrink: 0;
+
+  gap: 20px;
+
+  min-height:
     clamp(
-      18px,
-      2.4vw,
-      29px
+      62px,
+      8vh,
+      78px
     );
 
   padding:
-    7px 12px;
-
-  border-radius: 999px;
-
-  background:
-    rgba(30, 24, 49, 0.72);
-
-  color: #ffffff;
-
-  font-size:
+    10px
     clamp(
-      10px,
-      1vw,
-      14px
-    );
-
-  font-weight: 800;
-
-  letter-spacing: 0.09em;
-
-  content: "ADMIN QR SCAN";
-
-  pointer-events: none;
-}
-
-.admin-auth-scanner-wrapper::after {
-  position: absolute;
-  z-index: 2;
-
-  inset:
-    clamp(
-      13px,
-      1.8vw,
-      21px
-    );
-
-  border:
-    2px solid
-    rgba(151, 106, 229, 0.35);
-
-  border-radius:
-    clamp(
-      19px,
+      18px,
       2.3vw,
       30px
     );
 
-  content: "";
+  border-bottom:
+    1px solid
+    rgba(
+      86,
+      72,
+      116,
+      0.1
+    );
+}
 
-  pointer-events: none;
+.admin-auth-scanner-heading {
+  display: flex;
+  align-items: center;
+
+  min-width: 0;
+
+  gap:
+    clamp(
+      10px,
+      1.3vw,
+      15px
+    );
+}
+
+.admin-auth-scanner-heading-icon {
+  display: grid;
+
+  width:
+    clamp(
+      40px,
+      4vw,
+      52px
+    );
+
+  height:
+    clamp(
+      40px,
+      4vw,
+      52px
+    );
+
+  flex-shrink: 0;
+
+  place-items: center;
+
+  border-radius:
+    clamp(
+      12px,
+      1.4vw,
+      17px
+    );
+
+  background:
+    var(
+      --admin-purple-light
+    );
+
+  color:
+    var(
+      --admin-purple
+    );
+}
+
+.admin-auth-scanner-heading-icon svg {
+  width: 62%;
+  height: 62%;
+}
+
+.admin-auth-scanner-heading-copy {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+}
+
+.admin-auth-scanner-heading-copy small {
+  color: #8791a4;
+
+  font-size:
+    clamp(
+      10px,
+      0.95vw,
+      13px
+    );
+
+  font-weight: 800;
+
+  letter-spacing: 0.15em;
+}
+
+.admin-auth-scanner-heading-copy strong {
+  margin-top: 2px;
+
+  color: #182034;
+
+  font-size:
+    clamp(
+      18px,
+      1.9vw,
+      27px
+    );
+
+  font-weight: 800;
+
+  letter-spacing: -0.03em;
+
+  white-space: nowrap;
+}
+
+.admin-auth-scanner-ready {
+  display: inline-flex;
+  align-items: center;
+
+  flex-shrink: 0;
+
+  gap: 8px;
+
+  padding:
+    8px
+    13px;
+
+  border:
+    1px solid
+    rgba(
+      133,
+      82,
+      218,
+      0.16
+    );
+
+  border-radius: 999px;
+
+  background:
+    rgba(
+      133,
+      82,
+      218,
+      0.09
+    );
+
+  color: #7545c5;
+
+  font-size:
+    clamp(
+      13px,
+      1.2vw,
+      17px
+    );
+
+  font-weight: 750;
+
+  white-space: nowrap;
+}
+
+.admin-auth-scanner-ready-dot {
+  width: 9px;
+  height: 9px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background:
+    var(
+      --admin-purple
+    );
+
+  box-shadow:
+    0 0 0 4px
+    rgba(
+      134,
+      85,
+      220,
+      0.13
+    );
+}
+
+/*
+  カメラ
+*/
+.admin-auth-scanner-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+
+  overflow: hidden;
+
+  padding:
+    clamp(
+      10px,
+      1.4vw,
+      18px
+    );
+
+  background:
+    linear-gradient(
+      145deg,
+      #f6f2fa,
+      #ede7f4
+    );
 }
 
 .admin-auth-scanner-wrapper
   .camera-qr-scanner {
   width:
     min(
-      88vw,
-      1180px
+      100%,
+      1080px
     );
 
-  height:
-    min(
-      57vh,
-      630px
-    );
-
-  max-width: 100%;
+  height: 100%;
   max-height: 100%;
 
-  flex-shrink: 1;
-
   aspect-ratio: 16 / 9;
+
+  overflow: hidden;
+
+  border:
+    3px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.9
+    );
 
   border-radius:
     clamp(
       18px,
       2.2vw,
-      29px
+      28px
     );
 
-  overflow: hidden;
+  background: #0a101c;
 
   box-shadow:
-    0 14px 34px
-    rgba(29, 26, 46, 0.23);
+    0 12px 30px
+    rgba(
+      36,
+      27,
+      54,
+      0.24
+    );
 }
 
 .admin-auth-scanner-wrapper
   .camera-qr-reader {
   width: 100% !important;
   height: 100% !important;
-
-  background: #16131d;
 }
 
 .admin-auth-scanner-wrapper
@@ -549,8 +915,6 @@
   > div {
   width: 100% !important;
   height: 100% !important;
-
-  border: none !important;
 }
 
 .admin-auth-scanner-wrapper
@@ -584,450 +948,468 @@
 */
 .admin-auth-instruction {
   display: flex;
-  justify-content: center;
   align-items: center;
+
+  width: 100%;
 
   flex-shrink: 0;
 
-  min-height:
-    clamp(
-      51px,
-      6.8vh,
-      65px
-    );
-
   gap:
     clamp(
-      9px,
-      1.1vw,
-      13px
+      12px,
+      1.5vw,
+      18px
     );
 
-  margin: 0;
-
   padding:
-    9px
     clamp(
-      17px,
+      10px,
+      1.4vh,
+      15px
+    )
+    clamp(
+      16px,
       2.2vw,
       28px
     );
 
   border:
     1px solid
-    rgba(255, 255, 255, 0.92);
-
-  border-radius: 999px;
-
-  background:
-    rgba(255, 255, 255, 0.82);
-
-  box-shadow:
-    0 10px 25px
-    rgba(45, 39, 70, 0.09);
-
-  color: #3d315b;
-
-  font-size:
-    clamp(
-      17px,
-      1.9vw,
-      27px
+    rgba(
+      255,
+      255,
+      255,
+      0.92
     );
 
-  font-weight: 800;
-  line-height: 1.1;
+  border-radius:
+    clamp(
+      17px,
+      2vw,
+      24px
+    );
 
-  text-align: center;
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.84
+    );
 
-  white-space: nowrap;
+  box-shadow:
+    0 10px 26px
+    rgba(
+      69,
+      51,
+      98,
+      0.09
+    );
 }
 
-.admin-auth-instruction::before {
+.admin-auth-instruction-number {
   display: grid;
 
   width:
     clamp(
-      29px,
-      3vw,
-      39px
+      38px,
+      3.8vw,
+      49px
     );
 
   height:
     clamp(
-      29px,
-      3vw,
-      39px
+      38px,
+      3.8vw,
+      49px
     );
+
+  flex-shrink: 0;
 
   place-items: center;
-
-  border-radius:
-    clamp(
-      9px,
-      1vw,
-      12px
-    );
-
-  background: #eee7ff;
-
-  color: #7951c8;
-
-  font-size: 0.9em;
-
-  content: "▦";
-}
-
-/*
-  認証結果カード
-*/
-.admin-auth-result {
-  position: relative;
-
-  align-self: center;
-
-  width:
-    min(
-      760px,
-      calc(100% - 24px)
-    );
-
-  padding:
-    clamp(
-      30px,
-      4.5vh,
-      53px
-    )
-    clamp(
-      28px,
-      4.2vw,
-      56px
-    );
-
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.94);
-
-  border-radius:
-    clamp(
-      30px,
-      4vw,
-      50px
-    );
-
-  background:
-    rgba(255, 255, 255, 0.9);
-
-  box-shadow:
-    0 28px 70px
-    rgba(38, 33, 59, 0.18);
-
-  text-align: center;
-
-  backdrop-filter:
-    blur(22px);
-
-  -webkit-backdrop-filter:
-    blur(22px);
-
-  overflow: hidden;
-}
-
-.admin-auth-result::before {
-  position: absolute;
-
-  top: -100px;
-  right: -90px;
-
-  width: 250px;
-  height: 250px;
 
   border-radius: 50%;
 
   background:
-    rgba(130, 87, 214, 0.08);
+    linear-gradient(
+      145deg,
+      #a978ef,
+      #8250d7
+    );
 
-  content: "";
+  color: #ffffff;
+
+  font-size:
+    clamp(
+      18px,
+      1.8vw,
+      25px
+    );
+
+  font-weight: 850;
+
+  box-shadow:
+    0 7px 15px
+    rgba(
+      124,
+      71,
+      211,
+      0.25
+    );
 }
 
-.admin-auth-page.success
-  .admin-auth-result::before {
-  background:
-    rgba(54, 169, 101, 0.1);
+.admin-auth-instruction-copy {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
 }
 
-.admin-auth-page.error
-  .admin-auth-result::before {
-  background:
-    rgba(215, 76, 76, 0.1);
+.admin-auth-instruction-copy strong {
+  color: #182034;
+
+  font-size:
+    clamp(
+      18px,
+      2vw,
+      29px
+    );
+
+  font-weight: 800;
+
+  line-height: 1.15;
+
+  letter-spacing: -0.025em;
+}
+
+.admin-auth-instruction-copy small {
+  margin-top: 3px;
+
+  color: #707b8f;
+
+  font-size:
+    clamp(
+      13px,
+      1.3vw,
+      18px
+    );
+
+  font-weight: 600;
 }
 
 /*
-  成功・失敗アイコン
+  結果画面
 */
+.admin-auth-result-panel {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+
+  width:
+    min(
+      100%,
+      850px
+    );
+
+  min-height: 0;
+
+  align-self: center;
+
+  padding:
+    clamp(
+      25px,
+      4vh,
+      48px
+    )
+    clamp(
+      28px,
+      4vw,
+      55px
+    );
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.55
+    );
+
+  border-radius:
+    clamp(
+      28px,
+      3.5vw,
+      46px
+    );
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.82
+    );
+
+  box-shadow:
+    0 24px 60px
+    rgba(
+      36,
+      49,
+      70,
+      0.18
+    );
+
+  text-align: center;
+
+  backdrop-filter:
+    blur(20px);
+
+  -webkit-backdrop-filter:
+    blur(20px);
+}
+
 .admin-auth-result-icon {
   display: grid;
 
   width:
     clamp(
-      96px,
-      11vw,
-      148px
+      92px,
+      10vw,
+      145px
     );
 
   height:
     clamp(
-      96px,
-      11vw,
-      148px
+      92px,
+      10vw,
+      145px
     );
-
-  margin: 0 auto;
 
   place-items: center;
 
-  border-radius:
-    clamp(
-      29px,
-      3.5vw,
-      45px
-    );
+  border-radius: 50%;
+
+  color: #ffffff;
 
   font-size:
     clamp(
       58px,
-      7vw,
-      91px
+      6.5vw,
+      93px
     );
 
   font-weight: 800;
+
   line-height: 1;
 
   box-shadow:
-    0 17px 38px
-    rgba(40, 45, 60, 0.14);
+    0 18px 38px
+    rgba(
+      27,
+      45,
+      62,
+      0.2
+    );
 }
 
-.admin-auth-page.success
+.admin-auth-success-result
   .admin-auth-result-icon {
   background:
     linear-gradient(
       145deg,
-      #63d48e,
-      #32a862
+      #35ca62,
+      #149e43
     );
-
-  color: #ffffff;
 }
 
-.admin-auth-page.error
+.admin-auth-error-result
   .admin-auth-result-icon {
   background:
     linear-gradient(
       145deg,
-      #f27676,
-      #d54848
+      #f25555,
+      #cf2929
     );
-
-  color: #ffffff;
 }
 
-/*
-  認証中アイコン
-*/
-.admin-auth-processing-icon {
-  display: grid;
-
-  width:
+.admin-auth-result-eyebrow {
+  margin-top:
     clamp(
-      96px,
-      11vw,
-      148px
+      15px,
+      2vh,
+      22px
     );
 
-  height:
+  color: #707b8f;
+
+  font-size:
     clamp(
-      96px,
-      11vw,
-      148px
+      11px,
+      1.1vw,
+      15px
     );
 
-  margin: 0 auto;
+  font-weight: 850;
 
-  place-items: center;
-
-  border-radius:
-    clamp(
-      29px,
-      3.5vw,
-      45px
-    );
-
-  background:
-    linear-gradient(
-      145deg,
-      #b58cf1,
-      #7f56d4
-    );
-
-  box-shadow:
-    0 17px 38px
-    rgba(91, 57, 163, 0.23);
+  letter-spacing: 0.17em;
 }
 
-.admin-auth-processing-icon span {
-  width:
-    clamp(
-      43px,
-      4.8vw,
-      62px
-    );
-
-  height:
-    clamp(
-      43px,
-      4.8vw,
-      62px
-    );
-
-  border:
-    clamp(
-      5px,
-      0.55vw,
-      7px
-    )
-    solid
-    rgba(255, 255, 255, 0.34);
-
-  border-top-color:
-    #ffffff;
-
-  border-radius: 50%;
-
-  animation:
-    admin-auth-spin
-    0.8s
-    linear
-    infinite;
-}
-
-@keyframes admin-auth-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/*
-  結果文字
-*/
-.admin-auth-result h2 {
+.admin-auth-result-panel h2 {
   margin:
     clamp(
-      18px,
-      2.5vh,
-      29px
+      7px,
+      1vh,
+      12px
     )
     0
     0;
 
-  color: #172033;
+  color: #111827;
 
   font-size:
     clamp(
-      42px,
-      5.6vw,
-      78px
+      46px,
+      6vw,
+      82px
     );
 
   font-weight: 850;
+
   line-height: 1.02;
 
   letter-spacing: -0.055em;
 }
 
-.admin-auth-page.success
-  .admin-auth-result h2 {
-  color: #237847;
-}
-
-.admin-auth-page.error
-  .admin-auth-result h2 {
-  color: #b63838;
-}
-
-.admin-auth-result p {
+.admin-auth-result-primary {
   margin:
     clamp(
-      12px,
-      1.8vh,
+      13px,
+      2vh,
       21px
     )
     0
     0;
 
-  color: #344054;
+  color: #139044;
 
   font-size:
     clamp(
-      24px,
-      3.2vw,
-      45px
+      34px,
+      4.7vw,
+      66px
     );
 
-  font-weight: 800;
-  line-height: 1.15;
+  font-weight: 850;
 
-  overflow-wrap: anywhere;
+  line-height: 1.08;
+
+  letter-spacing: -0.04em;
 }
 
-.admin-auth-result strong {
-  display: block;
-
-  margin-top:
-    clamp(
-      10px,
-      1.5vh,
-      18px
-    );
-
-  padding:
-    10px
-    15px;
-
-  border-radius:
-    clamp(
-      13px,
-      1.5vw,
-      18px
-    );
-
-  background: #f0ecf9;
-
-  color: #6c5b8f;
+.admin-auth-error-result
+  .admin-auth-result-primary {
+  color: #c92929;
 
   font-size:
     clamp(
-      14px,
-      1.6vw,
-      22px
+      26px,
+      3.6vw,
+      50px
+    );
+}
+
+.admin-auth-processing-result
+  .admin-auth-result-primary {
+  color:
+    var(
+      --admin-purple
     );
 
-  font-weight: 750;
-  line-height: 1.3;
+  font-size:
+    clamp(
+      28px,
+      3.7vw,
+      51px
+    );
 }
 
-.admin-auth-page.success
-  .admin-auth-result strong {
-  background: #e3f5e9;
+.admin-auth-result-secondary {
+  margin:
+    clamp(
+      9px,
+      1.2vh,
+      14px
+    )
+    0
+    0;
 
-  color: #3f7957;
+  color: #687386;
+
+  font-size:
+    clamp(
+      16px,
+      1.8vw,
+      25px
+    );
+
+  font-weight: 650;
 }
 
-.admin-auth-page.error
-  .admin-auth-result strong {
-  background: #fae5e5;
+/*
+  処理中
+*/
+.admin-auth-processing-spinner {
+  width:
+    clamp(
+      84px,
+      9vw,
+      125px
+    );
 
-  color: #9d4c4c;
+  height:
+    clamp(
+      84px,
+      9vw,
+      125px
+    );
+
+  border:
+    clamp(
+      8px,
+      0.9vw,
+      12px
+    )
+    solid
+    rgba(
+      134,
+      85,
+      220,
+      0.15
+    );
+
+  border-top-color:
+    var(
+      --admin-purple
+    );
+
+  border-radius: 50%;
+
+  animation:
+    admin-auth-spinner-rotation
+    0.85s
+    linear
+    infinite;
+}
+
+@keyframes admin-auth-spinner-rotation {
+  to {
+    transform:
+      rotate(
+        360deg
+      );
+  }
 }
 
 /*
@@ -1037,115 +1419,38 @@
   position: relative;
   z-index: 2;
 
-  display: grid;
-
-  grid-template-columns:
-    minmax(0, 1fr)
-    auto;
-
+  display: flex;
+  justify-content: flex-start;
   align-items: center;
 
   flex-shrink: 0;
 
-  gap:
-    clamp(
-      12px,
-      2vw,
-      22px
-    );
-
   margin-top:
     clamp(
-      10px,
-      1.6vh,
-      17px
+      11px,
+      1.7vh,
+      18px
     );
 }
 
-.admin-auth-event {
-  display: flex;
-  flex-direction: column;
-
-  min-width: 0;
-
-  justify-self: start;
-
-  padding:
-    8px
-    14px;
-
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.92);
-
-  border-radius:
-    clamp(
-      14px,
-      1.7vw,
-      20px
-    );
-
-  background:
-    rgba(255, 255, 255, 0.78);
-
-  box-shadow:
-    0 8px 22px
-    rgba(45, 39, 70, 0.08);
-}
-
-.admin-auth-event-label {
-  color: #8b839b;
-
-  font-size:
-    clamp(
-      8px,
-      0.78vw,
-      11px
-    );
-
-  font-weight: 850;
-
-  letter-spacing: 0.14em;
-}
-
-.admin-auth-event strong {
-  min-width: 0;
-
-  margin-top: 3px;
-
-  color: #344054;
-
-  font-size:
-    clamp(
-      14px,
-      1.55vw,
-      21px
-    );
-
-  font-weight: 800;
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-
-  white-space: nowrap;
-}
-
-/*
-  戻るボタン
-*/
-.admin-auth-cancel-button {
+.admin-auth-return-button {
   display: inline-flex;
   justify-content: center;
   align-items: center;
 
-  min-height:
+  min-width:
     clamp(
-      49px,
-      6.6vh,
-      63px
+      210px,
+      24vw,
+      310px
     );
 
-  justify-self: end;
+  min-height:
+    clamp(
+      52px,
+      7vh,
+      66px
+    );
 
   gap:
     clamp(
@@ -1157,87 +1462,177 @@
   padding:
     8px
     clamp(
-      17px,
-      2.2vw,
+      18px,
+      2.3vw,
       28px
     );
 
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.94);
+  border: none;
 
   border-radius:
     clamp(
-      15px,
+      16px,
       1.8vw,
-      21px
+      22px
     );
-
-  box-shadow:
-    0 10px 25px
-    rgba(45, 39, 70, 0.1);
-
-  color: #344054;
 
   font-size:
     clamp(
-      16px,
-      1.8vw,
-      24px
+      17px,
+      1.9vw,
+      26px
     );
 
   font-weight: 800;
-  line-height: 1.1;
-
-  white-space: nowrap;
 
   cursor: pointer;
 
   transition:
     transform 150ms ease,
     box-shadow 150ms ease,
-    filter 150ms ease;
+    opacity 150ms ease;
 }
 
-.admin-auth-cancel-button::before {
-  font-size: 1.22em;
-
-  content: "←";
+.admin-auth-return-button:active:not(:disabled) {
+  transform:
+    scale(
+      0.98
+    );
 }
 
-.admin-auth-cancel-home {
-  background:
-    rgba(238, 231, 255, 0.94);
-
-  color: #6647aa;
-}
-
-.admin-auth-cancel-entry {
-  background:
-    rgba(219, 245, 227, 0.94);
-
-  color: #287849;
-}
-
-.admin-auth-cancel-exit {
-  background:
-    rgba(255, 242, 185, 0.95);
-
-  color: #866711;
-}
-
-.admin-auth-cancel-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-}
-
-.admin-auth-cancel-button:active:not(:disabled) {
-  transform: scale(0.985);
-}
-
-.admin-auth-cancel-button:disabled {
-  opacity: 0.48;
-
+.admin-auth-return-button:disabled {
   cursor: not-allowed;
+
+  opacity: 0.55;
+}
+
+.admin-auth-return-icon {
+  display: grid;
+
+  width:
+    clamp(
+      27px,
+      2.8vw,
+      37px
+    );
+
+  height:
+    clamp(
+      27px,
+      2.8vw,
+      37px
+    );
+
+  flex-shrink: 0;
+
+  place-items: center;
+}
+
+.admin-auth-return-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/*
+  入口へ戻る時は青
+*/
+.admin-auth-return-entry {
+  background:
+    linear-gradient(
+      135deg,
+      #3597f5 0%,
+      #1478ed 55%,
+      #0864d2 100%
+    );
+
+  box-shadow:
+    0 12px 27px
+    rgba(
+      18,
+      112,
+      222,
+      0.28
+    );
+
+  color: #ffffff;
+}
+
+/*
+  出口へ戻る時は黄色
+*/
+.admin-auth-return-exit {
+  background:
+    linear-gradient(
+      135deg,
+      #ffea66,
+      #ffd92e
+    );
+
+  box-shadow:
+    0 12px 27px
+    rgba(
+      191,
+      150,
+      13,
+      0.23
+    );
+
+  color: #665100;
+}
+
+/*
+  ホームへ戻る時
+*/
+.admin-auth-return-home {
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.9
+    );
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.82
+    );
+
+  box-shadow:
+    0 10px 25px
+    rgba(
+      61,
+      47,
+      84,
+      0.1
+    );
+
+  color: #344054;
+}
+
+.admin-auth-page.success
+  .admin-auth-return-button,
+.admin-auth-page.error
+  .admin-auth-return-button {
+  border-color:
+    rgba(
+      255,
+      255,
+      255,
+      0.45
+    );
+
+  box-shadow:
+    0 12px 27px
+    rgba(
+      24,
+      39,
+      47,
+      0.18
+    );
 }
 
 /*
@@ -1247,9 +1642,14 @@
   button:focus-visible {
   outline:
     5px solid
-    rgba(121, 79, 205, 0.2);
+    rgba(
+      17,
+      24,
+      39,
+      0.23
+    );
 
-  outline-offset: 3px;
+  outline-offset: 4px;
 }
 
 /*
@@ -1271,12 +1671,14 @@
         38px
       )
       max(
-        15px,
-        env(safe-area-inset-bottom)
+        16px,
+        env(
+          safe-area-inset-bottom
+        )
       );
   }
 
-  .admin-auth-title-area h1 {
+  .admin-auth-header h1 {
     font-size:
       clamp(
         29px,
@@ -1285,215 +1687,201 @@
       );
   }
 
-  .admin-auth-mode-label {
+  .admin-auth-header-meta {
+    margin-top: 8px;
+  }
+
+  .admin-auth-mode {
     width:
       clamp(
-        235px,
-        27vw,
-        300px
+        215px,
+        25vw,
+        275px
       );
 
     min-height: 66px;
 
     padding:
       9px
-      15px;
+      16px;
 
     border-radius: 20px;
-
-    font-size:
-      clamp(
-        19px,
-        2.15vw,
-        26px
-      );
   }
 
-  .admin-auth-mode-label::before {
-    width: 39px;
-    height: 39px;
+  .admin-auth-mode-icon {
+    width: 40px;
+    height: 40px;
+  }
 
-    border-radius: 12px;
+  .admin-auth-mode-copy strong {
+    font-size:
+      clamp(
+        20px,
+        2.25vw,
+        27px
+      );
   }
 
   .admin-auth-main {
     margin-top: 13px;
   }
 
-  .admin-auth-scanner-wrapper {
-    padding: 11px;
+  .admin-auth-waiting-panel {
+    gap: 10px;
+  }
 
+  .admin-auth-scanner-card {
     border-radius: 23px;
   }
 
-  .admin-auth-scanner-wrapper::after {
-    inset: 11px;
-
-    border-radius: 18px;
-  }
-
-  .admin-auth-scanner-wrapper
-    .camera-qr-scanner {
-    width:
-      min(
-        93vw,
-        1160px
-      );
-
-    height:
-      min(
-        58vh,
-        640px
-      );
-
-    border-radius: 18px;
-  }
-
-  .admin-auth-scanner-wrapper
-    .camera-qr-corners {
-    width:
-      min(
-        48%,
-        390px
-      );
-
-    max-width:
-      calc(
-        100% - 70px
-      );
-
-    max-height:
-      calc(
-        100% - 55px
-      );
-  }
-
-  .admin-auth-scanner-wrapper
-    .camera-qr-line {
-    width:
-      min(
-        44%,
-        350px
-      );
-
-    max-width:
-      calc(
-        100% - 90px
-      );
-  }
-
-  .admin-auth-instruction {
-    min-height: 48px;
+  .admin-auth-scanner-card-header {
+    min-height: 57px;
 
     padding:
       7px
-      17px;
+      18px;
+  }
 
+  .admin-auth-scanner-heading-icon {
+    width: 39px;
+    height: 39px;
+
+    border-radius: 12px;
+  }
+
+  .admin-auth-scanner-heading-copy strong {
     font-size:
       clamp(
-        15px,
-        1.65vw,
-        21px
+        17px,
+        1.9vw,
+        22px
       );
   }
 
-  .admin-auth-result {
-    width:
-      min(
-        650px,
-        calc(100% - 40px)
-      );
-
+  .admin-auth-scanner-ready {
     padding:
-      24px
-      34px;
-
-    border-radius: 31px;
-  }
-
-  .admin-auth-result-icon,
-  .admin-auth-processing-icon {
-    width: 88px;
-    height: 88px;
-
-    border-radius: 27px;
-  }
-
-  .admin-auth-result-icon {
-    font-size: 54px;
-  }
-
-  .admin-auth-processing-icon span {
-    width: 41px;
-    height: 41px;
-  }
-
-  .admin-auth-result h2 {
-    margin-top: 15px;
-
-    font-size:
-      clamp(
-        38px,
-        4.8vw,
-        59px
-      );
-  }
-
-  .admin-auth-result p {
-    margin-top: 9px;
-
-    font-size:
-      clamp(
-        21px,
-        2.7vw,
-        34px
-      );
-  }
-
-  .admin-auth-result strong {
-    margin-top: 9px;
+      6px
+      11px;
 
     font-size:
       clamp(
         12px,
-        1.3vw,
-        17px
+        1.25vw,
+        15px
+      );
+  }
+
+  .admin-auth-scanner-wrapper {
+    padding: 9px;
+  }
+
+  .admin-auth-instruction {
+    padding:
+      8px
+      16px;
+
+    border-radius: 17px;
+  }
+
+  .admin-auth-instruction-number {
+    width: 37px;
+    height: 37px;
+  }
+
+  .admin-auth-instruction-copy strong {
+    font-size:
+      clamp(
+        17px,
+        2vw,
+        23px
       );
   }
 
   .admin-auth-footer {
-    margin-top: 9px;
+    margin-top: 10px;
   }
 
-  .admin-auth-event {
+  .admin-auth-return-button {
+    min-width:
+      clamp(
+        190px,
+        23vw,
+        255px
+      );
+
+    min-height: 49px;
+
     padding:
       6px
-      11px;
-  }
+      17px;
 
-  .admin-auth-event strong {
+    border-radius: 16px;
+
     font-size:
       clamp(
-        13px,
-        1.35vw,
-        17px
+        16px,
+        1.9vw,
+        22px
       );
   }
 
-  .admin-auth-cancel-button {
-    min-height: 47px;
+  .admin-auth-return-icon {
+    width: 27px;
+    height: 27px;
+  }
+
+  .admin-auth-result-panel {
+    width:
+      min(
+        100%,
+        760px
+      );
 
     padding:
-      6px
-      16px;
+      22px
+      34px;
 
-    border-radius: 15px;
+    border-radius: 30px;
+  }
+
+  .admin-auth-result-icon {
+    width:
+      clamp(
+        78px,
+        9vw,
+        105px
+      );
+
+    height:
+      clamp(
+        78px,
+        9vw,
+        105px
+      );
 
     font-size:
       clamp(
-        15px,
-        1.65vw,
-        20px
+        50px,
+        6vw,
+        70px
+      );
+  }
+
+  .admin-auth-result-panel h2 {
+    font-size:
+      clamp(
+        40px,
+        5.5vw,
+        65px
+      );
+  }
+
+  .admin-auth-result-primary {
+    font-size:
+      clamp(
+        31px,
+        4.3vw,
+        53px
       );
   }
 }
@@ -1516,99 +1904,65 @@
     flex-direction: column;
   }
 
-  .admin-auth-title-area h1 {
+  .admin-auth-header h1 {
     white-space: normal;
   }
 
-  .admin-auth-mode-label {
+  .admin-auth-mode {
     width: 100%;
   }
 
+  .admin-auth-header-meta {
+    flex-wrap: wrap;
+  }
+
   .admin-auth-main {
-    min-height: 600px;
-
-    overflow: visible;
-  }
-
-  .admin-auth-waiting {
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-
-    overflow: visible;
-  }
-
-  .admin-auth-scanner-wrapper {
-    height: auto;
-    flex: none;
+    min-height: 650px;
   }
 
   .admin-auth-scanner-wrapper
     .camera-qr-scanner {
     width:
       min(
-        88vw,
+        100%,
         720px
       );
 
-    height:
-      min(
-        66vw,
-        540px
-      );
+    height: auto;
 
     aspect-ratio: 4 / 3;
+  }
+
+  .admin-auth-return-button {
+    width: 100%;
   }
 }
 
 /*
-  スマートフォン
+  狭い画面
 */
 @media (
   max-width: 680px
 ) {
-  .admin-auth-page {
-    padding:
-      16px
-      16px
-      max(
-        20px,
-        env(safe-area-inset-bottom)
-      );
-  }
-
-  .admin-auth-scanner-wrapper {
-    padding: 9px;
-  }
-
-  .admin-auth-scanner-wrapper::after {
-    inset: 9px;
-  }
-
-  .admin-auth-scanner-wrapper
-    .camera-qr-scanner {
+  .admin-auth-current-event {
     width: 100%;
   }
 
-  .admin-auth-instruction {
-    width: 100%;
-
-    white-space: normal;
+  .admin-auth-header-divider {
+    display: none;
   }
 
-  .admin-auth-footer {
-    grid-template-columns: 1fr;
+  .admin-auth-scanner-card-header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
-  .admin-auth-event,
-  .admin-auth-cancel-button {
-    width: 100%;
-
-    justify-self: stretch;
+  .admin-auth-scanner-ready {
+    align-self: flex-start;
   }
 
-  .admin-auth-cancel-button {
-    width: 100%;
+  .admin-auth-instruction-copy strong {
+    line-height: 1.25;
   }
 }
 
@@ -1620,12 +1974,11 @@
     reduce
 ) {
   .admin-auth-page,
-  .admin-auth-cancel-button {
+  .admin-auth-return-button {
     transition: none;
   }
 
-  .admin-auth-processing-icon
-    span {
+  .admin-auth-processing-spinner {
     animation-duration: 1.8s;
   }
 }
