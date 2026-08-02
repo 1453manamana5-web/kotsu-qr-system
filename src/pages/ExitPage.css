@@ -2079,3 +2079,115 @@
       1.8s;
   }
 }
+/*
+  iPad横向きでカメラ領域を広くする
+*/
+@media (
+  orientation: landscape
+) and (
+  max-height: 850px
+) {
+  .exit-reception-page {
+    padding-top: 13px;
+
+    padding-bottom:
+      max(
+        11px,
+        env(
+          safe-area-inset-bottom
+        )
+      );
+  }
+
+  .exit-header-meta {
+    margin-top: 5px;
+  }
+
+  .exit-reception-mode {
+    min-height: 61px;
+  }
+
+  .exit-reception-main {
+    margin-top: 8px;
+  }
+
+  .exit-waiting-panel {
+    gap: 6px;
+  }
+
+  .exit-scanner-card-header {
+    min-height: 49px;
+
+    padding:
+      5px
+      16px;
+  }
+
+  .exit-scanner-heading-icon {
+    width: 35px;
+    height: 35px;
+  }
+
+  .exit-scanner-heading-copy strong {
+    font-size:
+      clamp(
+        16px,
+        1.75vw,
+        21px
+      );
+  }
+
+  .exit-scanner-ready {
+    padding:
+      5px
+      10px;
+  }
+
+  .exit-scanner-wrapper {
+    padding: 5px;
+  }
+
+  .exit-scanner-wrapper
+    .camera-qr-scanner {
+    border-width: 2px;
+  }
+
+  .exit-scan-instruction {
+    min-height: 52px;
+
+    padding:
+      5px
+      14px;
+  }
+
+  .exit-scan-instruction-number {
+    width: 34px;
+    height: 34px;
+  }
+
+  .exit-scan-instruction-copy strong {
+    font-size:
+      clamp(
+        16px,
+        1.85vw,
+        22px
+      );
+  }
+
+  .exit-scan-instruction-copy small {
+    font-size:
+      clamp(
+        11px,
+        1.1vw,
+        14px
+      );
+  }
+
+  .exit-reception-footer {
+    margin-top: 6px;
+  }
+
+  .exit-reception-footer button {
+    min-height: 44px;
+  }
+}
