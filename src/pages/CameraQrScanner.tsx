@@ -66,22 +66,6 @@ function getErrorMessage(
   }
 }
 
-function isBackCameraLabel(
-  cameraLabel: string
-) {
-  const label =
-    cameraLabel.toLowerCase();
-
-  return (
-    label.includes("back") ||
-    label.includes("rear") ||
-    label.includes("environment") ||
-    label.includes("world") ||
-    label.includes("背面") ||
-    label.includes("外側")
-  );
-}
-
 function stopMediaStream(
   stream:
     MediaStream |
@@ -206,19 +190,6 @@ async function applyFastCameraSettings(
 ) {
   const fastConstraints:
     ExtendedVideoConstraints = {
-      width: {
-        ideal: 1280,
-      },
-
-      height: {
-        ideal: 720,
-      },
-
-      frameRate: {
-        ideal: 30,
-        min: 15,
-      },
-
       advanced: [
         {
           focusMode:
@@ -240,35 +211,9 @@ async function applyFastCameraSettings(
     );
   } catch (advancedError) {
     console.warn(
-      "連続フォーカス設定を使用できませんでした。通常設定を試します。",
+      "連続フォーカス設定には対応していないため、端末の標準設定を使用します。",
       advancedError
     );
-
-    try {
-      await scanner.applyVideoConstraints({
-        width: {
-          ideal: 1280,
-        },
-
-        height: {
-          ideal: 720,
-        },
-
-        frameRate: {
-          ideal: 30,
-          min: 15,
-        },
-      });
-
-      console.log(
-        "基本カメラ設定を適用しました。"
-      );
-    } catch (basicError) {
-      console.warn(
-        "カメラ設定の変更には対応していません。端末の標準設定を使用します。",
-        basicError
-      );
-    }
   }
 }
 
@@ -585,110 +530,34 @@ function CameraQrScanner({
           scannerRef.current =
             scanner;
 
-          const cameras =
-            await Html5Qrcode.getCameras();
-
-          if (
-            cancelled ||
-            !enabled ||
-            !pageVisible
-          ) {
-            if (
-              scannerRef.current ===
-              scanner
-            ) {
-              scannerRef.current =
-                null;
-            }
-
-            await stopScannerInstance(
-              scanner
-            );
-
-            stopReaderVideoTracks(
-              readerId
-            );
-
-            return;
-          }
-
-          if (
-            cameras.length ===
-            0
-          ) {
-            throw new Error(
-              "使用できるカメラが見つかりませんでした。"
-            );
-          }
-
-          const preferredCamera =
-            cameras.find(
-              (camera) =>
-                isBackCameraLabel(
-                  camera.label
-                )
-            ) ??
-            cameras[
-              cameras.length - 1
-            ];
-
-          if (
-            preferredCamera ===
-            undefined
-          ) {
-            throw new Error(
-              "背面カメラを選択できませんでした。"
-            );
-          }
-
-          console.log(
-            "使用する背面カメラ:",
-            preferredCamera.label ||
-              preferredCamera.id
-          );
-
           await scanner.start(
-            preferredCamera.id,
+            {
+              facingMode: {
+                ideal:
+                  "environment",
+              },
+
+              width: {
+                ideal:
+                  1280,
+              },
+
+              height: {
+                ideal:
+                  720,
+              },
+
+              frameRate: {
+                ideal:
+                  30,
+
+                min:
+                  20,
+              },
+            },
             {
               fps:
-                18,
-
-              qrbox: (
-                viewfinderWidth,
-                viewfinderHeight
-              ) => {
-                const minimumSide =
-                  Math.min(
-                    viewfinderWidth,
-                    viewfinderHeight
-                  );
-
-                const calculatedSize =
-                  Math.floor(
-                    minimumSide *
-                      0.9
-                  );
-
-                const availableSize =
-                  Math.max(
-                    180,
-                    minimumSide - 16
-                  );
-
-                const finalSize =
-                  Math.min(
-                    calculatedSize,
-                    availableSize
-                  );
-
-                return {
-                  width:
-                    finalSize,
-
-                  height:
-                    finalSize,
-                };
-              },
+                30,
 
               aspectRatio:
                 16 / 9,
