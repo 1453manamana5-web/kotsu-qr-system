@@ -1,120 +1,190 @@
-.connection-status {
-  display: flex;
-  align-items: center;
-  width: max-content;
-  max-width: 100%;
-  gap: 12px;
-  margin-top: 12px;
-  font-size: clamp(
-    26px,
-    3.5vw,
-    48px
-  );
-  font-weight: bold;
-  line-height: 1.15;
+/*
+  ホーム画面側の白いカプセルを解除
+*/
+.home-online-status {
+  display: block;
+
+  min-height: 0;
+
+  margin-top:
+    clamp(
+      10px,
+      1.4vh,
+      16px
+    );
+
+  padding: 0;
+
+  border: none;
+
+  border-radius: 0;
+
+  background: transparent;
+
+  box-shadow: none;
+
+  backdrop-filter: none;
+
+  -webkit-backdrop-filter: none;
 }
 
+/*
+  接続状態全体
+*/
+.connection-status {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 9px;
+
+  color: #667085;
+
+  font-size:
+    clamp(
+      15px,
+      1.35vw,
+      20px
+    );
+
+  font-weight: 650;
+
+  line-height: 1.2;
+
+  letter-spacing: -0.01em;
+}
+
+/*
+  状態を示す丸
+*/
 .connection-status-circle {
-  width: clamp(
-    32px,
-    3.8vw,
-    54px
-  );
-  height: clamp(
-    32px,
-    3.8vw,
-    54px
-  );
+  position: relative;
+
+  display: block;
+
+  width: 10px;
+  height: 10px;
+
   flex-shrink: 0;
+
   border-radius: 50%;
 }
 
-.connection-online {
-  color: #000;
+/*
+  丸の周囲の薄い光
+*/
+.connection-status-circle::after {
+  position: absolute;
+
+  top: 50%;
+  left: 50%;
+
+  width: 20px;
+  height: 20px;
+
+  border-radius: 50%;
+
+  content: "";
+
+  opacity: 0.16;
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    );
+}
+
+/*
+  オンライン
+*/
+.connection-online
+  .connection-status-circle {
+  background: #22a559;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(
+      34,
+      165,
+      89,
+      0.1
+    );
 }
 
 .connection-online
-  .connection-status-circle {
-  background: linear-gradient(
-    145deg,
-    #62ff28,
-    #08a900
-  );
-
-  box-shadow:
-    inset 4px 4px 8px
-      rgba(
-        255,
-        255,
-        255,
-        0.45
-      ),
-    inset -4px -4px 8px
-      rgba(
-        0,
-        80,
-        0,
-        0.3
-      );
+  .connection-status-circle::after {
+  background: #22a559;
 }
 
-.connection-offline {
-  box-sizing: border-box;
-  padding: 7px 15px;
-  border-radius: 14px;
-  background: #ffd8d6;
-  color: #8f1010;
+.connection-online
+  .connection-status-text {
+  color: #4f5b70;
+}
+
+/*
+  オフライン
+*/
+.connection-offline
+  .connection-status-circle {
+  background: #ef4444;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(
+      239,
+      68,
+      68,
+      0.1
+    );
 }
 
 .connection-offline
-  .connection-status-circle {
-  background: linear-gradient(
-    145deg,
-    #ff6b63,
-    #c81f18
-  );
-
-  box-shadow:
-    inset 4px 4px 8px
-      rgba(
-        255,
-        255,
-        255,
-        0.35
-      ),
-    inset -4px -4px 8px
-      rgba(
-        90,
-        0,
-        0,
-        0.3
-      );
+  .connection-status-circle::after {
+  background: #ef4444;
 }
 
+.connection-offline
+  .connection-status-text {
+  color: #b42318;
+}
+
+/*
+  文字
+*/
+.connection-status-text {
+  white-space: nowrap;
+}
+
+/*
+  iPad横向き
+*/
 @media (
-  max-width: 1200px
+  orientation: landscape
 ) and (
-  max-height: 900px
+  max-height: 850px
 ) {
+  .home-online-status {
+    margin-top: 9px;
+  }
+
   .connection-status {
-    margin-top: 7px;
-    gap: 9px;
-    font-size: 29px;
+    gap: 8px;
+
+    font-size:
+      clamp(
+        14px,
+        1.5vw,
+        18px
+      );
   }
 
   .connection-status-circle {
-    width: 36px;
-    height: 36px;
-  }
-}
-
-@media (max-width: 520px) {
-  .connection-status {
-    font-size: 24px;
+    width: 9px;
+    height: 9px;
   }
 
-  .connection-status-circle {
-    width: 31px;
-    height: 31px;
+  .connection-status-circle::after {
+    width: 18px;
+    height: 18px;
   }
 }

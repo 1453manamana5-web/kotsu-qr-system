@@ -73,16 +73,21 @@ function OnlineStatus() {
       }`}
       role="status"
       aria-live="polite"
+      aria-label={
+        isOnline
+          ? "現在オンラインです"
+          : "現在オフラインです"
+      }
     >
       <span
         className="connection-status-circle"
         aria-hidden="true"
       />
 
-      <span>
+      <span className="connection-status-text">
         {isOnline
-          ? "オンラインモード"
-          : "オフラインモード"}
+          ? "オンライン"
+          : "オフライン"}
       </span>
     </div>
   );
