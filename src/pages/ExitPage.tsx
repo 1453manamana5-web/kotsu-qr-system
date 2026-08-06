@@ -247,6 +247,40 @@ function ScannerIcon() {
   );
 }
 
+function SpeakerIcon() {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+    >
+      <path
+        d="M10 25H22L36 13V51L22 39H10V25Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      <path
+        d="M43 23C47 27 47 37 43 41"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M49 16C58 25 58 39 49 48"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function HomeIcon() {
   return (
     <svg
@@ -358,6 +392,21 @@ function ExitPage({
       )
   );
 
+  const [
+    soundReady,
+    setSoundReady,
+  ] = useState(false);
+
+  const [
+    soundStarting,
+    setSoundStarting,
+  ] = useState(false);
+
+  const [
+    soundActivationError,
+    setSoundActivationError,
+  ] = useState("");
+
   useEffect(() => {
     const eventName =
       loadCurrentEventName();
@@ -466,6 +515,53 @@ function ExitPage({
   }, [
     receptionState,
   ]);
+
+  const handleStartReception =
+    useCallback(
+      async () => {
+        if (
+          soundStarting
+        ) {
+          return;
+        }
+
+        setSoundStarting(
+          true
+        );
+
+        setSoundActivationError(
+          ""
+        );
+
+        const soundPlayed =
+          await playReceptionSuccessSound();
+
+        if (
+          !soundPlayed
+        ) {
+          setSoundActivationError(
+            "音を有効にできませんでした。iPadの音量を確認して、もう一度押してください。"
+          );
+
+          setSoundStarting(
+            false
+          );
+
+          return;
+        }
+
+        setSoundReady(
+          true
+        );
+
+        setSoundStarting(
+          false
+        );
+      },
+      [
+        soundStarting,
+      ]
+    );
 
   const showError =
     useCallback(
@@ -757,7 +853,7 @@ function ExitPage({
 
   return (
     <div
-      className={`exit-reception-page ${receptionState}`}
+      className={`exit-reception-page ${receptionState} ${soundReady ? "sound-ready" : "sound-locked"}`}
     >
       <div className="exit-background-circle exit-background-circle-one" />
 
@@ -809,7 +905,68 @@ function ExitPage({
 
       <main className="exit-reception-main">
         {receptionState ===
-          "waiting" && (
+          "waiting" &&
+          !soundReady && (
+          <section className="exit-sound-start-panel">
+            <div className="exit-sound-start-icon">
+              <SpeakerIcon />
+            </div>
+
+            <span className="exit-sound-start-eyebrow">
+              SOUND CHECK
+            </span>
+
+            <h2>
+              音声を有効にして
+              <br />
+              退出受付を開始
+            </h2>
+
+            <p className="exit-sound-start-description">
+              ボタンを押すと確認用の3連音が鳴り、
+              その後カメラが起動します。
+            </p>
+
+            <button
+              type="button"
+              className="exit-sound-start-button"
+              disabled={
+                soundStarting
+              }
+              onClick={() => {
+                void handleStartReception();
+              }}
+            >
+              <span className="exit-sound-start-button-icon">
+                <SpeakerIcon />
+              </span>
+
+              <span>
+                {soundStarting
+                  ? "音声を準備しています…"
+                  : "音を有効にして退出受付を開始"}
+              </span>
+            </button>
+
+            <p className="exit-sound-start-note">
+              iPadの音量が上がっていることを確認してください
+            </p>
+
+            {soundActivationError !==
+              "" && (
+              <p
+                className="exit-sound-start-error"
+                role="alert"
+              >
+                {soundActivationError}
+              </p>
+            )}
+          </section>
+        )}
+
+        {receptionState ===
+          "waiting" &&
+          soundReady && (
           <section className="exit-waiting-panel">
             <div className="exit-scanner-card">
               <div className="exit-scanner-card-header">
@@ -991,7 +1148,8 @@ function ExitPage({
           className="exit-home-button"
           disabled={
             receptionState ===
-            "processing"
+              "processing" ||
+            soundStarting
           }
           onClick={() =>
             setPage(
@@ -1013,7 +1171,8 @@ function ExitPage({
           className="exit-admin-button"
           disabled={
             receptionState ===
-            "processing"
+              "processing" ||
+            soundStarting
           }
           onClick={
             openAdminAuth

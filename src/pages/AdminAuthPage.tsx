@@ -179,6 +179,40 @@ function ScannerIcon() {
   );
 }
 
+function SpeakerIcon() {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+    >
+      <path
+        d="M10 25H22L36 13V51L22 39H10V25Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      <path
+        d="M43 23C47 27 47 37 43 41"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M49 16C58 25 58 39 49 48"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function ReturnIcon() {
   return (
     <svg
@@ -226,6 +260,21 @@ function AdminAuthPage({
     scannerSession,
     setScannerSession,
   ] = useState(0);
+
+  const [
+    soundReady,
+    setSoundReady,
+  ] = useState(false);
+
+  const [
+    soundStarting,
+    setSoundStarting,
+  ] = useState(false);
+
+  const [
+    soundActivationError,
+    setSoundActivationError,
+  ] = useState("");
 
   useEffect(() => {
     if (
@@ -278,6 +327,53 @@ function AdminAuthPage({
     authState,
     setPage,
   ]);
+
+  const handleStartAuthentication =
+    useCallback(
+      async () => {
+        if (
+          soundStarting
+        ) {
+          return;
+        }
+
+        setSoundStarting(
+          true
+        );
+
+        setSoundActivationError(
+          ""
+        );
+
+        const soundPlayed =
+          await playReceptionSuccessSound();
+
+        if (
+          !soundPlayed
+        ) {
+          setSoundActivationError(
+            "音を有効にできませんでした。iPadの音量を確認して、もう一度押してください。"
+          );
+
+          setSoundStarting(
+            false
+          );
+
+          return;
+        }
+
+        setSoundReady(
+          true
+        );
+
+        setSoundStarting(
+          false
+        );
+      },
+      [
+        soundStarting,
+      ]
+    );
 
   const handleQrScan =
     useCallback(
@@ -417,7 +513,7 @@ function AdminAuthPage({
 
   return (
     <div
-      className={`admin-auth-page ${authState}`}
+      className={`admin-auth-page ${authState} ${soundReady ? "sound-ready" : "sound-locked"}`}
     >
       <div className="admin-auth-background-circle admin-auth-background-circle-one" />
 
@@ -476,7 +572,68 @@ function AdminAuthPage({
         }
       >
         {authState ===
-          "waiting" && (
+          "waiting" &&
+          !soundReady && (
+          <section className="admin-auth-sound-start-panel">
+            <div className="admin-auth-sound-start-icon">
+              <SpeakerIcon />
+            </div>
+
+            <span className="admin-auth-sound-start-eyebrow">
+              SOUND CHECK
+            </span>
+
+            <h2>
+              音声を有効にして
+              <br />
+              管理者認証を開始
+            </h2>
+
+            <p className="admin-auth-sound-start-description">
+              ボタンを押すと確認用の3連音が鳴り、
+              その後カメラが起動します。
+            </p>
+
+            <button
+              type="button"
+              className="admin-auth-sound-start-button"
+              disabled={
+                soundStarting
+              }
+              onClick={() => {
+                void handleStartAuthentication();
+              }}
+            >
+              <span className="admin-auth-sound-start-button-icon">
+                <SpeakerIcon />
+              </span>
+
+              <span>
+                {soundStarting
+                  ? "音声を準備しています…"
+                  : "音を有効にして認証を開始"}
+              </span>
+            </button>
+
+            <p className="admin-auth-sound-start-note">
+              iPadの音量が上がっていることを確認してください
+            </p>
+
+            {soundActivationError !==
+              "" && (
+              <p
+                className="admin-auth-sound-start-error"
+                role="alert"
+              >
+                {soundActivationError}
+              </p>
+            )}
+          </section>
+        )}
+
+        {authState ===
+          "waiting" &&
+          soundReady && (
           <section className="admin-auth-waiting-panel">
             <div className="admin-auth-scanner-card">
               <div className="admin-auth-scanner-card-header">
@@ -625,7 +782,8 @@ function AdminAuthPage({
           className={`admin-auth-return-button admin-auth-return-${returnPage}`}
           disabled={
             authState ===
-            "processing"
+              "processing" ||
+            soundStarting
           }
           onClick={() =>
             setPage(
