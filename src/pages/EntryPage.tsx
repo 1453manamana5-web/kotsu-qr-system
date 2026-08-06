@@ -1,7 +1,6 @@
 import {
   useCallback,
   useEffect,
-  useRef,
   useState,
 } from "react";
 
@@ -21,6 +20,11 @@ import {
   removeReceptionPresence,
   sendReceptionHeartbeat,
 } from "../receptionPresenceFirestore";
+
+import {
+  playReceptionErrorSound,
+  playReceptionSuccessSound,
+} from "../receptionSound";
 
 import "./EntryPage.css";
 
@@ -62,8 +66,6 @@ const EVENT_STORAGE_KEY =
 const HEARTBEAT_INTERVAL_MILLISECONDS =
   5 * 1000;
 
-const SUCCESS_SOUND_PATH =
-  "/sounds/hankyu_style_gate_triple.wav";
 
 function loadCurrentEventName() {
   try {
@@ -356,61 +358,6 @@ function EntryPage({
       )
   );
 
-  const successSoundRef =
-    useRef<HTMLAudioElement | null>(
-      null
-    );
-
-  useEffect(() => {
-    const successSound =
-      new Audio(
-        SUCCESS_SOUND_PATH
-      );
-
-    successSound.preload =
-      "auto";
-
-    successSound.load();
-
-    successSoundRef.current =
-      successSound;
-
-    return () => {
-      successSound.pause();
-
-      successSoundRef.current =
-        null;
-    };
-  }, []);
-
-  const playSuccessSound =
-    useCallback(() => {
-      const successSound =
-        successSoundRef.current;
-
-      if (
-        successSound === null
-      ) {
-        return;
-      }
-
-      successSound.pause();
-
-      successSound.currentTime =
-        0;
-
-      void successSound
-        .play()
-        .catch(
-          (error) => {
-            console.warn(
-              "入口受付の成功音を再生できませんでした。",
-              error
-            );
-          }
-        );
-    }, []);
-
   useEffect(() => {
     const eventName =
       loadCurrentEventName();
@@ -526,6 +473,8 @@ function EntryPage({
         message: string,
         qrNumber = ""
       ) => {
+        void playReceptionErrorSound();
+
         setResultMessage(
           message
         );
@@ -551,7 +500,7 @@ function EntryPage({
         ticketNumber: string,
         message: string
       ) => {
-        playSuccessSound();
+        void playReceptionSuccessSound();
 
         setResultMessage(
           message
@@ -569,9 +518,7 @@ function EntryPage({
           "ticket-success"
         );
       },
-      [
-        playSuccessSound,
-      ]
+      []
     );
 
   const showMemberSuccess =
@@ -581,7 +528,7 @@ function EntryPage({
         qrNumber: string,
         actionMessage: string
       ) => {
-        playSuccessSound();
+        void playReceptionSuccessSound();
 
         setResultName(
           memberName.trim() ===
@@ -602,9 +549,7 @@ function EntryPage({
           "member-success"
         );
       },
-      [
-        playSuccessSound,
-      ]
+      []
     );
 
   const processTicket =

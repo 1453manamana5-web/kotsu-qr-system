@@ -11,6 +11,11 @@ import {
   findMemberByQrInFirestore,
 } from "../memberFirestore";
 
+import {
+  playReceptionErrorSound,
+  playReceptionSuccessSound,
+} from "../receptionSound";
+
 import "./AdminAuthPage.css";
 
 type AdminAuthPageProps = {
@@ -296,6 +301,8 @@ function AdminAuthPage({
           parsedQr ===
           null
         ) {
+          void playReceptionErrorSound();
+
           setAuthenticatedMemberName(
             ""
           );
@@ -311,6 +318,8 @@ function AdminAuthPage({
           eventName.trim() ===
           ""
         ) {
+          void playReceptionErrorSound();
+
           setAuthenticatedMemberName(
             ""
           );
@@ -338,6 +347,8 @@ function AdminAuthPage({
             member ===
             null
           ) {
+            void playReceptionErrorSound();
+
             setAuthenticatedMemberName(
               ""
             );
@@ -353,6 +364,8 @@ function AdminAuthPage({
             member.name.trim() ||
             "部員";
 
+          void playReceptionSuccessSound();
+
           setAuthenticatedMemberName(
             memberName
           );
@@ -365,6 +378,8 @@ function AdminAuthPage({
             "部員QR認証に失敗しました。",
             error
           );
+
+          void playReceptionErrorSound();
 
           setAuthenticatedMemberName(
             ""
