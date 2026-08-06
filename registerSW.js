@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/kotsu-qr-system/sw.js', { scope: '/kotsu-qr-system/' })})}
