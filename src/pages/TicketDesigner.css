@@ -515,15 +515,7 @@
   }
 
   .ticket-number-setting {
-    grid1fr;
-  }
-
-  .ticket-range-inputs > span {
-    display: none;
-  }
-
-  .ticket-number-setting {
-   -template-columns: 1fr 90px 30px;
+    grid-template-columns: 1fr 90px 30px;
   }
 
   .ticket-designer-buttons {
