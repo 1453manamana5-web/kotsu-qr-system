@@ -1,99 +1,20 @@
 import OnlineStatus from "./OnlineStatus";
 
+import { unlockReceptionSound } from "../receptionSound";
+
 import "./HomePage.css";
 
 type HomePageProps = {
-  setPage: (
-    page: string
-  ) => void;
+  setPage: (page: string) => void;
 
-  eventConfigured:
-    boolean;
+  eventConfigured: boolean;
 
   eventName: string;
 };
 
-const SUCCESS_SOUND_PATH =
-  "/sounds/hankyu_style_gate_triple.wav";
-
-const SUCCESS_SOUND_ELEMENT_ID =
-  "qr-reception-success-sound";
-
-function getReceptionSuccessSound() {
-  const existingSound =
-    document.getElementById(
-      SUCCESS_SOUND_ELEMENT_ID
-    );
-
-  if (
-    existingSound instanceof
-      HTMLAudioElement
-  ) {
-    return existingSound;
-  }
-
-  const successSound =
-    new Audio(
-      SUCCESS_SOUND_PATH
-    );
-
-  successSound.id =
-    SUCCESS_SOUND_ELEMENT_ID;
-
-  successSound.preload =
-    "auto";
-
-  document.body.appendChild(
-    successSound
-  );
-
-  return successSound;
-}
-
-function prepareReceptionSuccessSound() {
-  const successSound =
-    getReceptionSuccessSound();
-
-  successSound.pause();
-
-  successSound.currentTime =
-    0;
-
-  successSound.volume =
-    0;
-
-  void successSound
-    .play()
-    .then(
-      () => {
-        successSound.pause();
-
-        successSound.currentTime =
-          0;
-
-        successSound.volume =
-          1;
-      }
-    )
-    .catch(
-      (error) => {
-        successSound.volume =
-          1;
-
-        console.warn(
-          "受付成功音を有効化できませんでした。",
-          error
-        );
-      }
-    );
-}
-
 function EntryIcon() {
   return (
-    <svg
-      viewBox="0 0 64 64"
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 64 64" aria-hidden="true">
       <path
         d="M37 11H52V53H37"
         fill="none"
@@ -125,10 +46,7 @@ function EntryIcon() {
 
 function ExitIcon() {
   return (
-    <svg
-      viewBox="0 0 64 64"
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 64 64" aria-hidden="true">
       <path
         d="M27 11H12V53H27"
         fill="none"
@@ -160,10 +78,7 @@ function ExitIcon() {
 
 function CalendarIcon() {
   return (
-    <svg
-      viewBox="0 0 64 64"
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 64 64" aria-hidden="true">
       <rect
         x="10"
         y="15"
@@ -198,36 +113,18 @@ function CalendarIcon() {
         strokeLinecap="round"
       />
 
-      <circle
-        cx="23"
-        cy="38"
-        r="3"
-        fill="currentColor"
-      />
+      <circle cx="23" cy="38" r="3" fill="currentColor" />
 
-      <circle
-        cx="32"
-        cy="38"
-        r="3"
-        fill="currentColor"
-      />
+      <circle cx="32" cy="38" r="3" fill="currentColor" />
 
-      <circle
-        cx="41"
-        cy="38"
-        r="3"
-        fill="currentColor"
-      />
+      <circle cx="41" cy="38" r="3" fill="currentColor" />
     </svg>
   );
 }
 
 function AdminIcon() {
   return (
-    <svg
-      viewBox="0 0 64 64"
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 64 64" aria-hidden="true">
       <path
         d="M32 7L51 15V29C51 42 43 52 32 57C21 52 13 42 13 29V15L32 7Z"
         fill="none"
@@ -258,10 +155,7 @@ function AdminIcon() {
 
 function ArrowIcon() {
   return (
-    <svg
-      viewBox="0 0 32 32"
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 32 32" aria-hidden="true">
       <path
         d="M8 16H24"
         fill="none"
@@ -287,35 +181,25 @@ function HomePage({
   eventConfigured,
   eventName,
 }: HomePageProps) {
-  const goToEntry =
-    () => {
-      if (
-        !eventConfigured
-      ) {
-        return;
-      }
+  const goToEntry = () => {
+    if (!eventConfigured) {
+      return;
+    }
 
-      prepareReceptionSuccessSound();
+    void unlockReceptionSound();
 
-      setPage(
-        "entry"
-      );
-    };
+    setPage("entry");
+  };
 
-  const goToExit =
-    () => {
-      if (
-        !eventConfigured
-      ) {
-        return;
-      }
+  const goToExit = () => {
+    if (!eventConfigured) {
+      return;
+    }
 
-      prepareReceptionSuccessSound();
+    void unlockReceptionSound();
 
-      setPage(
-        "exit"
-      );
-    };
+    setPage("exit");
+  };
 
   return (
     <div className="home-page">
@@ -337,11 +221,7 @@ function HomePage({
         <button
           type="button"
           className="home-admin-button"
-          onClick={() =>
-            setPage(
-              "admin"
-            )
-          }
+          onClick={() => setPage("admin")}
         >
           <span className="home-admin-icon">
             <AdminIcon />
@@ -393,12 +273,8 @@ function HomePage({
         <button
           type="button"
           className="home-action-card home-entry-card"
-          disabled={
-            !eventConfigured
-          }
-          onClick={
-            goToEntry
-          }
+          disabled={!eventConfigured}
+          onClick={goToEntry}
         >
           <span className="home-action-decoration home-action-decoration-one" />
 
@@ -432,12 +308,8 @@ function HomePage({
         <button
           type="button"
           className="home-action-card home-exit-card"
-          disabled={
-            !eventConfigured
-          }
-          onClick={
-            goToExit
-          }
+          disabled={!eventConfigured}
+          onClick={goToExit}
         >
           <span className="home-action-decoration home-action-decoration-one" />
 

@@ -13,12 +13,18 @@ type ScheduledTone = {
   startDelay: number;
   duration: number;
   volume: number;
-  wave:
-    | OscillatorType;
+  wave: OscillatorType;
 };
+
+const RECORDED_SUCCESS_SOUND_PATH =
+  `${import.meta.env.BASE_URL}sounds/osaka_metro_qr_gate_success.wav?v=20260807`;
 
 let audioContext:
   AudioContext |
+  null = null;
+
+let recordedSuccessAudio:
+  HTMLAudioElement |
   null = null;
 
 let unlockListenersInstalled =
@@ -71,7 +77,7 @@ function getAudioContext():
     null
   ) {
     console.warn(
-      "このブラウザは音声再生に対応していません。"
+      "このブラウザは合成音の再生に対応していません。"
     );
 
     return null;
@@ -90,6 +96,42 @@ function getAudioContext():
 
     return null;
   }
+}
+
+function getRecordedSuccessAudio():
+  HTMLAudioElement |
+  null {
+  if (
+    typeof window ===
+    "undefined"
+  ) {
+    return null;
+  }
+
+  if (
+    recordedSuccessAudio !==
+    null
+  ) {
+    return recordedSuccessAudio;
+  }
+
+  const audio =
+    new Audio(
+      RECORDED_SUCCESS_SOUND_PATH
+    );
+
+  audio.preload =
+    "auto";
+
+  audio.volume =
+    1;
+
+  audio.load();
+
+  recordedSuccessAudio =
+    audio;
+
+  return recordedSuccessAudio;
 }
 
 function removeUnlockListeners() {
@@ -164,7 +206,52 @@ export function installReceptionSoundUnlock() {
   );
 }
 
-export async function unlockReceptionSound():
+async function unlockRecordedSuccessSound():
+  Promise<boolean> {
+  const audio =
+    getRecordedSuccessAudio();
+
+  if (
+    audio ===
+    null
+  ) {
+    return false;
+  }
+
+  audio.pause();
+
+  audio.currentTime =
+    0;
+
+  audio.volume =
+    0.01;
+
+  try {
+    await audio.play();
+
+    audio.pause();
+
+    audio.currentTime =
+      0;
+
+    audio.volume =
+      1;
+
+    return true;
+  } catch (error) {
+    audio.volume =
+      1;
+
+    console.warn(
+      "大阪メトロQR改札音の有効化に失敗しました。",
+      error
+    );
+
+    return false;
+  }
+}
+
+async function unlockAudioContext():
   Promise<boolean> {
   const context =
     getAudioContext();
@@ -184,10 +271,6 @@ export async function unlockReceptionSound():
       await context.resume();
     }
 
-    /*
-      iPad・Safariの音声制限を解除するため、
-      聞こえないほど小さい音を一瞬だけ再生します。
-    */
     const oscillator =
       context.createOscillator();
 
@@ -227,26 +310,52 @@ export async function unlockReceptionSound():
         0.015
     );
 
-    soundUnlocked =
+    return (
       context.state ===
-      "running";
-
-    if (
-      soundUnlocked
-    ) {
-      warnedAboutBlockedSound =
-        false;
-    }
-
-    return soundUnlocked;
+      "running"
+    );
   } catch (error) {
     console.warn(
-      "音声の有効化に失敗しました。",
+      "合成音の有効化に失敗しました。",
       error
     );
 
     return false;
   }
+}
+
+export async function unlockReceptionSound():
+  Promise<boolean> {
+  /*
+    ユーザー操作中に両方の再生開始を要求して、
+    iPad・Safariの自動再生制限を解除します。
+  */
+  const recordedSoundPromise =
+    unlockRecordedSuccessSound();
+
+  const audioContextPromise =
+    unlockAudioContext();
+
+  const [
+    recordedSoundReady,
+    audioContextReady,
+  ] = await Promise.all([
+    recordedSoundPromise,
+    audioContextPromise,
+  ]);
+
+  soundUnlocked =
+    recordedSoundReady ||
+    audioContextReady;
+
+  if (
+    soundUnlocked
+  ) {
+    warnedAboutBlockedSound =
+      false;
+  }
+
+  return soundUnlocked;
 }
 
 async function prepareAudioContext():
@@ -302,6 +411,55 @@ async function prepareAudioContext():
   return context;
 }
 
+async function playRecordedSuccessSound():
+  Promise<boolean> {
+  const audio =
+    getRecordedSuccessAudio();
+
+  if (
+    audio ===
+    null
+  ) {
+    return false;
+  }
+
+  try {
+    audio.pause();
+
+    audio.currentTime =
+      0;
+
+    audio.volume =
+      1;
+
+    await audio.play();
+
+    soundUnlocked =
+      true;
+
+    warnedAboutBlockedSound =
+      false;
+
+    return true;
+  } catch (error) {
+    if (
+      !warnedAboutBlockedSound
+    ) {
+      console.warn(
+        "大阪メトロQR改札音を再生できません。画面を一度タップしてください。",
+        error
+      );
+
+      warnedAboutBlockedSound =
+        true;
+    }
+
+    installReceptionSoundUnlock();
+
+    return false;
+  }
+}
+
 function stopActiveSounds() {
   activeOscillators.forEach(
     (oscillator) => {
@@ -354,10 +512,6 @@ function scheduleTone(
     startTime
   );
 
-  /*
-    音の最初と最後を少し滑らかにして、
-    ノイズが出にくいようにします。
-  */
   gain.gain.setValueAtTime(
     0.0001,
     startTime
@@ -408,7 +562,7 @@ function scheduleTone(
         gain.disconnect();
       } catch {
         /*
-          切断済みの場合は
+          すでに切断済みの場合は
           何もしません。
         */
       }
@@ -457,131 +611,24 @@ async function playToneSequence(
 }
 
 /*
-  チケット・部員の受付成功音
-
-  高めの音を3回鳴らす、
-  改札機に近い「ピ・ピ・ピ」という音です。
+  来場者チケットの通常受付成功音。
+  録音から切り出した大阪メトロQR改札音を再生します。
 */
 export async function playReceptionSuccessSound() {
-  return playToneSequence([
-    {
-      frequency:
-        1568,
-
-      startDelay:
-        0,
-
-      duration:
-        0.085,
-
-      volume:
-        0.16,
-
-      wave:
-        "triangle",
-    },
-
-    {
-      frequency:
-        1568,
-
-      startDelay:
-        0.145,
-
-      duration:
-        0.085,
-
-      volume:
-        0.16,
-
-      wave:
-        "triangle",
-    },
-
-    {
-      frequency:
-        1568,
-
-      startDelay:
-        0.29,
-
-      duration:
-        0.095,
-
-      volume:
-        0.17,
-
-      wave:
-        "triangle",
-    },
-  ]);
+  return playRecordedSuccessSound();
 }
 
 /*
-  再入場時の音
-
-  通常受付より少しだけ高くして、
-  聞き分けられるようにします。
+  再入場も来場者チケットの正常通過なので、
+  通常受付と同じ大阪メトロQR改札音を再生します。
 */
 export async function playReEntrySound() {
-  return playToneSequence([
-    {
-      frequency:
-        1661,
-
-      startDelay:
-        0,
-
-      duration:
-        0.08,
-
-      volume:
-        0.15,
-
-      wave:
-        "triangle",
-    },
-
-    {
-      frequency:
-        1661,
-
-      startDelay:
-        0.13,
-
-      duration:
-        0.08,
-
-      volume:
-        0.15,
-
-      wave:
-        "triangle",
-    },
-
-    {
-      frequency:
-        1865,
-
-      startDelay:
-        0.26,
-
-      duration:
-        0.1,
-
-      volume:
-        0.17,
-
-      wave:
-        "triangle",
-    },
-  ]);
+  return playRecordedSuccessSound();
 }
 
 /*
-  部員受付の成功音
-
-  来場者チケットより少し柔らかい音です。
+  部員受付は来場者と聞き分けられるよう、
+  従来の柔らかい3音を残します。
 */
 export async function playMemberSuccessSound() {
   return playToneSequence([
@@ -639,10 +686,7 @@ export async function playMemberSuccessSound() {
 }
 
 /*
-  QR受付エラー音
-
-  低い音を2回鳴らして、
-  成功音とすぐ区別できるようにします。
+  QR受付エラー音。
 */
 export async function playReceptionErrorSound() {
   return playToneSequence([
@@ -683,7 +727,7 @@ export async function playReceptionErrorSound() {
 }
 
 /*
-  管理者認証成功音
+  管理者認証成功音。
 */
 export async function playAdminAuthSuccessSound() {
   return playToneSequence([
@@ -742,12 +786,25 @@ export async function playAdminAuthSuccessSound() {
 
 export function stopReceptionSounds() {
   stopActiveSounds();
+
+  if (
+    recordedSuccessAudio !==
+    null
+  ) {
+    recordedSuccessAudio.pause();
+
+    recordedSuccessAudio.currentTime =
+      0;
+  }
 }
 
 export async function closeReceptionAudio() {
   removeUnlockListeners();
 
-  stopActiveSounds();
+  stopReceptionSounds();
+
+  recordedSuccessAudio =
+    null;
 
   const context =
     audioContext;
@@ -760,9 +817,9 @@ export async function closeReceptionAudio() {
 
   if (
     context ===
-    null ||
+      null ||
     context.state ===
-    "closed"
+      "closed"
   ) {
     return;
   }
