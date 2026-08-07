@@ -813,7 +813,12 @@
   入力欄
 */
 .create-event-field input {
+  display: block;
+
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+
   min-height:
     clamp(
       48px,
@@ -935,6 +940,26 @@
       1.4vw,
       16px
     );
+}
+
+.create-event-time-fields > * {
+  min-width: 0;
+}
+
+.create-event-field
+  input[type="time"] {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+
+  overflow: hidden;
+}
+
+.create-event-field
+  input[type="time"]::-webkit-date-and-time-value {
+  min-width: 0;
+
+  text-align: left;
 }
 
 .create-event-error {

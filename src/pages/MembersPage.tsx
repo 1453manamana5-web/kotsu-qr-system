@@ -8,6 +8,8 @@ import {
   QRCodeSVG,
 } from "qrcode.react";
 
+import OnlineStatus from "./OnlineStatus";
+
 import MemberCardDesigner from "./MemberCardDesigner";
 
 import {
@@ -1083,9 +1085,7 @@ function MembersPage({
           </h1>
 
           <div className="members-title-row">
-            <h2>
-              部員管理
-            </h2>
+            <OnlineStatus />
 
             <div className="members-event-name">
               イベント名　
@@ -1096,7 +1096,7 @@ function MembersPage({
         </div>
 
         <div className="members-mode-label">
-          管理モード
+          部員管理
         </div>
       </header>
 
