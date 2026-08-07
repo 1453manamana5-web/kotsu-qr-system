@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-
   workflow_dispatch:
 
 permissions:
@@ -13,10 +12,10 @@ permissions:
   id-token: write
 
 # Pagesの公開処理は同時に1つだけ実行します。
-# 実行中の公開は途中でキャンセルせず、完了してから次を開始します。
+# 新しい公開が始まった場合は、古い実行を自動的に終了します。
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -48,6 +47,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     needs:
       - build
@@ -60,3 +60,5 @@ jobs:
       - name: Deploy website
         id: deployment
         uses: actions/deploy-pages@v5
+        with:
+          timeout: 1200000
