@@ -7,7 +7,11 @@
   align-items: center;
   box-sizing: border-box;
   padding: 22px;
-  background: rgba(0, 0, 0, 0.68);
+  color: #17191d;
+  background: rgba(18, 24, 33, 0.62);
+  font-family: inherit;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .member-designer-window {
@@ -16,8 +20,12 @@
   box-sizing: border-box;
   overflow-y: auto;
   padding: 28px;
+  border: 1px solid #d6dce4;
   border-radius: 28px;
-  background: #f4f4f4;
+  background: #f3f5f7;
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.25),
+    0 4px 14px rgba(0, 0, 0, 0.08);
 }
 
 .member-designer-header {
@@ -25,15 +33,19 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 20px;
+  padding: 4px 4px 24px;
+  border-bottom: 1px solid #d9dee5;
 }
 
 .member-designer-header h2 {
   margin: 0;
+  color: #111318;
   font-size: clamp(34px, 4vw, 56px);
 }
 
 .member-designer-header p {
   margin: 8px 0 0;
+  color: #525a65;
   font-size: clamp(18px, 2vw, 27px);
   font-weight: bold;
 }
@@ -42,13 +54,27 @@
   width: 56px;
   height: 56px;
   flex-shrink: 0;
-  border: none;
+  border: 1px solid #cfd5dd;
   border-radius: 50%;
-  background: #d5d5d5;
+  color: #17191d;
+  background: #fff;
   font-size: 38px;
   font-weight: bold;
   line-height: 1;
   cursor: pointer;
+  -webkit-text-fill-color: #17191d;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+
+.member-designer-close:hover {
+  background: #e9edf1;
+}
+
+.member-designer-close:active {
+  transform: scale(0.96);
 }
 
 .member-designer-content {
@@ -72,10 +98,12 @@
 .member-preview-heading h3,
 .member-designer-settings > h3 {
   margin: 0;
+  color: #17191d;
   font-size: clamp(27px, 3vw, 40px);
 }
 
 .member-preview-heading span {
+  color: #4c5561;
   font-size: 18px;
   font-weight: bold;
 }
@@ -87,9 +115,11 @@
   min-height: 500px;
   box-sizing: border-box;
   padding: 24px;
+  border: 1px solid #d4dae2;
   border-radius: 18px;
-  background: #d8d8d8;
+  background: #e8ecf1;
   overflow: auto;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .member-card-print-area {
@@ -97,13 +127,14 @@
   width: 100%;
   max-width: 850px;
   max-height: 680px;
-  border: 2px solid #777;
+  border: 1px solid #9fa8b3;
   border-radius: 12px;
   background-color: #fff;
   background-position: center;
   background-size: contain;
   background-repeat: no-repeat;
   overflow: hidden;
+  box-shadow: 0 12px 32px rgba(23, 25, 29, 0.16);
 }
 
 .member-card-no-background {
@@ -114,7 +145,7 @@
   justify-content: center;
   align-items: center;
   padding: 20px;
-  color: #777;
+  color: #5d6672;
   font-size: clamp(22px, 2.5vw, 34px);
   font-weight: bold;
   text-align: center;
@@ -157,15 +188,18 @@
 
 .member-designer-settings {
   padding: 22px;
+  border: 1px solid #d9dee5;
   border-radius: 20px;
-  background: #e5e5e5;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(23, 25, 29, 0.05);
 }
 
 .member-setting-group {
   margin-top: 18px;
   padding: 16px;
+  border: 1px solid #e0e4e9;
   border-radius: 15px;
-  background: #f4f4f4;
+  background: #f7f8fa;
 }
 
 .member-setting-group:first-of-type {
@@ -191,10 +225,13 @@
   min-height: 52px;
   box-sizing: border-box;
   padding: 8px 12px;
-  border: 2px solid #aaa;
+  border: 1px solid #bfc7d1;
   border-radius: 11px;
+  color: #17191d;
   background: #fff;
   font-size: 19px;
+  font-weight: 700;
+  -webkit-text-fill-color: #17191d;
 }
 
 .member-custom-ratio {
@@ -224,10 +261,13 @@
   min-height: 46px;
   box-sizing: border-box;
   padding: 7px 10px;
-  border: 2px solid #aaa;
+  border: 1px solid #bfc7d1;
   border-radius: 10px;
+  color: #17191d;
   background: #fff;
   font-size: 18px;
+  font-weight: 700;
+  -webkit-text-fill-color: #17191d;
 }
 
 .member-number-setting {
@@ -245,20 +285,42 @@
   min-height: 46px;
   box-sizing: border-box;
   padding: 7px 10px;
-  border: 2px solid #aaa;
+  border: 1px solid #bfc7d1;
   border-radius: 10px;
+  color: #17191d;
   background: #fff;
   font-size: 18px;
+  font-weight: 700;
+  -webkit-text-fill-color: #17191d;
 }
 
 .member-background-label input {
   padding: 12px;
+  border: 1px solid #bfc7d1;
   border-radius: 12px;
+  color: #17191d;
   background: #fff;
+  -webkit-text-fill-color: #17191d;
+}
+
+.member-background-label input::file-selector-button,
+.member-background-label input::-webkit-file-upload-button {
+  min-height: 38px;
+  margin-right: 12px;
+  padding: 7px 13px;
+  border: 1px solid #c4ccd5;
+  border-radius: 9px;
+  color: #17191d;
+  background: #e8edf2;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-text-fill-color: #17191d;
 }
 
 .member-designer-help {
   margin: 9px 0 0;
+  color: #59626e;
   font-size: 15px;
   font-weight: bold;
   line-height: 1.4;
@@ -268,19 +330,22 @@
   min-height: 44px;
   margin-top: 14px;
   padding: 8px 14px;
-  border: none;
+  border: 1px solid #e0a7a4;
   border-radius: 10px;
-  background: #ef9b98;
+  color: #17191d;
+  background: #f8d9d7;
   font-size: 17px;
   font-weight: bold;
   cursor: pointer;
+  -webkit-text-fill-color: #17191d;
 }
 
-.member-setting-group > label:not(
-  .member-select-setting,
-  .member-background-label,
-  .member-number-setting
-) {
+.member-setting-group
+  > label:not(
+    .member-select-setting,
+    .member-background-label,
+    .member-number-setting
+  ) {
   display: grid;
   grid-template-columns: 95px 1fr 65px;
   align-items: center;
@@ -292,6 +357,7 @@
 
 .member-setting-group input[type="range"] {
   width: 100%;
+  accent-color: #2f6b4f;
 }
 
 .member-setting-group > label > span {
@@ -309,27 +375,60 @@
 .member-designer-buttons button {
   min-height: 58px;
   padding: 10px 22px;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 14px;
+  color: #17191d;
   font-size: 21px;
   font-weight: bold;
   cursor: pointer;
+  -webkit-text-fill-color: #17191d;
+  box-shadow: 0 3px 9px rgba(23, 25, 29, 0.08);
+  transition:
+    filter 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.member-designer-buttons button:hover {
+  filter: brightness(0.97);
+  box-shadow: 0 5px 13px rgba(23, 25, 29, 0.12);
+}
+
+.member-designer-buttons button:active {
+  transform: translateY(1px);
 }
 
 .member-design-save-button {
-  background: #79bdf4;
+  border-color: #c7cfd9 !important;
+  background: #e8edf2;
 }
 
 .member-design-print-button {
-  background: #86d992;
+  border-color: #9bc9ad !important;
+  background: #ccebd8;
 }
 
 .member-design-reset-button {
-  background: #ffd074;
+  border-color: #dfca99 !important;
+  background: #f7e8bd;
 }
 
 .member-design-cancel-button {
-  background: #ccc;
+  border-color: #cbd2da !important;
+  background: #fff;
+}
+
+.member-designer-window button,
+.member-designer-window select,
+.member-designer-window input {
+  font-family: inherit;
+}
+
+.member-designer-window button:focus-visible,
+.member-designer-window select:focus-visible,
+.member-designer-window input:focus-visible {
+  outline: 3px solid rgba(47, 107, 79, 0.28);
+  outline-offset: 2px;
 }
 
 @media (max-width: 1050px) {
@@ -366,11 +465,12 @@
     padding: 12px;
   }
 
-  .member-setting-group > label:not(
-    .member-select-setting,
-    .member-background-label,
-    .member-number-setting
-  ) {
+  .member-setting-group
+    > label:not(
+      .member-select-setting,
+      .member-background-label,
+      .member-number-setting
+    ) {
     grid-template-columns: 80px 1fr 55px;
   }
 
@@ -389,7 +489,8 @@
 
 @media print {
   @page {
-    margin: 0;
+    size: auto;
+    margin: 8mm;
   }
 
   body * {
@@ -429,13 +530,16 @@
     background: #fff;
   }
 }
+
 .member-manual-print-page {
   position: fixed;
   z-index: 6000;
   inset: 0;
   box-sizing: border-box;
   overflow: auto;
-  background: #e7e7e7;
+  color: #17191d;
+  background: #f3f5f7;
+  font-family: inherit;
 }
 
 .member-manual-print-toolbar {
@@ -448,27 +552,21 @@
   gap: 22px;
   box-sizing: border-box;
   padding: 18px 24px;
-  border-bottom: 2px solid #aaa;
+  border-bottom: 1px solid #d6dce4;
   background: #fff;
+  box-shadow: 0 3px 14px rgba(23, 25, 29, 0.08);
 }
 
 .member-manual-print-toolbar h2 {
   margin: 0;
-  font-size: clamp(
-    26px,
-    3vw,
-    40px
-  );
+  font-size: clamp(26px, 3vw, 40px);
 }
 
 .member-manual-print-toolbar p {
   max-width: 850px;
   margin: 7px 0 0;
-  font-size: clamp(
-    17px,
-    2vw,
-    23px
-  );
+  color: #525a65;
+  font-size: clamp(17px, 2vw, 23px);
   font-weight: bold;
   line-height: 1.5;
 }
@@ -477,12 +575,15 @@
   min-height: 54px;
   flex-shrink: 0;
   padding: 10px 18px;
-  border: none;
+  border: 1px solid #cbd2da;
   border-radius: 13px;
-  background: #ccc;
+  color: #17191d;
+  background: #e8edf2;
   font-size: 19px;
   font-weight: bold;
   cursor: pointer;
+  font-family: inherit;
+  -webkit-text-fill-color: #17191d;
 }
 
 .member-manual-print-content {
@@ -490,11 +591,9 @@
   justify-content: center;
   align-items: flex-start;
   box-sizing: border-box;
-  min-height: calc(
-    100vh - 120px
-  );
+  min-height: calc(100vh - 120px);
   padding: 24px;
-  background: #e7e7e7;
+  background: #f3f5f7;
 }
 
 .member-card-manual-print-area {
@@ -506,7 +605,7 @@
   max-width: var(--print-width);
   max-height: var(--print-height);
   box-sizing: border-box;
-  border: 1px solid #888;
+  border: 1px solid #9fa8b3;
   background-color: #fff;
   background-position: center;
   background-size: contain;
@@ -514,11 +613,10 @@
   overflow: hidden;
   print-color-adjust: exact;
   -webkit-print-color-adjust: exact;
+  box-shadow: 0 12px 32px rgba(23, 25, 29, 0.16);
 }
 
-@media (
-  max-width: 720px
-) {
+@media (max-width: 720px) {
   .member-manual-print-toolbar {
     align-items: stretch;
     flex-direction: column;
@@ -560,9 +658,11 @@
   }
 
   .member-card-manual-print-area {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    display: inline-block !important;
+    vertical-align: top !important;
     width: var(--print-width) !important;
     height: var(--print-height) !important;
     min-width: var(--print-width) !important;
@@ -578,16 +678,17 @@
     background-size: contain !important;
     background-repeat: no-repeat !important;
     overflow: hidden !important;
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+    -webkit-column-break-inside: avoid !important;
     print-color-adjust: exact !important;
     -webkit-print-color-adjust: exact !important;
+    box-shadow: none !important;
   }
 
-  .member-card-manual-print-area
-    .member-card-qr,
-  .member-card-manual-print-area
-    .member-card-name,
-  .member-card-manual-print-area
-    .member-card-number {
+  .member-card-manual-print-area .member-card-qr,
+  .member-card-manual-print-area .member-card-name,
+  .member-card-manual-print-area .member-card-number {
     position: absolute !important;
   }
 }
