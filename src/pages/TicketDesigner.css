@@ -515,7 +515,15 @@
   }
 
   .ticket-number-setting {
-    grid-template-columns: 1fr 90px 30px;
+    grid1fr;
+  }
+
+  .ticket-range-inputs > span {
+    display: none;
+  }
+
+  .ticket-number-setting {
+   -template-columns: 1fr 90px 30px;
   }
 
   .ticket-designer-buttons {
@@ -719,20 +727,16 @@
   .ticket-print-sheet {
     position: static !important;
     inset: auto !important;
-    display: flex !important;
-    flex-flow: row wrap !important;
-    align-items: flex-start !important;
-    align-content: flex-start !important;
-    justify-content: flex-start !important;
+    display: block !important;
     width: auto !important;
     height: auto !important;
     min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
-    column-gap: var(--ticket-print-gap) !important;
-    row-gap: var(--ticket-print-gap) !important;
     overflow: visible !important;
     visibility: visible !important;
+    font-size: 0 !important;
+    text-align: left !important;
   }
 
   .ticket-print-sheet,
@@ -745,7 +749,8 @@
   */
   .ticket-print-card {
     position: relative !important;
-    flex: 0 0 var(--ticket-print-width) !important;
+    display: inline-block !important;
+    vertical-align: top !important;
     width: var(--ticket-print-width) !important;
     height: var(--ticket-print-height) !important;
     min-width: var(--ticket-print-width) !important;
@@ -753,15 +758,16 @@
     max-width: var(--ticket-print-width) !important;
     max-height: var(--ticket-print-height) !important;
     box-sizing: border-box !important;
-    margin: 0 !important;
+    margin: 0 var(--ticket-print-gap) var(--ticket-print-gap) 0 !important;
     padding: 0 !important;
     background-color: #fff !important;
     background-position: center !important;
     background-size: contain !important;
     background-repeat: no-repeat !important;
     overflow: hidden !important;
-    break-inside: avoid !important;
+    break-inside: avoid-page !important;
     page-break-inside: avoid !important;
+    -webkit-column-break-inside: avoid !important;
     print-color-adjust: exact !important;
     -webkit-print-color-adjust: exact !important;
   }
