@@ -145,3 +145,2041 @@
       176,
       235,
       0.12
+    );
+
+  content: "";
+
+  pointer-events: none;
+}
+
+/*
+  ヘッダー
+*/
+.settings-header {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  flex-shrink: 0;
+
+  gap:
+    clamp(
+      20px,
+      3vw,
+      42px
+    );
+}
+
+.settings-header > div:first-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.settings-header h1 {
+  margin: 0;
+
+  color: #111827;
+
+  font-size:
+    clamp(
+      30px,
+      3.35vw,
+      50px
+    );
+
+  font-weight: 800;
+  line-height: 1.06;
+
+  letter-spacing:
+    -0.045em;
+
+  white-space: nowrap;
+}
+
+.settings-title-row {
+  display: flex;
+  align-items: center;
+
+  min-width: 0;
+
+  gap:
+    clamp(
+      10px,
+      1.4vw,
+      16px
+    );
+
+  margin-top:
+    clamp(
+      9px,
+      1.3vh,
+      14px
+    );
+}
+
+.settings-title-row
+  .connection-status {
+  flex-shrink: 0;
+
+  font-size:
+    clamp(
+      14px,
+      1.4vw,
+      20px
+    );
+}
+
+/*
+  右上ラベル
+*/
+.settings-mode-label {
+  display: flex;
+  align-items: center;
+
+  width:
+    clamp(
+      235px,
+      26vw,
+      350px
+    );
+
+  min-height:
+    clamp(
+      72px,
+      9vh,
+      94px
+    );
+
+  flex-shrink: 0;
+
+  padding:
+    12px
+    clamp(
+      18px,
+      2vw,
+      25px
+    );
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.34
+    );
+
+  border-radius:
+    clamp(
+      20px,
+      2.2vw,
+      28px
+    );
+
+  background:
+    linear-gradient(
+      135deg,
+      #ae76f0 0%,
+      #8350df 52%,
+      #6832c3 100%
+    );
+
+  box-shadow:
+    0 15px 32px
+    rgba(
+      101,
+      48,
+      188,
+      0.27
+    ),
+    inset 0 1px 0
+    rgba(
+      255,
+      255,
+      255,
+      0.36
+    );
+
+  color: #ffffff;
+
+  white-space: nowrap;
+}
+
+.settings-mode-icon {
+  display: grid;
+
+  width:
+    clamp(
+      42px,
+      4.2vw,
+      56px
+    );
+
+  height:
+    clamp(
+      42px,
+      4.2vw,
+      56px
+    );
+
+  flex-shrink: 0;
+
+  margin-right:
+    clamp(
+      10px,
+      1.2vw,
+      16px
+    );
+
+  place-items: center;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.26
+    );
+
+  border-radius:
+    clamp(
+      13px,
+      1.5vw,
+      18px
+    );
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.16
+    );
+}
+
+.settings-mode-icon svg {
+  width: 72%;
+  height: 72%;
+}
+
+.settings-mode-copy {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  line-height: 1;
+}
+
+.settings-mode-copy small {
+  margin-bottom: 5px;
+
+  font-size:
+    clamp(
+      9px,
+      0.85vw,
+      12px
+    );
+
+  font-weight: 800;
+
+  letter-spacing: 0.14em;
+
+  opacity: 0.8;
+}
+
+.settings-mode-copy strong {
+  font-size:
+    clamp(
+      21px,
+      2.25vw,
+      32px
+    );
+
+  font-weight: 850;
+
+  letter-spacing:
+    -0.04em;
+
+  white-space: nowrap;
+}
+
+/*
+  設定一覧
+*/
+.settings-content {
+  position: relative;
+  z-index: 2;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(
+        0,
+        1fr
+      )
+    );
+
+  align-content: start;
+
+  min-height: 0;
+  flex: 1;
+
+  gap:
+    clamp(
+      12px,
+      1.7vw,
+      20px
+    );
+
+  margin-top:
+    clamp(
+      15px,
+      2.2vh,
+      24px
+    );
+
+  padding-right: 4px;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  overscroll-behavior:
+    contain;
+
+  -webkit-overflow-scrolling:
+    touch;
+
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    rgba(
+      111,
+      68,
+      191,
+      0.3
+    )
+    transparent;
+}
+
+.settings-content::-webkit-scrollbar {
+  width: 7px;
+}
+
+.settings-content::-webkit-scrollbar-track {
+  background:
+    transparent;
+}
+
+.settings-content::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+
+  background:
+    rgba(
+      111,
+      68,
+      191,
+      0.28
+    );
+}
+
+.settings-section,
+.settings-danger-section {
+  min-width: 0;
+
+  padding:
+    clamp(
+      16px,
+      2vw,
+      24px
+    );
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.94
+    );
+
+  border-radius:
+    clamp(
+      22px,
+      2.6vw,
+      33px
+    );
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.87
+    );
+
+  box-shadow:
+    0 18px 42px
+    rgba(
+      46,
+      55,
+      82,
+      0.1
+    );
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+}
+
+.settings-section h3,
+.settings-danger-section h3 {
+  display: flex;
+  flex-direction: column;
+
+  margin:
+    0
+    0
+    clamp(
+      11px,
+      1.5vh,
+      17px
+    );
+
+  color: #172033;
+
+  font-size:
+    clamp(
+      21px,
+      2.35vw,
+      33px
+    );
+
+  font-weight: 850;
+  line-height: 1.05;
+
+  letter-spacing:
+    -0.04em;
+
+  white-space: nowrap;
+}
+
+.settings-section h3::before,
+.settings-danger-section h3::before {
+  margin-bottom: 4px;
+
+  color: #9299a7;
+
+  font-size:
+    clamp(
+      9px,
+      0.85vw,
+      12px
+    );
+
+  font-weight: 850;
+
+  letter-spacing: 0.15em;
+}
+
+.settings-system-section h3::before {
+  content: "SYSTEM INFORMATION";
+}
+
+.settings-reception-section h3::before {
+  content: "RECEPTION MODE";
+}
+
+.settings-device-section h3::before {
+  content: "DEVICE SETTINGS";
+}
+
+.settings-data-section h3::before {
+  content: "DATA MANAGEMENT";
+}
+
+/*
+  システム情報
+*/
+.settings-info-row {
+  display: grid;
+
+  grid-template-columns:
+    minmax(
+      0,
+      1fr
+    )
+    auto;
+
+  align-items: center;
+
+  min-height:
+    clamp(
+      49px,
+      6.3vh,
+      61px
+    );
+
+  gap: 12px;
+
+  padding:
+    9px
+    12px;
+
+  border-bottom:
+    1px solid
+    rgba(
+      90,
+      102,
+      124,
+      0.1
+    );
+
+  color: #6a7588;
+
+  font-size:
+    clamp(
+      13px,
+      1.35vw,
+      18px
+    );
+
+  font-weight: 700;
+}
+
+.settings-info-row:last-child {
+  border-bottom: none;
+}
+
+.settings-info-row strong {
+  min-width: 0;
+
+  color: #263046;
+
+  font-size:
+    clamp(
+      15px,
+      1.55vw,
+      21px
+    );
+
+  font-weight: 850;
+
+  text-align: right;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.settings-version {
+  padding:
+    6px
+    12px;
+
+  border-radius: 999px;
+
+  background:
+    #eee6ff;
+
+  color:
+    #7443cb !important;
+
+  letter-spacing:
+    0.04em;
+}
+
+/*
+  受付画面変更
+*/
+.settings-mode-buttons {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(
+        0,
+        1fr
+      )
+    );
+
+  gap:
+    clamp(
+      8px,
+      1vw,
+      12px
+    );
+}
+
+.settings-mode-buttons button {
+  min-height:
+    clamp(
+      53px,
+      7vh,
+      67px
+    );
+
+  padding:
+    8px
+    10px;
+
+  border: none;
+
+  border-radius:
+    clamp(
+      15px,
+      1.8vw,
+      21px
+    );
+
+  font-size:
+    clamp(
+      14px,
+      1.5vw,
+      20px
+    );
+
+  font-weight: 850;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    filter 150ms ease;
+}
+
+.settings-entry-button {
+  background:
+    linear-gradient(
+      135deg,
+      #75baff,
+      #438ee7
+    );
+
+  box-shadow:
+    0 9px 20px
+    rgba(
+      52,
+      119,
+      202,
+      0.2
+    );
+
+  color: #ffffff;
+}
+
+.settings-exit-button {
+  background:
+    linear-gradient(
+      135deg,
+      #ffe46d,
+      #e8bd27
+    );
+
+  color: #4a3b05;
+}
+
+.settings-finish-button {
+  background:
+    linear-gradient(
+      135deg,
+      #75d69a,
+      #3da765
+    );
+
+  color: #ffffff;
+}
+
+.settings-mode-buttons
+  button:hover {
+  transform:
+    translateY(-2px);
+}
+
+.settings-mode-buttons
+  button:active {
+  transform:
+    scale(0.98);
+}
+
+.settings-help {
+  margin:
+    clamp(
+      9px,
+      1.3vh,
+      14px
+    )
+    0
+    0;
+
+  color: #758094;
+
+  font-size:
+    clamp(
+      11px,
+      1.1vw,
+      15px
+    );
+
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+/*
+  端末設定
+*/
+.settings-device-name {
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+
+  color: #354056;
+
+  font-size:
+    clamp(
+      13px,
+      1.35vw,
+      18px
+    );
+
+  font-weight: 800;
+}
+
+.settings-device-name input {
+  width: 100%;
+
+  min-height:
+    clamp(
+      48px,
+      6.2vh,
+      59px
+    );
+
+  padding:
+    8px
+    14px;
+
+  border:
+    2px solid
+    rgba(
+      104,
+      114,
+      135,
+      0.13
+    );
+
+  border-radius:
+    clamp(
+      13px,
+      1.5vw,
+      18px
+    );
+
+  outline: none;
+
+  background: #ffffff;
+
+  color: #172033;
+
+  font-size:
+    clamp(
+      15px,
+      1.55vw,
+      21px
+    );
+
+  font-weight: 700;
+
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.settings-device-name
+  input:focus {
+  border-color:
+    rgba(
+      126,
+      72,
+      222,
+      0.62
+    );
+
+  box-shadow:
+    0 0 0 5px
+    rgba(
+      126,
+      72,
+      222,
+      0.1
+    );
+}
+
+/*
+  音設定
+*/
+.settings-switch-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 14px;
+
+  margin-top:
+    clamp(
+      9px,
+      1.3vh,
+      14px
+    );
+
+  padding:
+    clamp(
+      10px,
+      1.3vw,
+      15px
+    );
+
+  border:
+    1px solid
+    rgba(
+      89,
+      101,
+      122,
+      0.08
+    );
+
+  border-radius:
+    clamp(
+      15px,
+      1.8vw,
+      21px
+    );
+
+  background:
+    #f5f6f8;
+}
+
+.settings-switch-row > div {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  gap: 3px;
+}
+
+.settings-switch-row strong {
+  color: #313c51;
+
+  font-size:
+    clamp(
+      14px,
+      1.45vw,
+      19px
+    );
+
+  font-weight: 800;
+}
+
+.settings-switch-row span {
+  color: #7a8597;
+
+  font-size:
+    clamp(
+      10px,
+      1vw,
+      14px
+    );
+
+  font-weight: 600;
+}
+
+.settings-toggle {
+  position: relative;
+
+  width: 82px;
+  min-height: 42px;
+
+  flex-shrink: 0;
+
+  padding:
+    4px
+    9px;
+
+  border: none;
+  border-radius: 999px;
+
+  font-size:
+    clamp(
+      11px,
+      1.05vw,
+      14px
+    );
+
+  font-weight: 850;
+
+  text-align: right;
+
+  cursor: pointer;
+
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+}
+
+.settings-toggle::before {
+  position: absolute;
+
+  top: 5px;
+
+  width: 32px;
+  height: 32px;
+
+  border-radius: 50%;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 2px 7px
+    rgba(
+      34,
+      42,
+      58,
+      0.23
+    );
+
+  content: "";
+
+  transition:
+    right 150ms ease,
+    left 150ms ease;
+}
+
+.settings-toggle.enabled {
+  padding-right: 10px;
+
+  background: #43b66f;
+
+  color: #ffffff;
+}
+
+.settings-toggle.enabled::before {
+  left: 5px;
+}
+
+.settings-toggle.disabled {
+  padding-left: 10px;
+
+  background: #c8ccd3;
+
+  color: #596274;
+
+  text-align: left;
+}
+
+.settings-toggle.disabled::before {
+  right: 5px;
+}
+
+/*
+  データ管理
+*/
+.settings-data-buttons {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(
+        0,
+        1fr
+      )
+    );
+
+  gap:
+    clamp(
+      8px,
+      1vw,
+      12px
+    );
+}
+
+.settings-data-buttons button,
+.settings-import-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  min-height:
+    clamp(
+      50px,
+      6.6vh,
+      63px
+    );
+
+  padding:
+    8px
+    10px;
+
+  border: none;
+
+  border-radius:
+    clamp(
+      15px,
+      1.8vw,
+      21px
+    );
+
+  font-size:
+    clamp(
+      13px,
+      1.4vw,
+      19px
+    );
+
+  font-weight: 800;
+
+  text-align: center;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  transition:
+    transform 150ms ease,
+    filter 150ms ease;
+}
+
+.settings-export-button {
+  background:
+    linear-gradient(
+      135deg,
+      #dcecff,
+      #c9e0ff
+    );
+
+  color: #35659e;
+}
+
+.settings-import-button {
+  background:
+    linear-gradient(
+      135deg,
+      #eee5ff,
+      #dfd1fa
+    );
+
+  color: #7046b8;
+}
+
+.settings-import-button input {
+  display: none;
+}
+
+.settings-status-reset-button {
+  grid-column:
+    1 / -1;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fff1c9,
+      #ffe5a6
+    );
+
+  color: #8d610b;
+}
+
+.settings-data-buttons
+  button:hover,
+.settings-import-button:hover {
+  transform:
+    translateY(-2px);
+}
+
+.settings-data-buttons
+  button:active,
+.settings-import-button:active {
+  transform:
+    scale(0.98);
+}
+
+/*
+  危険な操作
+*/
+.settings-danger-section {
+  grid-column:
+    1 / -1;
+
+  border:
+    1px solid
+    rgba(
+      208,
+      61,
+      61,
+      0.2
+    );
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(
+        255,
+        244,
+        244,
+        0.96
+      ),
+      rgba(
+        255,
+        233,
+        233,
+        0.96
+      )
+    );
+}
+
+.settings-danger-section h3 {
+  color: #a93535;
+}
+
+.settings-danger-section
+  h3::before {
+  color: #c05b5b;
+
+  content: "DANGER ZONE";
+}
+
+.settings-danger-section p {
+  margin:
+    0
+    0
+    clamp(
+      12px,
+      1.7vh,
+      18px
+    );
+
+  color: #8e4a4a;
+
+  font-size:
+    clamp(
+      12px,
+      1.3vw,
+      17px
+    );
+
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.settings-initialize-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+
+  width: 100%;
+  min-height:
+    clamp(
+      61px,
+      8vh,
+      77px
+    );
+
+  gap: 4px;
+
+  padding:
+    9px
+    14px;
+
+  border: none;
+
+  border-radius:
+    clamp(
+      16px,
+      1.9vw,
+      23px
+    );
+
+  background:
+    linear-gradient(
+      135deg,
+      #e25a55,
+      #bf3434
+    );
+
+  box-shadow:
+    0 11px 25px
+    rgba(
+      179,
+      48,
+      48,
+      0.21
+    );
+
+  color: #ffffff;
+
+  cursor: pointer;
+
+  transition:
+    transform 150ms ease,
+    filter 150ms ease;
+}
+
+.settings-initialize-button strong {
+  font-size:
+    clamp(
+      17px,
+      1.9vw,
+      26px
+    );
+
+  font-weight: 850;
+}
+
+.settings-initialize-button span {
+  color:
+    rgba(
+      255,
+      255,
+      255,
+      0.82
+    );
+
+  font-size:
+    clamp(
+      10px,
+      1vw,
+      14px
+    );
+
+  font-weight: 650;
+}
+
+.settings-initialize-button:hover {
+  transform:
+    translateY(-2px);
+}
+
+.settings-initialize-button:active {
+  transform:
+    scale(0.985);
+}
+
+/*
+  戻るボタン
+*/
+.settings-return-button {
+  position: relative;
+  z-index: 2;
+
+  display: inline-flex;
+  align-items: center;
+
+  align-self: flex-start;
+  flex-shrink: 0;
+
+  min-height:
+    clamp(
+      48px,
+      6.5vh,
+      62px
+    );
+
+  gap:
+    clamp(
+      8px,
+      1vw,
+      12px
+    );
+
+  margin-top:
+    clamp(
+      10px,
+      1.6vh,
+      17px
+    );
+
+  padding:
+    8px
+    clamp(
+      16px,
+      2vw,
+      25px
+    );
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.94
+    );
+
+  border-radius:
+    clamp(
+      15px,
+      1.8vw,
+      21px
+    );
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.84
+    );
+
+  box-shadow:
+    0 9px 24px
+    rgba(
+      45,
+      57,
+      82,
+      0.09
+    );
+
+  color: #344054;
+
+  font-size:
+    clamp(
+      16px,
+      1.8vw,
+      24px
+    );
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    transform 150ms ease;
+}
+
+.settings-return-button::before {
+  font-size: 1.25em;
+
+  content: "←";
+}
+
+.settings-return-button:active {
+  transform:
+    scale(0.98);
+}
+
+/*
+  初期化確認モーダル
+*/
+.settings-reset-background {
+  position: fixed;
+  z-index: 5000;
+
+  inset: 0;
+
+  display: grid;
+
+  place-items: center;
+
+  padding:
+    clamp(
+      18px,
+      4vw,
+      50px
+    );
+
+  background:
+    rgba(
+      17,
+      24,
+      39,
+      0.52
+    );
+
+  backdrop-filter:
+    blur(10px);
+
+  -webkit-backdrop-filter:
+    blur(10px);
+}
+
+.settings-reset-window {
+  width:
+    min(
+      100%,
+      680px
+    );
+
+  max-height:
+    min(
+      90dvh,
+      720px
+    );
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  padding:
+    clamp(
+      25px,
+      3.3vw,
+      40px
+    );
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.9
+    );
+
+  border-radius:
+    clamp(
+      28px,
+      3.5vw,
+      42px
+    );
+
+  background:
+    rgba(
+      252,
+      250,
+      250,
+      0.98
+    );
+
+  box-shadow:
+    0 30px 80px
+    rgba(
+      22,
+      28,
+      43,
+      0.32
+    );
+
+  text-align: center;
+}
+
+.settings-reset-icon {
+  display: grid;
+
+  width:
+    clamp(
+      67px,
+      7vw,
+      89px
+    );
+
+  height:
+    clamp(
+      67px,
+      7vw,
+      89px
+    );
+
+  margin:
+    0
+    auto
+    15px;
+
+  place-items: center;
+
+  border-radius:
+    clamp(
+      20px,
+      2.4vw,
+      28px
+    );
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffe7e7,
+      #ffcaca
+    );
+
+  color: #be3838;
+
+  font-size:
+    clamp(
+      31px,
+      3.8vw,
+      48px
+    );
+
+  font-weight: 900;
+}
+
+.settings-reset-window h2 {
+  margin: 0;
+
+  color: #a93232;
+
+  font-size:
+    clamp(
+      28px,
+      3.7vw,
+      47px
+    );
+
+  font-weight: 850;
+  line-height: 1.05;
+
+  letter-spacing:
+    -0.045em;
+}
+
+.settings-reset-question {
+  margin:
+    clamp(
+      17px,
+      2.4vh,
+      25px
+    )
+    0
+    9px;
+
+  color: #2e3749;
+
+  font-size:
+    clamp(
+      17px,
+      1.9vw,
+      25px
+    );
+
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.settings-reset-warning {
+  margin: 0;
+
+  padding:
+    12px
+    14px;
+
+  border:
+    1px solid
+    rgba(
+      196,
+      56,
+      56,
+      0.12
+    );
+
+  border-radius:
+    clamp(
+      14px,
+      1.7vw,
+      20px
+    );
+
+  background:
+    #fff0f0;
+
+  color: #9d4646;
+
+  font-size:
+    clamp(
+      12px,
+      1.25vw,
+      17px
+    );
+
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.settings-reset-buttons {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(
+        0,
+        1fr
+      )
+    );
+
+  gap:
+    clamp(
+      10px,
+      1.4vw,
+      15px
+    );
+
+  margin-top:
+    clamp(
+      19px,
+      2.8vh,
+      29px
+    );
+}
+
+.settings-reset-buttons button {
+  min-height:
+    clamp(
+      51px,
+      6.7vh,
+      65px
+    );
+
+  padding:
+    8px
+    13px;
+
+  border: none;
+
+  border-radius:
+    clamp(
+      15px,
+      1.8vw,
+      21px
+    );
+
+  font-size:
+    clamp(
+      14px,
+      1.5vw,
+      20px
+    );
+
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+.settings-reset-cancel {
+  background: #e9ebef;
+
+  color: #505c70;
+}
+
+.settings-reset-confirm {
+  background:
+    linear-gradient(
+      135deg,
+      #df5752,
+      #bd3333
+    );
+
+  box-shadow:
+    0 11px 25px
+    rgba(
+      179,
+      48,
+      48,
+      0.21
+    );
+
+  color: #ffffff;
+}
+
+/*
+  フォーカス
+*/
+.settings-page
+  button:focus-visible,
+.settings-page
+  input:focus-visible,
+.settings-page
+  label:focus-within {
+  outline:
+    5px solid
+    rgba(
+      111,
+      55,
+      204,
+      0.2
+    );
+
+  outline-offset: 3px;
+}
+
+/*
+  iPad横向き
+*/
+@media (
+  orientation: landscape
+) and (
+  max-height: 850px
+) {
+  .settings-page {
+    min-height: 100dvh;
+
+    padding:
+      18px
+      clamp(
+        22px,
+        3.5vw,
+        38px
+      )
+      max(
+        15px,
+        env(
+          safe-area-inset-bottom
+        )
+      );
+  }
+
+  .settings-header h1 {
+    font-size:
+      clamp(
+        29px,
+        3.25vw,
+        40px
+      );
+  }
+
+  .settings-title-row {
+    margin-top: 8px;
+  }
+
+  .settings-mode-label {
+    width:
+      clamp(
+        225px,
+        26vw,
+        285px
+      );
+
+    min-height: 66px;
+
+    padding:
+      9px
+      15px;
+
+    border-radius: 20px;
+
+    font-size:
+      clamp(
+        19px,
+        2.15vw,
+        26px
+      );
+  }
+
+  .settings-mode-icon {
+    width: 39px;
+    height: 39px;
+
+    border-radius: 12px;
+  }
+
+  .settings-mode-copy strong {
+    font-size:
+      clamp(
+        19px,
+        2.15vw,
+        26px
+      );
+  }
+
+  .settings-content {
+    gap: 10px;
+
+    margin-top: 13px;
+  }
+
+  .settings-section,
+  .settings-danger-section {
+    padding:
+      12px
+      14px;
+
+    border-radius: 21px;
+  }
+
+  .settings-section h3,
+  .settings-danger-section h3 {
+    margin-bottom: 8px;
+
+    font-size:
+      clamp(
+        19px,
+        2.2vw,
+        27px
+      );
+  }
+
+  .settings-info-row {
+    min-height: 42px;
+
+    padding:
+      6px
+      9px;
+
+    font-size:
+      clamp(
+        11px,
+        1.1vw,
+        14px
+      );
+  }
+
+  .settings-info-row strong {
+    font-size:
+      clamp(
+        13px,
+        1.3vw,
+        17px
+      );
+  }
+
+  .settings-mode-buttons button,
+  .settings-data-buttons button,
+  .settings-import-button {
+    min-height: 45px;
+
+    padding:
+      6px
+      8px;
+
+    border-radius: 14px;
+
+    font-size:
+      clamp(
+        11px,
+        1.15vw,
+        15px
+      );
+  }
+
+  .settings-device-name {
+    gap: 5px;
+
+    font-size:
+      clamp(
+        11px,
+        1.1vw,
+        14px
+      );
+  }
+
+  .settings-device-name input {
+    min-height: 41px;
+
+    padding:
+      6px
+      10px;
+
+    font-size:
+      clamp(
+        13px,
+        1.3vw,
+        17px
+      );
+  }
+
+  .settings-switch-row {
+    margin-top: 7px;
+
+    padding:
+      7px
+      9px;
+
+    border-radius: 13px;
+  }
+
+  .settings-switch-row strong {
+    font-size:
+      clamp(
+        12px,
+        1.2vw,
+        15px
+      );
+  }
+
+  .settings-switch-row span {
+    font-size:
+      clamp(
+        9px,
+        0.9vw,
+        12px
+      );
+  }
+
+  .settings-toggle {
+    width: 72px;
+    min-height: 36px;
+
+    font-size: 11px;
+  }
+
+  .settings-toggle::before {
+    top: 4px;
+
+    width: 28px;
+    height: 28px;
+  }
+
+  .settings-danger-section p,
+  .settings-help {
+    font-size:
+      clamp(
+        9px,
+        0.95vw,
+        12px
+      );
+  }
+
+  .settings-initialize-button {
+    min-height: 51px;
+
+    border-radius: 15px;
+  }
+
+  .settings-initialize-button strong {
+    font-size:
+      clamp(
+        14px,
+        1.5vw,
+        19px
+      );
+  }
+
+  .settings-initialize-button span {
+    font-size:
+      clamp(
+        8px,
+        0.8vw,
+        10px
+      );
+  }
+
+  .settings-return-button {
+    min-height: 47px;
+
+    margin-top: 9px;
+
+    padding:
+      6px
+      16px;
+
+    border-radius: 15px;
+
+    font-size:
+      clamp(
+        16px,
+        1.7vw,
+        21px
+      );
+  }
+}
+
+/*
+  縦向き
+*/
+@media (
+  max-width: 900px
+) {
+  .settings-page {
+    height: auto;
+    min-height: 100dvh;
+
+    overflow: auto;
+  }
+
+  .settings-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .settings-header h1 {
+    white-space: normal;
+  }
+
+  .settings-mode-label {
+    width: 100%;
+  }
+
+  .settings-content {
+    grid-template-columns:
+      1fr;
+
+    flex: none;
+
+    overflow: visible;
+  }
+
+  .settings-danger-section {
+    grid-column: auto;
+  }
+}
+
+/*
+  スマートフォン
+*/
+@media (
+  max-width: 650px
+) {
+  .settings-page {
+    padding:
+      16px
+      16px
+      max(
+        20px,
+        env(
+          safe-area-inset-bottom
+        )
+      );
+  }
+
+  .settings-mode-buttons,
+  .settings-data-buttons {
+    grid-template-columns:
+      1fr;
+  }
+
+  .settings-status-reset-button {
+    grid-column: auto;
+  }
+
+  .settings-return-button {
+    width: 100%;
+
+    justify-content: center;
+  }
+
+  .settings-reset-buttons {
+    grid-template-columns:
+      1fr;
+  }
+}
+
+/*
+  動きを減らす
+*/
+@media (
+  prefers-reduced-motion:
+    reduce
+) {
+  .settings-mode-buttons button,
+  .settings-data-buttons button,
+  .settings-import-button,
+  .settings-toggle,
+  .settings-toggle::before,
+  .settings-initialize-button,
+  .settings-return-button {
+    transition: none;
+  }
+}
