@@ -156,40 +156,11 @@
   margin-top: clamp(9px, 1.3vh, 14px);
 }
 
-.analysis-title-row h2 {
-  display: flex;
-  align-items: center;
-
+.analysis-title-row
+  .connection-status {
   flex-shrink: 0;
 
-  gap: 9px;
-
-  margin: 0;
-
-  color: #667085;
-
   font-size: clamp(14px, 1.4vw, 20px);
-  font-weight: 800;
-  line-height: 1;
-
-  letter-spacing: 0.05em;
-
-  white-space: nowrap;
-}
-
-.analysis-title-row h2::before {
-  width: 10px;
-  height: 10px;
-
-  border-radius: 50%;
-
-  background: #3b82e8;
-
-  box-shadow:
-    0 0 0 5px
-    rgba(59, 130, 232, 0.11);
-
-  content: "";
 }
 
 .analysis-event-name {
@@ -254,15 +225,10 @@
 
   color: #ffffff;
 
-  font-size: clamp(21px, 2.25vw, 32px);
-  font-weight: 850;
-
-  letter-spacing: -0.04em;
-
   white-space: nowrap;
 }
 
-.analysis-mode-label::before {
+.analysis-mode-icon {
   display: grid;
 
   width: clamp(42px, 4.2vw, 56px);
@@ -282,10 +248,40 @@
 
   background:
     rgba(255, 255, 255, 0.16);
+}
 
-  font-size: 0.82em;
+.analysis-mode-icon svg {
+  width: 72%;
+  height: 72%;
+}
 
-  content: "▥";
+.analysis-mode-copy {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  line-height: 1;
+}
+
+.analysis-mode-copy small {
+  margin-bottom: 5px;
+
+  font-size: clamp(9px, 0.85vw, 12px);
+  font-weight: 800;
+
+  letter-spacing: 0.14em;
+
+  opacity: 0.8;
+}
+
+.analysis-mode-copy strong {
+  font-size: clamp(21px, 2.25vw, 32px);
+  font-weight: 850;
+
+  letter-spacing: -0.04em;
+
+  white-space: nowrap;
 }
 
 /*
@@ -1379,7 +1375,8 @@
     margin-top: 8px;
   }
 
-  .analysis-title-row h2 {
+  .analysis-title-row
+    .connection-status {
     font-size: clamp(13px, 1.25vw, 16px);
   }
 
@@ -1394,15 +1391,17 @@
     padding: 9px 15px;
 
     border-radius: 20px;
-
-    font-size: clamp(19px, 2.15vw, 26px);
   }
 
-  .analysis-mode-label::before {
+  .analysis-mode-icon {
     width: 39px;
     height: 39px;
 
     border-radius: 12px;
+  }
+
+  .analysis-mode-copy strong {
+    font-size: clamp(19px, 2.15vw, 26px);
   }
 
   .analysis-content {
@@ -1702,7 +1701,10 @@
     animation-duration: 1.8s;
   }
 }
-/* 右側の分析情報を少し大きくする */
+
+/*
+  右側の分析情報を少し大きくする
+*/
 .analysis-summary-card span {
   font-size: clamp(
     15px,
@@ -1759,7 +1761,9 @@
   );
 }
 
-/* iPad横向きでも小さくなりすぎないようにする */
+/*
+  iPad横向きでも小さくなりすぎないようにする
+*/
 @media (
   orientation: landscape
 ) and (
