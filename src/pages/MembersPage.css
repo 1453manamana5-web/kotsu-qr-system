@@ -164,40 +164,11 @@
   margin-top: clamp(9px, 1.3vh, 14px);
 }
 
-.members-title-row h2 {
-  display: flex;
-  align-items: center;
-
+.members-title-row
+  .connection-status {
   flex-shrink: 0;
 
-  gap: 9px;
-
-  margin: 0;
-
-  color: #667085;
-
   font-size: clamp(14px, 1.4vw, 20px);
-  font-weight: 800;
-  line-height: 1;
-
-  letter-spacing: 0.04em;
-
-  white-space: nowrap;
-}
-
-.members-title-row h2::before {
-  width: 10px;
-  height: 10px;
-
-  border-radius: 50%;
-
-  background: #34a864;
-
-  box-shadow:
-    0 0 0 5px
-    rgba(52, 168, 100, 0.11);
-
-  content: "";
 }
 
 .members-event-name {
@@ -262,15 +233,10 @@
 
   color: #ffffff;
 
-  font-size: clamp(21px, 2.25vw, 32px);
-  font-weight: 850;
-
-  letter-spacing: -0.04em;
-
   white-space: nowrap;
 }
 
-.members-mode-label::before {
+.members-mode-icon {
   display: grid;
 
   width: clamp(42px, 4.2vw, 56px);
@@ -290,10 +256,40 @@
 
   background:
     rgba(255, 255, 255, 0.15);
+}
 
-  font-size: 0.78em;
+.members-mode-icon svg {
+  width: 72%;
+  height: 72%;
+}
 
-  content: "👥";
+.members-mode-copy {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  line-height: 1;
+}
+
+.members-mode-copy small {
+  margin-bottom: 5px;
+
+  font-size: clamp(9px, 0.85vw, 12px);
+  font-weight: 800;
+
+  letter-spacing: 0.14em;
+
+  opacity: 0.8;
+}
+
+.members-mode-copy strong {
+  font-size: clamp(21px, 2.25vw, 32px);
+  font-weight: 850;
+
+  letter-spacing: -0.04em;
+
+  white-space: nowrap;
 }
 
 /*
@@ -1789,7 +1785,8 @@
     margin-top: 8px;
   }
 
-  .members-title-row h2 {
+  .members-title-row
+    .connection-status {
     font-size: clamp(13px, 1.25vw, 16px);
   }
 
@@ -1804,15 +1801,17 @@
     padding: 9px 15px;
 
     border-radius: 20px;
-
-    font-size: clamp(19px, 2.15vw, 26px);
   }
 
-  .members-mode-label::before {
+  .members-mode-icon {
     width: 39px;
     height: 39px;
 
     border-radius: 12px;
+  }
+
+  .members-mode-copy strong {
+    font-size: clamp(19px, 2.15vw, 26px);
   }
 
   .members-content {
