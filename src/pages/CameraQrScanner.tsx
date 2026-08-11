@@ -32,6 +32,15 @@ const CAMERA_SCAN_FPS =
 const CAMERA_ASPECT_RATIO =
   4 / 3;
 
+const CAMERA_VIDEO_WIDTH =
+  1920;
+
+const CAMERA_VIDEO_HEIGHT =
+  1440;
+
+const CAMERA_VIDEO_FPS =
+  30;
+
 function getErrorMessage(
   error: unknown
 ) {
@@ -395,11 +404,38 @@ function CameraQrScanner({
               fps:
                 CAMERA_SCAN_FPS,
 
-              aspectRatio:
-                CAMERA_ASPECT_RATIO,
-
               disableFlip:
                 false,
+
+              videoConstraints: {
+                deviceId: {
+                  exact:
+                    cameraId,
+                },
+
+                width: {
+                  ideal:
+                    CAMERA_VIDEO_WIDTH,
+                },
+
+                height: {
+                  ideal:
+                    CAMERA_VIDEO_HEIGHT,
+                },
+
+                aspectRatio: {
+                  ideal:
+                    CAMERA_ASPECT_RATIO,
+                },
+
+                frameRate: {
+                  ideal:
+                    CAMERA_VIDEO_FPS,
+
+                  max:
+                    CAMERA_VIDEO_FPS,
+                },
+              },
             },
             (
               decodedText
