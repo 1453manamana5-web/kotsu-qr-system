@@ -590,3 +590,9 @@
     min-width: 82%;
   }
 }
+/*
+  前面カメラを鏡のように表示
+*/
+.camera-qr-reader video {
+  transform: scaleX(-1);
+}
