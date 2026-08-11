@@ -30,13 +30,13 @@ const CAMERA_SCAN_FPS =
   15;
 
 const CAMERA_ASPECT_RATIO =
-  4 / 3;
+  16 / 9;
 
 const CAMERA_VIDEO_WIDTH =
-  1920;
+  1280;
 
 const CAMERA_VIDEO_HEIGHT =
-  1440;
+  720;
 
 const CAMERA_VIDEO_FPS =
   30;
@@ -66,10 +66,10 @@ function getErrorMessage(
   }
 }
 
-function isBackCameraLabel(
+function isFrontCameraLabel(
   label: string
 ) {
-  return /back|rear|environment|背面/i.test(
+  return /front|user|facetime|前面|フロント/i.test(
     label
   );
 }
@@ -87,20 +87,17 @@ async function getCameraId() {
     );
   }
 
-  const backCamera =
+  const frontCamera =
     cameras.find(
       (camera) =>
-        isBackCameraLabel(
+        isFrontCameraLabel(
           camera.label
         )
     );
 
   const selectedCamera =
-    backCamera ??
-    cameras[
-      cameras.length -
-        1
-    ];
+    frontCamera ??
+    cameras[0];
 
   return selectedCamera.id;
 }
