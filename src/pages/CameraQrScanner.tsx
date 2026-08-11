@@ -26,6 +26,12 @@ type CameraState =
   | "ready"
   | "error";
 
+const CAMERA_SCAN_FPS =
+  15;
+
+const CAMERA_ASPECT_RATIO =
+  4 / 3;
+
 function getErrorMessage(
   error: unknown
 ) {
@@ -373,7 +379,7 @@ function CameraQrScanner({
                 ],
 
                 useBarCodeDetectorIfSupported:
-                  true,
+                  false,
 
                 verbose:
                   false,
@@ -387,13 +393,13 @@ function CameraQrScanner({
             cameraId,
             {
               fps:
-                30,
+                CAMERA_SCAN_FPS,
 
               aspectRatio:
-                16 / 9,
+                CAMERA_ASPECT_RATIO,
 
               disableFlip:
-                true,
+                false,
             },
             (
               decodedText
