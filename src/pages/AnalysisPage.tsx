@@ -19,6 +19,8 @@ import {
   type ActivityLog,
 } from "../activityFirestore";
 
+import OnlineStatus from "./OnlineStatus";
+
 import "./AnalysisPage.css";
 
 type AnalysisPageProps = {
@@ -405,6 +407,47 @@ function createHourData(
     );
 }
 
+function AnalysisIcon() {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+    >
+      <path
+        d="M11 53V11"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M11 53H55"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M18 44L28 33L37 39L52 20"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      <circle
+        cx="52"
+        cy="20"
+        r="4"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 function AnalysisPage({
   setPage,
   eventData,
@@ -773,9 +816,7 @@ function AnalysisPage({
           </h1>
 
           <div className="analysis-title-row">
-            <h2>
-              分析
-            </h2>
+            <OnlineStatus />
 
             <div className="analysis-event-name">
               イベント名　
@@ -786,7 +827,19 @@ function AnalysisPage({
         </div>
 
         <div className="analysis-mode-label">
-          管理モード
+          <span className="analysis-mode-icon">
+            <AnalysisIcon />
+          </span>
+
+          <span className="analysis-mode-copy">
+            <small>
+              ANALYSIS
+            </small>
+
+            <strong>
+              分析
+            </strong>
+          </span>
         </div>
       </header>
 
