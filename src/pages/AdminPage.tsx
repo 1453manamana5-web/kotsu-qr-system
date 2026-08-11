@@ -496,21 +496,95 @@ function SettingsIcon() {
       viewBox="0 0 64 64"
       aria-hidden="true"
     >
+      <g fill="currentColor">
+        <rect
+          x="29"
+          y="5"
+          width="6"
+          height="12"
+          rx="2"
+        />
+
+        <rect
+          x="29"
+          y="5"
+          width="6"
+          height="12"
+          rx="2"
+          transform="rotate(45 32 32)"
+        />
+
+        <rect
+          x="29"
+          y="5"
+          width="6"
+          height="12"
+          rx="2"
+          transform="rotate(90 32 32)"
+        />
+
+        <rect
+          x="29"
+          y="5"
+          width="6"
+          height="12"
+          rx="2"
+          transform="rotate(135 32 32)"
+        />
+
+        <rect
+          x="29"
+          y="5"
+          width="6"
+          height="12"
+          rx="2"
+          transform="rotate(180 32 32)"
+        />
+
+        <rect
+          x="29"
+          y="5"
+          width="6"
+          height="12"
+          rx="2"
+          transform="rotate(225 32 32)"
+        />
+
+        <rect
+          x="29"
+          y="5"
+          width="6"
+          height="12"
+          rx="2"
+          transform="rotate(270 32 32)"
+        />
+
+        <rect
+          x="29"
+          y="5"
+          width="6"
+          height="12"
+          rx="2"
+          transform="rotate(315 32 32)"
+        />
+      </g>
+
       <circle
         cx="32"
         cy="32"
-        r="9"
+        r="17"
         fill="none"
         stroke="currentColor"
         strokeWidth="4"
       />
 
-      <path
-        d="M32 8L37 11L43 10L47 16L46 22L51 26L50 33L55 38L52 45L46 46L42 52L35 51L30 56L23 53L22 47L16 43L17 36L12 31L15 24L21 23L25 17L32 18Z"
+      <circle
+        cx="32"
+        cy="32"
+        r="7"
         fill="none"
         stroke="currentColor"
         strokeWidth="4"
-        strokeLinejoin="round"
       />
     </svg>
   );
