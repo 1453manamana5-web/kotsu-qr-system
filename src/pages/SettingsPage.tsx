@@ -3,6 +3,8 @@ import {
   useState,
 } from "react";
 
+import OnlineStatus from "./OnlineStatus";
+
 import "./SettingsPage.css";
 
 type SettingsPageProps = {
@@ -22,7 +24,7 @@ type AppSettings = {
 };
 
 const APP_VERSION =
-  "2.5.1";
+  "2.5.2";
 
 const SETTINGS_STORAGE_KEY =
   "qr-management-app-settings";
@@ -78,6 +80,106 @@ function createEventMembersStorageKey(
         );
 
   return `qr-management-event-members-${safeEventName}`;
+}
+
+function SettingsIcon() {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+    >
+      <g fill="currentColor">
+        <rect
+          x="29"
+          y="5"
+          width="6"
+          height="12"
+          rx="2"
+        />
+
+        <rect
+          x="29"
+          y="5"
+          width="6"
+          height="12"
+          rx="2"
+          transform="rotate(45 32 32)"
+        />
+
+        <rect
+          x="29"
+          y="5"
+          width="6"
+          height="12"
+          rx="2"
+          transform="rotate(90 32 32)"
+        />
+
+        <rect
+          x="29"
+          y="5"
+          width="6"
+          height="12"
+          rx="2"
+          transform="rotate(135 32 32)"
+        />
+
+        <rect
+          x="29"
+          y="5"
+          width="6"
+          height="12"
+          rx="2"
+          transform="rotate(180 32 32)"
+        />
+
+        <rect
+          x="29"
+          y="5"
+          width="6"
+          height="12"
+          rx="2"
+          transform="rotate(225 32 32)"
+        />
+
+        <rect
+          x="29"
+          y="5"
+          width="6"
+          height="12"
+          rx="2"
+          transform="rotate(270 32 32)"
+        />
+
+        <rect
+          x="29"
+          y="5"
+          width="6"
+          height="12"
+          rx="2"
+          transform="rotate(315 32 32)"
+        />
+      </g>
+
+      <circle
+        cx="32"
+        cy="32"
+        r="17"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+
+      <circle
+        cx="32"
+        cy="32"
+        r="7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+    </svg>
+  );
 }
 
 function SettingsPage({
@@ -547,18 +649,24 @@ function SettingsPage({
           </h1>
 
           <div className="settings-title-row">
-            <span className="settings-gear">
-              ⚙
-            </span>
-
-            <h2>
-              設定
-            </h2>
+            <OnlineStatus />
           </div>
         </div>
 
         <div className="settings-mode-label">
-          管理モード
+          <span className="settings-mode-icon">
+            <SettingsIcon />
+          </span>
+
+          <span className="settings-mode-copy">
+            <small>
+              SETTINGS
+            </small>
+
+            <strong>
+              設定
+            </strong>
+          </span>
         </div>
       </header>
 
