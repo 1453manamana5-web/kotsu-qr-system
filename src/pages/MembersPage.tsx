@@ -126,6 +126,48 @@ function createQrValue(
   ].join(":");
 }
 
+function MemberManagementIcon() {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+    >
+      <circle
+        cx="25"
+        cy="22"
+        r="9"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+
+      <path
+        d="M9 51C11 39 17 34 25 34C32 34 37 38 40 45"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M45 34V52"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M36 43H54"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function MembersPage({
   setPage,
   eventName,
@@ -218,10 +260,6 @@ function MembersPage({
     string | null
   >(null);
 
-  /*
-    全イベントで共通の
-    部員QR台帳を同期します。
-  */
   useEffect(() => {
     setCardsLoading(
       true
@@ -259,10 +297,6 @@ function MembersPage({
     };
   }, []);
 
-  /*
-    現在のイベントで使う
-    名前と入退室状態を同期します。
-  */
   useEffect(() => {
     setMembersLoading(
       true
@@ -644,10 +678,6 @@ function MembersPage({
           "未入室",
       };
 
-      /*
-        入力欄をすぐ反応させるため、
-        画面上だけ先に更新します。
-      */
       setEventMembers(
         (currentMembers) => {
           const exists =
@@ -1096,7 +1126,19 @@ function MembersPage({
         </div>
 
         <div className="members-mode-label">
-          部員管理
+          <span className="members-mode-icon">
+            <MemberManagementIcon />
+          </span>
+
+          <span className="members-mode-copy">
+            <small>
+              MEMBERS
+            </small>
+
+            <strong>
+              部員管理
+            </strong>
+          </span>
         </div>
       </header>
 
