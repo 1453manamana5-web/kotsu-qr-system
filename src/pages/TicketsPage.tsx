@@ -81,7 +81,7 @@ function TicketIcon() {
       aria-hidden="true"
     >
       <path
-        d="M9 19C13 19 16 16 16 12H48C48 16 51 19 55 19V45C51 45 48 48 48 52H16C16 48 13 45 9 45V19Z"
+        d="M10 18C15 18 18 15 18 10H54V25C49 25 46 28 46 32C46 36 49 39 54 39V54H18C18 49 15 46 10 46V18Z"
         fill="none"
         stroke="currentColor"
         strokeWidth="4"
@@ -89,27 +89,12 @@ function TicketIcon() {
       />
 
       <path
-        d="M32 16V22"
+        d="M31 15V49"
         fill="none"
         stroke="currentColor"
         strokeWidth="4"
         strokeLinecap="round"
-      />
-
-      <path
-        d="M32 29V35"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-
-      <path
-        d="M32 42V48"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
+        strokeDasharray="5 7"
       />
     </svg>
   );
