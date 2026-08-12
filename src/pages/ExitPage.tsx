@@ -9,6 +9,7 @@ import OnlineStatus from "./OnlineStatus";
 
 import {
   processTicketExitInFirestore,
+  subscribeToTickets,
 } from "../ticketFirestore";
 
 import {
@@ -408,6 +409,31 @@ function ExitPage({
   ] = useState("");
 
   useEffect(() => {
+    if (
+      currentEventName.trim() ===
+      ""
+    ) {
+      return;
+    }
+
+    return subscribeToTickets(
+      currentEventName,
+      () => {
+        // オンライン中に全チケットを端末へ保存して、
+        // 通信が切れた後も受付できるようにします。
+      },
+      (error) => {
+        console.warn(
+          "オフライン受付用のチケット準備に失敗しました。",
+          error
+        );
+      }
+    );
+  }, [
+    currentEventName,
+  ]);
+
+  useEffect(() => {
     const eventName =
       loadCurrentEventName();
 
@@ -593,12 +619,13 @@ function ExitPage({
   const showTicketSuccess =
     useCallback(
       (
-        ticketNumber: string
+        ticketNumber: string,
+        message: string
       ) => {
         void playReceptionSuccessSound();
 
         setResultMessage(
-          "退出を受け付けました"
+          message
         );
 
         setResultName(
@@ -664,8 +691,27 @@ function ExitPage({
           if (
             !result.success
           ) {
+            const resultReason =
+              (
+                result as {
+                  reason?: string;
+                }
+              ).reason;
+
             if (
-              result.reason ===
+              resultReason ===
+                "not-cached"
+            ) {
+              showError(
+                "この端末にチケット情報がありません。通信を確認してください",
+                parsedQr.qrNumber
+              );
+
+              return;
+            }
+
+            if (
+              resultReason ===
                 "invalid"
             ) {
               showError(
@@ -677,7 +723,7 @@ function ExitPage({
             }
 
             if (
-              result.reason ===
+              resultReason ===
                 "not-entered"
             ) {
               showError(
@@ -689,7 +735,7 @@ function ExitPage({
             }
 
             if (
-              result.reason ===
+              resultReason ===
                 "already-exited"
             ) {
               showError(
@@ -708,8 +754,20 @@ function ExitPage({
             return;
           }
 
+          const resultSyncStatus =
+            (
+              result as {
+                syncStatus?: string;
+              }
+            ).syncStatus;
+
           showTicketSuccess(
-            result.ticket.qrNumber
+            result.ticket.qrNumber,
+
+            resultSyncStatus ===
+              "pending"
+              ? "退出を端末に保存しました（通信復旧後に自動同期）"
+              : "退出を受け付けました"
           );
         } catch (error) {
           console.error(
@@ -1045,7 +1103,7 @@ function ExitPage({
             </h2>
 
             <p className="exit-result-primary">
-              Firebaseへ確認しています
+              チケット情報を確認しています
             </p>
 
             <p className="exit-result-secondary">

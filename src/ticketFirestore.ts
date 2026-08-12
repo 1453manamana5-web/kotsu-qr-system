@@ -2,6 +2,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocFromCache,
   onSnapshot,
   runTransaction,
   serverTimestamp,
@@ -9,6 +10,7 @@ import {
   writeBatch,
   type DocumentData,
   type Unsubscribe,
+  type WriteBatch,
 } from "firebase/firestore";
 
 import {
@@ -200,6 +202,363 @@ function getActivityDocument(
     ACTIVITY_COLLECTION,
     activityId
   );
+}
+
+function isDeviceOffline() {
+  return (
+    typeof navigator !==
+      "undefined" &&
+    navigator.onLine ===
+      false
+  );
+}
+
+function isOfflineFirestoreError(
+  error: unknown
+) {
+  if (
+    typeof error !==
+      "object" ||
+    error === null ||
+    !("code" in error)
+  ) {
+    return false;
+  }
+
+  const errorCode =
+    String(
+      error.code
+    );
+
+  return (
+    errorCode ===
+      "unavailable" ||
+    errorCode ===
+      "firestore/unavailable"
+  );
+}
+
+function commitBatchWithoutWaitingForServer(
+  batch: WriteBatch
+) {
+  void batch
+    .commit()
+    .catch(
+      (error) => {
+        console.error(
+          "同期待ちデータをFirebaseへ送信できませんでした。",
+          error
+        );
+      }
+    );
+}
+
+async function getCachedTicket(
+  eventName: string,
+  qrNumber: string
+) {
+  try {
+    const ticketSnapshot =
+      await getDocFromCache(
+        getTicketDocument(
+          eventName,
+          qrNumber
+        )
+      );
+
+    if (
+      !ticketSnapshot.exists()
+    ) {
+      return null;
+    }
+
+    return convertTicketDocument(
+      ticketSnapshot.id,
+      ticketSnapshot.data()
+    );
+  } catch (error) {
+    console.warn(
+      "端末内のチケット情報を読み込めませんでした。",
+      error
+    );
+
+    return null;
+  }
+}
+
+async function processTicketEntryFromCache(
+  eventName: string,
+  qrNumber: string,
+  authToken: string,
+  activityId: string
+): Promise<TicketReceptionResult> {
+  const ticket =
+    await getCachedTicket(
+      eventName,
+      qrNumber
+    );
+
+  if (
+    ticket === null
+  ) {
+    return {
+      success:
+        false,
+
+      reason:
+        "not-found",
+    };
+  }
+
+  if (
+    ticket.authToken !==
+    authToken
+  ) {
+    return {
+      success:
+        false,
+
+      reason:
+        "invalid-token",
+    };
+  }
+
+  if (
+    ticket.status ===
+    "無効"
+  ) {
+    return {
+      success:
+        false,
+
+      reason:
+        "invalid",
+    };
+  }
+
+  if (
+    ticket.status ===
+    "入場中"
+  ) {
+    return {
+      success:
+        false,
+
+      reason:
+        "already-inside",
+    };
+  }
+
+  const isReEntry =
+    ticket.status ===
+    "使用済み";
+
+  const updatedTicket:
+    Ticket = {
+    ...ticket,
+
+    status:
+      "入場中",
+  };
+
+  const batch =
+    writeBatch(db);
+
+  batch.update(
+    getTicketDocument(
+      eventName,
+      qrNumber
+    ),
+    {
+      status:
+        "入場中",
+
+      updatedAt:
+        serverTimestamp(),
+    }
+  );
+
+  batch.set(
+    getActivityDocument(
+      eventName,
+      activityId
+    ),
+    {
+      id:
+        activityId,
+
+      type:
+        "ticket-entry",
+
+      qrNumber:
+        ticket.qrNumber,
+
+      timestamp:
+        new Date().toISOString(),
+
+      isReEntry,
+
+      source:
+        "scanner",
+
+      createdAt:
+        serverTimestamp(),
+    }
+  );
+
+  commitBatchWithoutWaitingForServer(
+    batch
+  );
+
+  return {
+    success:
+      true,
+
+    ticket:
+      updatedTicket,
+
+    isReEntry,
+  };
+}
+
+async function processTicketExitFromCache(
+  eventName: string,
+  qrNumber: string,
+  authToken: string,
+  activityId: string
+): Promise<TicketReceptionResult> {
+  const ticket =
+    await getCachedTicket(
+      eventName,
+      qrNumber
+    );
+
+  if (
+    ticket === null
+  ) {
+    return {
+      success:
+        false,
+
+      reason:
+        "not-found",
+    };
+  }
+
+  if (
+    ticket.authToken !==
+    authToken
+  ) {
+    return {
+      success:
+        false,
+
+      reason:
+        "invalid-token",
+    };
+  }
+
+  if (
+    ticket.status ===
+    "無効"
+  ) {
+    return {
+      success:
+        false,
+
+      reason:
+        "invalid",
+    };
+  }
+
+  if (
+    ticket.status ===
+    "未使用"
+  ) {
+    return {
+      success:
+        false,
+
+      reason:
+        "not-entered",
+    };
+  }
+
+  if (
+    ticket.status ===
+    "使用済み"
+  ) {
+    return {
+      success:
+        false,
+
+      reason:
+        "already-exited",
+    };
+  }
+
+  const updatedTicket:
+    Ticket = {
+    ...ticket,
+
+    status:
+      "使用済み",
+  };
+
+  const batch =
+    writeBatch(db);
+
+  batch.update(
+    getTicketDocument(
+      eventName,
+      qrNumber
+    ),
+    {
+      status:
+        "使用済み",
+
+      updatedAt:
+        serverTimestamp(),
+    }
+  );
+
+  batch.set(
+    getActivityDocument(
+      eventName,
+      activityId
+    ),
+    {
+      id:
+        activityId,
+
+      type:
+        "ticket-exit",
+
+      qrNumber:
+        ticket.qrNumber,
+
+      timestamp:
+        new Date().toISOString(),
+
+      source:
+        "scanner",
+
+      createdAt:
+        serverTimestamp(),
+    }
+  );
+
+  commitBatchWithoutWaitingForServer(
+    batch
+  );
+
+  return {
+    success:
+      true,
+
+    ticket:
+      updatedTicket,
+  };
 }
 
 export function subscribeToTickets(
@@ -542,11 +901,23 @@ export async function processTicketEntryInFirestore(
       activityId
     );
 
-  return runTransaction(
-    db,
-    async (
-      transaction
-    ) => {
+  if (
+    isDeviceOffline()
+  ) {
+    return processTicketEntryFromCache(
+      eventName,
+      qrNumber,
+      authToken,
+      activityId
+    );
+  }
+
+  try {
+    return await runTransaction(
+      db,
+      async (
+        transaction
+      ) => {
       const ticketSnapshot =
         await transaction.get(
           ticketDocument
@@ -678,8 +1049,25 @@ export async function processTicketEntryInFirestore(
 
         isReEntry,
       };
+      }
+    );
+  } catch (error) {
+    if (
+      isDeviceOffline() ||
+      isOfflineFirestoreError(
+        error
+      )
+    ) {
+      return processTicketEntryFromCache(
+        eventName,
+        qrNumber,
+        authToken,
+        activityId
+      );
     }
-  );
+
+    throw error;
+  }
 }
 
 export async function processTicketExitInFirestore(
@@ -702,11 +1090,23 @@ export async function processTicketExitInFirestore(
       activityId
     );
 
-  return runTransaction(
-    db,
-    async (
-      transaction
-    ) => {
+  if (
+    isDeviceOffline()
+  ) {
+    return processTicketExitFromCache(
+      eventName,
+      qrNumber,
+      authToken,
+      activityId
+    );
+  }
+
+  try {
+    return await runTransaction(
+      db,
+      async (
+        transaction
+      ) => {
       const ticketSnapshot =
         await transaction.get(
           ticketDocument
@@ -843,8 +1243,25 @@ export async function processTicketExitInFirestore(
         ticket:
           updatedTicket,
       };
+      }
+    );
+  } catch (error) {
+    if (
+      isDeviceOffline() ||
+      isOfflineFirestoreError(
+        error
+      )
+    ) {
+      return processTicketExitFromCache(
+        eventName,
+        qrNumber,
+        authToken,
+        activityId
+      );
     }
-  );
+
+    throw error;
+  }
 }
 
 export async function saveActivityLogToFirestore(

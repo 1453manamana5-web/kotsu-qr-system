@@ -3,7 +3,9 @@ import {
 } from "firebase/app";
 
 import {
-  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
 } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -35,6 +37,13 @@ const firebaseApp =
   );
 
 export const db =
-  getFirestore(
-    firebaseApp
+  initializeFirestore(
+    firebaseApp,
+    {
+      localCache:
+        persistentLocalCache({
+          tabManager:
+            persistentMultipleTabManager(),
+        }),
+    }
   );

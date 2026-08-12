@@ -9,6 +9,7 @@ import OnlineStatus from "./OnlineStatus";
 
 import {
   processTicketEntryInFirestore,
+  subscribeToTickets,
 } from "../ticketFirestore";
 
 import {
@@ -408,6 +409,31 @@ function EntryPage({
   ] = useState("");
 
   useEffect(() => {
+    if (
+      currentEventName.trim() ===
+      ""
+    ) {
+      return;
+    }
+
+    return subscribeToTickets(
+      currentEventName,
+      () => {
+        // オンライン中に全チケットを端末へ保存して、
+        // 通信が切れた後も受付できるようにします。
+      },
+      (error) => {
+        console.warn(
+          "オフライン受付用のチケット準備に失敗しました。",
+          error
+        );
+      }
+    );
+  }, [
+    currentEventName,
+  ]);
+
+  useEffect(() => {
     const eventName =
       loadCurrentEventName();
 
@@ -666,6 +692,20 @@ function EntryPage({
             !result.success
           ) {
             if (
+  String(
+    result.reason
+  ) ===
+    "not-cached"
+) {
+              showError(
+                "この端末にチケット情報がありません。通信を確認してください",
+                parsedQr.qrNumber
+              );
+
+              return;
+            }
+
+            if (
               result.reason ===
                 "invalid"
             ) {
@@ -700,9 +740,16 @@ function EntryPage({
           showTicketSuccess(
             result.ticket.qrNumber,
 
-            result.isReEntry
-              ? "再入場を受け付けました"
-              : "入場を受け付けました"
+            "syncStatus" in
+    result &&
+  result.syncStatus ===
+    "pending"
+              ? result.isReEntry
+                ? "再入場を端末に保存しました（通信復旧後に自動同期）"
+                : "入場を端末に保存しました（通信復旧後に自動同期）"
+              : result.isReEntry
+                ? "再入場を受け付けました"
+                : "入場を受け付けました"
           );
         } catch (error) {
           console.error(
@@ -1038,7 +1085,7 @@ function EntryPage({
             </h2>
 
             <p className="entry-result-primary">
-              Firebaseへ確認しています
+              チケット情報を確認しています
             </p>
 
             <p className="entry-result-secondary">
