@@ -692,11 +692,9 @@ function EntryPage({
             !result.success
           ) {
             if (
-  String(
-    result.reason
-  ) ===
-    "not-cached"
-) {
+              result.reason ===
+                "not-cached"
+            ) {
               showError(
                 "この端末にチケット情報がありません。通信を確認してください",
                 parsedQr.qrNumber
@@ -740,10 +738,8 @@ function EntryPage({
           showTicketSuccess(
             result.ticket.qrNumber,
 
-            "syncStatus" in
-    result &&
-  result.syncStatus ===
-    "pending"
+            result.syncStatus ===
+              "pending"
               ? result.isReEntry
                 ? "再入場を端末に保存しました（通信復旧後に自動同期）"
                 : "入場を端末に保存しました（通信復旧後に自動同期）"

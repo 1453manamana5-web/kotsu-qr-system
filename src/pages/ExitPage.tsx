@@ -691,15 +691,8 @@ function ExitPage({
           if (
             !result.success
           ) {
-            const resultReason =
-              (
-                result as {
-                  reason?: string;
-                }
-              ).reason;
-
             if (
-              resultReason ===
+              result.reason ===
                 "not-cached"
             ) {
               showError(
@@ -711,7 +704,7 @@ function ExitPage({
             }
 
             if (
-              resultReason ===
+              result.reason ===
                 "invalid"
             ) {
               showError(
@@ -723,7 +716,7 @@ function ExitPage({
             }
 
             if (
-              resultReason ===
+              result.reason ===
                 "not-entered"
             ) {
               showError(
@@ -735,7 +728,7 @@ function ExitPage({
             }
 
             if (
-              resultReason ===
+              result.reason ===
                 "already-exited"
             ) {
               showError(
@@ -754,17 +747,10 @@ function ExitPage({
             return;
           }
 
-          const resultSyncStatus =
-            (
-              result as {
-                syncStatus?: string;
-              }
-            ).syncStatus;
-
           showTicketSuccess(
             result.ticket.qrNumber,
 
-            resultSyncStatus ===
+            result.syncStatus ===
               "pending"
               ? "退出を端末に保存しました（通信復旧後に自動同期）"
               : "退出を受け付けました"
