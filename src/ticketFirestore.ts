@@ -53,11 +53,15 @@ export type TicketReceptionResult =
       success: true;
       ticket: Ticket;
       isReEntry?: boolean;
+      syncStatus:
+        | "synced"
+        | "pending";
     }
   | {
       success: false;
       reason:
         | "not-found"
+        | "not-cached"
         | "invalid-token"
         | "invalid"
         | "already-inside"
@@ -225,16 +229,21 @@ function isOfflineFirestoreError(
     return false;
   }
 
-  const errorCode =
-    String(
-      error.code
-    );
+  const errorCode = String(
+    error.code
+  ).replace(
+    "firestore/",
+    ""
+  );
 
   return (
-    errorCode ===
-      "unavailable" ||
-    errorCode ===
-      "firestore/unavailable"
+    errorCode === "unavailable" ||
+    errorCode === "deadline-exceeded" ||
+    errorCode === "aborted" ||
+    errorCode === "cancelled" ||
+    errorCode === "internal" ||
+    errorCode === "unknown" ||
+    errorCode === "failed-precondition"
   );
 }
 
@@ -306,7 +315,7 @@ async function processTicketEntryFromCache(
         false,
 
       reason:
-        "not-found",
+        "not-cached",
     };
   }
 
@@ -418,6 +427,9 @@ async function processTicketEntryFromCache(
       updatedTicket,
 
     isReEntry,
+
+    syncStatus:
+      "pending",
   };
 }
 
@@ -441,7 +453,7 @@ async function processTicketExitFromCache(
         false,
 
       reason:
-        "not-found",
+        "not-cached",
     };
   }
 
@@ -558,6 +570,9 @@ async function processTicketExitFromCache(
 
     ticket:
       updatedTicket,
+
+    syncStatus:
+      "pending",
   };
 }
 
@@ -1048,6 +1063,9 @@ export async function processTicketEntryInFirestore(
           updatedTicket,
 
         isReEntry,
+
+        syncStatus:
+          "synced",
       };
       }
     );
@@ -1242,6 +1260,9 @@ export async function processTicketExitInFirestore(
 
         ticket:
           updatedTicket,
+
+        syncStatus:
+          "synced",
       };
       }
     );
