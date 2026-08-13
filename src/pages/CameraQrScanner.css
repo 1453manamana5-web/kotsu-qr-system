@@ -1,32 +1,34 @@
 .camera-qr-scanner {
   position: relative;
 
-  width: min(
-    88vw,
-    1180px
-  );
+  width:
+    min(
+      88vw,
+      1180px
+    );
 
-  height: min(
-    49.5vw,
-    664px
-  );
+  height:
+    min(
+      49.5vw,
+      664px
+    );
 
   max-width: 100%;
   max-height: 68dvh;
 
   aspect-ratio: 16 / 9;
-
   flex-shrink: 1;
 
-  border-radius: clamp(
-    22px,
-    3vw,
-    42px
-  );
+  overflow: hidden;
+
+  border-radius:
+    clamp(
+      22px,
+      3vw,
+      42px
+    );
 
   background: #000;
-
-  overflow: hidden;
 
   box-shadow:
     0
@@ -42,24 +44,21 @@
 
 .camera-qr-reader {
   position: absolute;
-
   inset: 0;
 
   width: 100%;
   height: 100%;
 
-  background: #000;
-
   overflow: hidden;
+  background: #000;
 }
 
 .camera-qr-reader > div {
   width: 100% !important;
   height: 100% !important;
 
-  border: none !important;
-
   overflow: hidden !important;
+  border: none !important;
 }
 
 .camera-qr-reader video {
@@ -69,8 +68,12 @@
   height: 100% !important;
 
   object-fit: cover !important;
-
   background: #000;
+
+  transform:
+    scaleX(
+      -1
+    );
 }
 
 .camera-qr-reader img,
@@ -91,34 +94,37 @@
 
 .camera-qr-guide {
   position: absolute;
-
   z-index: 10;
-
   inset: 0;
 
   overflow: hidden;
-
   pointer-events: none;
 }
 
 .camera-qr-corners {
+  --camera-qr-corner-color:
+    #fff;
+
   position: absolute;
 
   top: 50%;
   left: 50%;
 
-  width: min(
-    46%,
-    400px
-  );
+  width:
+    min(
+      46%,
+      400px
+    );
 
-  max-width: calc(
-    100% - 60px
-  );
+  max-width:
+    calc(
+      100% - 60px
+    );
 
-  max-height: calc(
-    100% - 60px
-  );
+  max-height:
+    calc(
+      100% - 60px
+    );
 
   aspect-ratio: 1 / 1;
 
@@ -130,163 +136,93 @@
 
   background:
     linear-gradient(
-      #fff,
-      #fff
-    )
-      left top /
-      clamp(
-        55px,
-        7vw,
-        95px
-      )
-      clamp(
-        6px,
-        0.7vw,
-        9px
-      )
+      var(--camera-qr-corner-color),
+      var(--camera-qr-corner-color)
+    ) left top /
+      clamp(55px, 7vw, 95px)
+      clamp(6px, 0.7vw, 9px)
       no-repeat,
 
     linear-gradient(
-      #fff,
-      #fff
-    )
-      left top /
-      clamp(
-        6px,
-        0.7vw,
-        9px
-      )
-      clamp(
-        55px,
-        7vw,
-        95px
-      )
+      var(--camera-qr-corner-color),
+      var(--camera-qr-corner-color)
+    ) left top /
+      clamp(6px, 0.7vw, 9px)
+      clamp(55px, 7vw, 95px)
       no-repeat,
 
     linear-gradient(
-      #fff,
-      #fff
-    )
-      right top /
-      clamp(
-        55px,
-        7vw,
-        95px
-      )
-      clamp(
-        6px,
-        0.7vw,
-        9px
-      )
+      var(--camera-qr-corner-color),
+      var(--camera-qr-corner-color)
+    ) right top /
+      clamp(55px, 7vw, 95px)
+      clamp(6px, 0.7vw, 9px)
       no-repeat,
 
     linear-gradient(
-      #fff,
-      #fff
-    )
-      right top /
-      clamp(
-        6px,
-        0.7vw,
-        9px
-      )
-      clamp(
-        55px,
-        7vw,
-        95px
-      )
+      var(--camera-qr-corner-color),
+      var(--camera-qr-corner-color)
+    ) right top /
+      clamp(6px, 0.7vw, 9px)
+      clamp(55px, 7vw, 95px)
       no-repeat,
 
     linear-gradient(
-      #fff,
-      #fff
-    )
-      left bottom /
-      clamp(
-        55px,
-        7vw,
-        95px
-      )
-      clamp(
-        6px,
-        0.7vw,
-        9px
-      )
+      var(--camera-qr-corner-color),
+      var(--camera-qr-corner-color)
+    ) left bottom /
+      clamp(55px, 7vw, 95px)
+      clamp(6px, 0.7vw, 9px)
       no-repeat,
 
     linear-gradient(
-      #fff,
-      #fff
-    )
-      left bottom /
-      clamp(
-        6px,
-        0.7vw,
-        9px
-      )
-      clamp(
-        55px,
-        7vw,
-        95px
-      )
+      var(--camera-qr-corner-color),
+      var(--camera-qr-corner-color)
+    ) left bottom /
+      clamp(6px, 0.7vw, 9px)
+      clamp(55px, 7vw, 95px)
       no-repeat,
 
     linear-gradient(
-      #fff,
-      #fff
-    )
-      right bottom /
-      clamp(
-        55px,
-        7vw,
-        95px
-      )
-      clamp(
-        6px,
-        0.7vw,
-        9px
-      )
+      var(--camera-qr-corner-color),
+      var(--camera-qr-corner-color)
+    ) right bottom /
+      clamp(55px, 7vw, 95px)
+      clamp(6px, 0.7vw, 9px)
       no-repeat,
 
     linear-gradient(
-      #fff,
-      #fff
-    )
-      right bottom /
-      clamp(
-        6px,
-        0.7vw,
-        9px
-      )
-      clamp(
-        55px,
-        7vw,
-        95px
-      )
+      var(--camera-qr-corner-color),
+      var(--camera-qr-corner-color)
+    ) right bottom /
+      clamp(6px, 0.7vw, 9px)
+      clamp(55px, 7vw, 95px)
       no-repeat;
 }
 
 .camera-qr-line {
   position: absolute;
-
   z-index: 2;
 
   left: 50%;
 
-  width: min(
-    42%,
-    360px
-  );
+  width:
+    min(
+      42%,
+      360px
+    );
 
-  max-width: calc(
-    100% - 80px
-  );
+  max-width:
+    calc(
+      100% - 80px
+    );
 
-  height: clamp(
-    4px,
-    0.5vw,
-    6px
-  );
+  height:
+    clamp(
+      4px,
+      0.5vw,
+      6px
+    );
 
   border-radius: 999px;
 
@@ -304,7 +240,9 @@
     );
 
   transform:
-    translateX(-50%);
+    translateX(
+      -50%
+    );
 
   animation:
     camera-qr-scan
@@ -315,16 +253,16 @@
 
 .camera-qr-message {
   position: absolute;
-
   z-index: 20;
 
   top: 50%;
   left: 50%;
 
-  min-width: min(
-    430px,
-    80%
-  );
+  min-width:
+    min(
+      430px,
+      80%
+    );
 
   display: flex;
   flex-direction: column;
@@ -334,19 +272,12 @@
   box-sizing: border-box;
 
   padding:
-    clamp(
-      13px,
-      2vh,
-      20px
-    )
-    clamp(
-      20px,
-      2.5vw,
-      32px
-    );
+    clamp(13px, 2vh, 20px)
+    clamp(20px, 2.5vw, 32px);
 
   border-radius: 16px;
 
+  color: #000;
   background:
     rgba(
       255,
@@ -354,8 +285,6 @@
       255,
       0.92
     );
-
-  color: #000;
 
   text-align: center;
 
@@ -367,51 +296,54 @@
 }
 
 .camera-qr-message strong {
-  font-size: clamp(
-    20px,
-    2.4vw,
-    32px
-  );
+  font-size:
+    clamp(
+      20px,
+      2.4vw,
+      32px
+    );
 
   line-height: 1.15;
 }
 
 .camera-qr-message span {
-  font-size: clamp(
-    14px,
-    1.5vw,
-    19px
-  );
+  font-size:
+    clamp(
+      14px,
+      1.5vw,
+      19px
+    );
 
   font-weight: bold;
 }
 
 .camera-qr-error {
   position: absolute;
-
   z-index: 20;
-
   inset: 0;
 
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
+  flex-direction: column;
 
-  gap: clamp(
-    8px,
-    1.4vh,
-    14px
-  );
+  gap:
+    clamp(
+      8px,
+      1.4vh,
+      14px
+    );
 
   box-sizing: border-box;
 
-  padding: clamp(
-    20px,
-    3vw,
-    38px
-  );
+  padding:
+    clamp(
+      20px,
+      3vw,
+      38px
+    );
 
+  color: #fff;
   background:
     rgba(
       0,
@@ -420,17 +352,16 @@
       0.9
     );
 
-  color: #fff;
-
   text-align: center;
 }
 
 .camera-qr-error strong {
-  font-size: clamp(
-    24px,
-    3vw,
-    40px
-  );
+  font-size:
+    clamp(
+      24px,
+      3vw,
+      40px
+    );
 
   line-height: 1.15;
 }
@@ -440,17 +371,180 @@
 
   color: #fff;
 
-  font-size: clamp(
-    16px,
-    1.9vw,
-    24px
-  );
+  font-size:
+    clamp(
+      16px,
+      1.9vw,
+      24px
+    );
 
   font-weight: bold;
-
   line-height: 1.4;
-
   overflow-wrap: anywhere;
+}
+
+/*
+  認証成功時は実際の読み取り枠を変化させます。
+*/
+.success-animation
+  .camera-qr-guide::before {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+
+  content: "";
+
+  background:
+    rgba(
+      22,
+      207,
+      88,
+      0.2
+    );
+
+  animation:
+    camera-qr-success-wash
+    1400ms
+    ease-out
+    both;
+}
+
+.success-animation
+  .camera-qr-guide::after {
+  position: absolute;
+  z-index: 6;
+
+  top: 50%;
+  left: 50%;
+
+  content:
+    "✓  認証成功";
+
+  padding:
+    clamp(11px, 1.8vh, 17px)
+    clamp(22px, 3vw, 38px);
+
+  border:
+    2px
+    solid
+    rgba(
+      255,
+      255,
+      255,
+      0.7
+    );
+
+  border-radius: 999px;
+
+  color: #fff;
+  background: #159447;
+
+  box-shadow:
+    0
+    12px
+    34px
+    rgba(
+      5,
+      75,
+      31,
+      0.42
+    ),
+    0
+    0
+    26px
+    rgba(
+      40,
+      229,
+      111,
+      0.7
+    );
+
+  font-size:
+    clamp(
+      22px,
+      3vw,
+      42px
+    );
+
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    );
+
+  animation:
+    camera-qr-success-label
+    620ms
+    250ms
+    cubic-bezier(
+      0.2,
+      1.25,
+      0.3,
+      1
+    )
+    both;
+}
+
+.success-animation
+  .camera-qr-corners {
+  --camera-qr-corner-color:
+    #2be676;
+
+  z-index: 5;
+
+  filter:
+    drop-shadow(
+      0
+      0
+      13px
+      rgba(
+        36,
+        232,
+        113,
+        0.95
+      )
+    );
+
+  animation:
+    camera-qr-success-corners
+    1300ms
+    cubic-bezier(
+      0.2,
+      0.82,
+      0.25,
+      1
+    )
+    both;
+}
+
+.success-animation
+  .camera-qr-line {
+  z-index: 5;
+
+  top: 50%;
+
+  background: #2be676;
+
+  box-shadow:
+    0
+    0
+    22px
+    rgba(
+      43,
+      230,
+      118,
+      1
+    );
+
+  animation:
+    camera-qr-success-line
+    1100ms
+    ease-out
+    both;
 }
 
 @keyframes camera-qr-scan {
@@ -467,51 +561,160 @@
   }
 }
 
+@keyframes camera-qr-success-wash {
+  from {
+    opacity: 0;
+  }
+
+  35% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0.78;
+  }
+}
+
+@keyframes camera-qr-success-label {
+  from {
+    opacity: 0;
+
+    transform:
+      translate(
+        -50%,
+        -42%
+      )
+      scale(
+        0.76
+      );
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translate(
+        -50%,
+        -50%
+      )
+      scale(
+        1
+      );
+  }
+}
+
+@keyframes camera-qr-success-corners {
+  0% {
+    opacity: 0.55;
+
+    transform:
+      translate(
+        -50%,
+        -50%
+      )
+      scale(
+        0.93
+      );
+  }
+
+  45% {
+    opacity: 1;
+
+    transform:
+      translate(
+        -50%,
+        -50%
+      )
+      scale(
+        1.045
+      );
+  }
+
+  100% {
+    opacity: 1;
+
+    transform:
+      translate(
+        -50%,
+        -50%
+      )
+      scale(
+        1
+      );
+  }
+}
+
+@keyframes camera-qr-success-line {
+  from {
+    opacity: 0;
+    width: 10%;
+  }
+
+  35% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 1;
+    width:
+      min(
+        42%,
+        360px
+      );
+  }
+}
+
 @media (
   orientation: landscape
 ) and (
   max-height: 850px
 ) {
   .camera-qr-scanner {
-    width: min(
-      90vw,
-      1120px
-    );
+    width:
+      min(
+        90vw,
+        1120px
+      );
 
-    height: min(
-      50.625vw,
-      630px
-    );
+    height:
+      min(
+        50.625vw,
+        630px
+      );
 
     max-height: 66dvh;
-
     border-radius: 28px;
   }
 
   .camera-qr-corners {
-    width: min(
-      48%,
-      390px
-    );
+    width:
+      min(
+        48%,
+        390px
+      );
 
-    max-width: calc(
-      100% - 70px
-    );
+    max-width:
+      calc(
+        100% - 70px
+      );
 
-    max-height: calc(
-      100% - 55px
-    );
+    max-height:
+      calc(
+        100% - 55px
+      );
   }
 
   .camera-qr-line {
-    width: min(
-      44%,
-      350px
-    );
+    width:
+      min(
+        44%,
+        350px
+      );
 
-    max-width: calc(
-      100% - 90px
-    );
+    max-width:
+      calc(
+        100% - 90px
+      );
   }
 }
 
@@ -519,41 +722,46 @@
   orientation: portrait
 ) {
   .camera-qr-scanner {
-    width: min(
-      92vw,
-      760px
-    );
+    width:
+      min(
+        92vw,
+        760px
+      );
 
-    height: min(
-      70vw,
-      570px
-    );
+    height:
+      min(
+        70vw,
+        570px
+      );
 
     max-height: 58dvh;
-
     aspect-ratio: 4 / 3;
   }
 
   .camera-qr-corners {
-    width: min(
-      62%,
-      390px
-    );
+    width:
+      min(
+        62%,
+        390px
+      );
 
-    max-width: calc(
-      100% - 50px
-    );
+    max-width:
+      calc(
+        100% - 50px
+      );
 
-    max-height: calc(
-      100% - 50px
-    );
+    max-height:
+      calc(
+        100% - 50px
+      );
   }
 
   .camera-qr-line {
-    width: min(
-      56%,
-      355px
-    );
+    width:
+      min(
+        56%,
+        355px
+      );
   }
 }
 
@@ -562,37 +770,53 @@
 ) {
   .camera-qr-scanner {
     width: 94vw;
-
     border-radius: 22px;
   }
 
   .camera-qr-corners {
     width: 60%;
 
-    max-width: calc(
-      100% - 42px
-    );
+    max-width:
+      calc(
+        100% - 42px
+      );
 
-    max-height: calc(
-      100% - 42px
-    );
+    max-height:
+      calc(
+        100% - 42px
+      );
   }
 
   .camera-qr-line {
     width: 54%;
 
-    max-width: calc(
-      100% - 60px
-    );
+    max-width:
+      calc(
+        100% - 60px
+      );
   }
 
   .camera-qr-message {
     min-width: 82%;
   }
 }
-/*
-  前面カメラを鏡のように表示
-*/
-.camera-qr-reader video {
-  transform: scaleX(-1);
+
+@media (
+  prefers-reduced-motion:
+    reduce
+) {
+  .success-animation
+    .camera-qr-guide::before,
+  .success-animation
+    .camera-qr-guide::after,
+  .success-animation
+    .camera-qr-corners,
+  .success-animation
+    .camera-qr-line {
+    animation-duration:
+      1ms;
+
+    animation-delay:
+      0ms;
+  }
 }

@@ -2730,8 +2730,7 @@
   position: relative;
 }
 
-.exit-scan-processing-overlay,
-.exit-scan-success-overlay {
+.exit-scan-processing-overlay {
   position: absolute;
   z-index: 8;
 
@@ -2836,129 +2835,6 @@
   font-weight: 650;
 }
 
-.exit-scan-success-overlay {
-  background:
-    rgba(
-      24,
-      184,
-      82,
-      0.14
-    );
-
-  animation:
-    exit-success-wash
-    500ms
-    ease-out
-    both;
-}
-
-.exit-scan-success-frame {
-  position: absolute;
-
-  width:
-    min(
-      42%,
-      270px
-    );
-
-  aspect-ratio: 1;
-
-  overflow: visible;
-}
-
-.exit-scan-success-frame rect {
-  fill: none;
-
-  stroke: #20c560;
-  stroke-width: 4;
-  stroke-linecap: round;
-
-  stroke-dasharray:
-    0.24
-    0.76;
-
-  stroke-dashoffset: 1;
-
-  vector-effect:
-    non-scaling-stroke;
-
-  filter:
-    drop-shadow(
-      0
-      0
-      8px
-      rgba(
-        25,
-        210,
-        95,
-        0.82
-      )
-    );
-
-  animation:
-    exit-success-border-run
-    500ms
-    cubic-bezier(
-      0.2,
-      0.76,
-      0.25,
-      1
-    )
-    forwards;
-}
-
-.exit-scan-success-label {
-  position: absolute;
-
-  bottom:
-    clamp(
-      18px,
-      3vh,
-      32px
-    );
-
-  padding:
-    8px
-    17px;
-
-  border-radius: 999px;
-
-  color: #ffffff;
-  background: #16984a;
-
-  box-shadow:
-    0
-    9px
-    24px
-    rgba(
-      15,
-      112,
-      52,
-      0.26
-    );
-
-  font-size:
-    clamp(
-      16px,
-      1.8vw,
-      24px
-    );
-
-  font-weight: 850;
-
-  animation:
-    exit-success-label-in
-    280ms
-    170ms
-    cubic-bezier(
-      0.2,
-      0.9,
-      0.25,
-      1
-    )
-    both;
-}
-
 .exit-reception-page.success-animation
   .camera-qr-scanner {
   transform:
@@ -2968,7 +2844,7 @@
 
   transition:
     transform
-    500ms
+    1400ms
     ease-out;
 }
 
@@ -2976,7 +2852,7 @@
 .exit-member-result {
   animation:
     exit-result-arrive
-    300ms
+    520ms
     cubic-bezier(
       0.2,
       0.82,
@@ -2984,52 +2860,6 @@
       1
     )
     both;
-}
-
-@keyframes exit-success-border-run {
-  from {
-    stroke-dashoffset: 1;
-  }
-
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes exit-success-wash {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes exit-success-label-in {
-  from {
-    opacity: 0;
-
-    transform:
-      translateY(
-        12px
-      )
-      scale(
-        0.96
-      );
-  }
-
-  to {
-    opacity: 1;
-
-    transform:
-      translateY(
-        0
-      )
-      scale(
-        1
-      );
-  }
 }
 
 @keyframes exit-result-arrive {
@@ -3062,9 +2892,6 @@
   prefers-reduced-motion:
     reduce
 ) {
-  .exit-scan-success-overlay,
-  .exit-scan-success-frame rect,
-  .exit-scan-success-label,
   .exit-ticket-result,
   .exit-member-result {
     animation-duration:

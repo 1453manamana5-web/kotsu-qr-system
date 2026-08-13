@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -41,9 +42,14 @@ type EntryPageProps = {
 type ReceptionState =
   | "waiting"
   | "processing"
+  | "success-animation"
   | "ticket-success"
   | "member-success"
   | "error";
+
+type SuccessResultState =
+  | "ticket-success"
+  | "member-success";
 
 type EventData = {
   name: string;
@@ -66,6 +72,9 @@ const EVENT_STORAGE_KEY =
 
 const HEARTBEAT_INTERVAL_MILLISECONDS =
   5 * 1000;
+
+const SUCCESS_ANIMATION_MILLISECONDS =
+  1500;
 
 
 function loadCurrentEventName() {
@@ -408,6 +417,25 @@ function EntryPage({
     setSoundActivationError,
   ] = useState("");
 
+  const successAnimationTimerRef =
+    useRef<
+      number |
+      null
+    >(null);
+
+  useEffect(() => {
+    return () => {
+      if (
+        successAnimationTimerRef.current !==
+        null
+      ) {
+        window.clearTimeout(
+          successAnimationTimerRef.current
+        );
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (
       currentEventName.trim() ===
@@ -506,7 +534,9 @@ function EntryPage({
       receptionState ===
         "waiting" ||
       receptionState ===
-        "processing"
+        "processing" ||
+      receptionState ===
+        "success-animation"
     ) {
       return;
     }
@@ -616,6 +646,41 @@ function EntryPage({
       []
     );
 
+  const startSuccessAnimation =
+    useCallback(
+      (
+        resultState:
+          SuccessResultState
+      ) => {
+        if (
+          successAnimationTimerRef.current !==
+          null
+        ) {
+          window.clearTimeout(
+            successAnimationTimerRef.current
+          );
+        }
+
+        setReceptionState(
+          "success-animation"
+        );
+
+        successAnimationTimerRef.current =
+          window.setTimeout(
+            () => {
+              successAnimationTimerRef.current =
+                null;
+
+              setReceptionState(
+                resultState
+              );
+            },
+            SUCCESS_ANIMATION_MILLISECONDS
+          );
+      },
+      []
+    );
+
   const showTicketSuccess =
     useCallback(
       (
@@ -636,11 +701,13 @@ function EntryPage({
           ticketNumber
         );
 
-        setReceptionState(
+        startSuccessAnimation(
           "ticket-success"
         );
       },
-      []
+      [
+        startSuccessAnimation,
+      ]
     );
 
   const showMemberSuccess =
@@ -667,11 +734,13 @@ function EntryPage({
           qrNumber
         );
 
-        setReceptionState(
+        startSuccessAnimation(
           "member-success"
         );
       },
-      []
+      [
+        startSuccessAnimation,
+      ]
     );
 
   const processTicket =
@@ -1000,8 +1069,12 @@ function EntryPage({
           </section>
         )}
 
-        {receptionState ===
-          "waiting" &&
+        {(receptionState ===
+          "waiting" ||
+          receptionState ===
+            "processing" ||
+          receptionState ===
+            "success-animation") &&
           soundReady && (
           <section className="entry-waiting-panel">
             <div className="entry-scanner-card">
@@ -1028,7 +1101,13 @@ function EntryPage({
                     aria-hidden="true"
                   />
 
-                  読み取り待機中
+                  {receptionState ===
+                  "processing"
+                    ? "受付処理中"
+                    : receptionState ===
+                        "success-animation"
+                      ? "認証成功"
+                      : "読み取り待機中"}
                 </div>
               </div>
 
@@ -1043,6 +1122,27 @@ function EntryPage({
                     );
                   }}
                 />
+
+                {receptionState ===
+                  "processing" && (
+                  <div
+                    className="entry-scan-processing-overlay"
+                    aria-live="polite"
+                  >
+                    <div
+                      className="entry-processing-spinner"
+                      aria-hidden="true"
+                    />
+
+                    <strong>
+                      受付処理中
+                    </strong>
+
+                    <span>
+                      チケット情報を確認しています
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1061,32 +1161,6 @@ function EntryPage({
                 </small>
               </span>
             </div>
-          </section>
-        )}
-
-        {receptionState ===
-          "processing" && (
-          <section className="entry-result-panel entry-processing-result">
-            <div
-              className="entry-processing-spinner"
-              aria-hidden="true"
-            />
-
-            <span className="entry-result-eyebrow">
-              PROCESSING
-            </span>
-
-            <h2>
-              受付処理中
-            </h2>
-
-            <p className="entry-result-primary">
-              チケット情報を確認しています
-            </p>
-
-            <p className="entry-result-secondary">
-              そのままお待ちください
-            </p>
           </section>
         )}
 
@@ -1185,6 +1259,8 @@ function EntryPage({
           disabled={
             receptionState ===
               "processing" ||
+            receptionState ===
+              "success-animation" ||
             soundStarting
           }
           onClick={() =>
@@ -1208,6 +1284,8 @@ function EntryPage({
           disabled={
             receptionState ===
               "processing" ||
+            receptionState ===
+              "success-animation" ||
             soundStarting
           }
           onClick={
