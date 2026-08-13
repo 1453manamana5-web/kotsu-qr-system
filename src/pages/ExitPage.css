@@ -2906,3 +2906,795 @@
     transition: none;
   }
 }
+
+/*
+  チケット退出成功画面
+*/
+.exit-ticket-result {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  min-height:
+    min(
+      53vh,
+      590px
+    );
+
+  border-color:
+    rgba(
+      255,
+      255,
+      255,
+      0.82
+    );
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(
+        255,
+        255,
+        255,
+        0.96
+      ) 0%,
+      rgba(
+        238,
+        252,
+        254,
+        0.93
+      ) 55%,
+      rgba(
+        218,
+        246,
+        250,
+        0.9
+      ) 100%
+    );
+
+  box-shadow:
+    0
+    28px
+    72px
+    rgba(
+      4,
+      124,
+      142,
+      0.22
+    ),
+    inset
+    0
+    1px
+    0
+    rgba(
+      255,
+      255,
+      255,
+      0.9
+    );
+}
+
+.exit-ticket-result::before {
+  position: absolute;
+  z-index: -2;
+
+  top: 50%;
+  left: 50%;
+
+  width:
+    min(
+      82vw,
+      740px
+    );
+
+  aspect-ratio: 1;
+
+  border-radius: 50%;
+
+  content: "";
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(
+        35,
+        196,
+        216,
+        0.35
+      ) 0%,
+      rgba(
+        35,
+        196,
+        216,
+        0.13
+      ) 42%,
+      transparent 70%
+    );
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    )
+    scale(
+      0.16
+    );
+
+  animation:
+    exit-ticket-success-bloom
+    1350ms
+    ease-out
+    both;
+}
+
+.exit-ticket-result::after {
+  position: absolute;
+  z-index: -1;
+
+  top: 31%;
+  left: 50%;
+
+  width:
+    clamp(
+      118px,
+      14vw,
+      190px
+    );
+
+  aspect-ratio: 1;
+
+  border:
+    clamp(
+      3px,
+      0.35vw,
+      5px
+    )
+    solid
+    rgba(
+      22,
+      172,
+      193,
+      0.46
+    );
+
+  border-radius: 50%;
+
+  content: "";
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    )
+    scale(
+      0.65
+    );
+
+  animation:
+    exit-ticket-success-wave
+    1250ms
+    160ms
+    ease-out
+    both;
+}
+
+.exit-ticket-result > * {
+  position: relative;
+  z-index: 1;
+}
+
+.exit-ticket-result
+  .exit-ticket-success-icon {
+  background:
+    linear-gradient(
+      145deg,
+      #42d9e9 0%,
+      #18b7ca 50%,
+      #067f91 100%
+    );
+
+  box-shadow:
+    0
+    20px
+    44px
+    rgba(
+      3,
+      116,
+      133,
+      0.31
+    ),
+    0
+    0
+    0
+    10px
+    rgba(
+      48,
+      202,
+      220,
+      0.13
+    );
+
+  animation:
+    exit-ticket-success-icon-in
+    680ms
+    cubic-bezier(
+      0.18,
+      1.28,
+      0.3,
+      1
+    )
+    both;
+}
+
+.exit-ticket-success-icon svg {
+  width: 84%;
+  height: 84%;
+
+  overflow: visible;
+}
+
+.exit-ticket-success-circle {
+  fill: none;
+
+  stroke:
+    rgba(
+      255,
+      255,
+      255,
+      0.34
+    );
+
+  stroke-width: 4;
+
+  stroke-dasharray: 302;
+  stroke-dashoffset: 302;
+
+  transform: rotate(-90deg);
+  transform-origin: center;
+
+  animation:
+    exit-ticket-success-draw
+    620ms
+    90ms
+    ease-out
+    forwards;
+}
+
+.exit-ticket-success-check {
+  fill: none;
+
+  stroke: #ffffff;
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  stroke-dasharray: 82;
+  stroke-dashoffset: 82;
+
+  filter:
+    drop-shadow(
+      0
+      3px
+      4px
+      rgba(
+        0,
+        71,
+        83,
+        0.22
+      )
+    );
+
+  animation:
+    exit-ticket-success-draw
+    430ms
+    430ms
+    cubic-bezier(
+      0.2,
+      0.8,
+      0.25,
+      1
+    )
+    forwards;
+}
+
+.exit-ticket-result
+  .exit-result-eyebrow {
+  color: #397c86;
+
+  animation:
+    exit-ticket-success-copy-in
+    440ms
+    390ms
+    ease-out
+    both;
+}
+
+.exit-ticket-result
+  .exit-ticket-success-title {
+  margin-top:
+    clamp(
+      5px,
+      0.8vh,
+      10px
+    );
+
+  color: #057888;
+
+  font-size:
+    clamp(
+      58px,
+      7.5vw,
+      102px
+    );
+
+  letter-spacing: -0.07em;
+
+  text-shadow:
+    0
+    5px
+    18px
+    rgba(
+      5,
+      120,
+      136,
+      0.13
+    );
+
+  animation:
+    exit-ticket-success-title-in
+    560ms
+    500ms
+    cubic-bezier(
+      0.2,
+      1.18,
+      0.28,
+      1
+    )
+    both;
+}
+
+.exit-ticket-result
+  .exit-thank-you-message {
+  margin-top:
+    clamp(
+      7px,
+      1vh,
+      12px
+    );
+
+  color: #246b75;
+
+  font-size:
+    clamp(
+      22px,
+      3vw,
+      42px
+    );
+
+  animation:
+    exit-ticket-success-copy-in
+    430ms
+    680ms
+    ease-out
+    both;
+}
+
+.exit-ticket-result
+  .exit-result-number {
+  display: flex;
+  align-items: center;
+
+  gap:
+    clamp(
+      8px,
+      1vw,
+      13px
+    );
+
+  padding:
+    9px
+    17px;
+
+  border:
+    1px
+    solid
+    rgba(
+      16,
+      151,
+      170,
+      0.16
+    );
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.62
+    );
+
+  color: #315f66;
+
+  box-shadow:
+    inset
+    0
+    1px
+    0
+    rgba(
+      255,
+      255,
+      255,
+      0.8
+    );
+
+  animation:
+    exit-ticket-success-copy-in
+    430ms
+    790ms
+    ease-out
+    both;
+}
+
+.exit-ticket-result
+  .exit-result-number span {
+  color: #078a9c;
+
+  font-size: 0.68em;
+  font-weight: 900;
+
+  letter-spacing: 0.14em;
+}
+
+.exit-ticket-result
+  .exit-result-secondary {
+  margin-top:
+    clamp(
+      7px,
+      1vh,
+      11px
+    );
+
+  color: #55777c;
+
+  animation:
+    exit-ticket-success-copy-in
+    420ms
+    850ms
+    ease-out
+    both;
+}
+
+.exit-result-return {
+  width:
+    min(
+      78%,
+      540px
+    );
+
+  margin-top:
+    clamp(
+      12px,
+      1.7vh,
+      19px
+    );
+
+  color: #5c767a;
+
+  font-size:
+    clamp(
+      12px,
+      1.25vw,
+      16px
+    );
+
+  font-weight: 700;
+
+  animation:
+    exit-ticket-success-copy-in
+    420ms
+    900ms
+    ease-out
+    both;
+}
+
+.exit-result-return-track {
+  width: 100%;
+  height:
+    clamp(
+      5px,
+      0.6vw,
+      8px
+    );
+
+  margin-top: 7px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background:
+    rgba(
+      9,
+      137,
+      154,
+      0.14
+    );
+}
+
+.exit-result-return-track > span {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      #4bd9e8,
+      #078fa1
+    );
+
+  transform-origin: left center;
+
+  animation:
+    exit-ticket-return-countdown
+    2500ms
+    linear
+    both;
+}
+
+@keyframes exit-ticket-success-bloom {
+  0% {
+    opacity: 0;
+
+    transform:
+      translate(
+        -50%,
+        -50%
+      )
+      scale(
+        0.16
+      );
+  }
+
+  44% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.68;
+
+    transform:
+      translate(
+        -50%,
+        -50%
+      )
+      scale(
+        1.18
+      );
+  }
+}
+
+@keyframes exit-ticket-success-wave {
+  0% {
+    opacity: 0;
+
+    transform:
+      translate(
+        -50%,
+        -50%
+      )
+      scale(
+        0.65
+      );
+  }
+
+  28% {
+    opacity: 0.72;
+  }
+
+  100% {
+    opacity: 0;
+
+    transform:
+      translate(
+        -50%,
+        -50%
+      )
+      scale(
+        3.1
+      );
+  }
+}
+
+@keyframes exit-ticket-success-icon-in {
+  0% {
+    opacity: 0;
+
+    transform:
+      scale(
+        0.56
+      )
+      rotate(
+        -7deg
+      );
+  }
+
+  64% {
+    opacity: 1;
+
+    transform:
+      scale(
+        1.08
+      )
+      rotate(
+        1deg
+      );
+  }
+
+  100% {
+    opacity: 1;
+
+    transform:
+      scale(
+        1
+      )
+      rotate(
+        0
+      );
+  }
+}
+
+@keyframes exit-ticket-success-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes exit-ticket-success-title-in {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(
+        14px
+      )
+      scale(
+        0.86
+      );
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(
+        0
+      )
+      scale(
+        1
+      );
+  }
+}
+
+@keyframes exit-ticket-success-copy-in {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(
+        9px
+      );
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(
+        0
+      );
+  }
+}
+
+@keyframes exit-ticket-return-countdown {
+  from {
+    transform:
+      scaleX(
+        1
+      );
+  }
+
+  to {
+    transform:
+      scaleX(
+        0
+      );
+  }
+}
+
+@media (
+  orientation: landscape
+) and (
+  max-height: 850px
+) {
+  .exit-ticket-result {
+    min-height: 0;
+
+    padding:
+      clamp(
+        16px,
+        2.3vh,
+        23px
+      )
+      34px;
+  }
+
+  .exit-ticket-result
+    .exit-ticket-success-icon {
+    width:
+      clamp(
+        76px,
+        8.5vh,
+        100px
+      );
+
+    height:
+      clamp(
+        76px,
+        8.5vh,
+        100px
+      );
+  }
+
+  .exit-ticket-result
+    .exit-ticket-success-title {
+    font-size:
+      clamp(
+        47px,
+        6.8vh,
+        66px
+      );
+  }
+
+  .exit-ticket-result
+    .exit-thank-you-message {
+    font-size:
+      clamp(
+        21px,
+        3.2vh,
+        30px
+      );
+  }
+
+  .exit-result-return {
+    margin-top: 9px;
+  }
+}
+
+@media (
+  prefers-reduced-motion:
+    reduce
+) {
+  .exit-ticket-result::before,
+  .exit-ticket-result::after,
+  .exit-ticket-success-icon,
+  .exit-ticket-success-circle,
+  .exit-ticket-success-check,
+  .exit-ticket-result
+    .exit-result-eyebrow,
+  .exit-ticket-success-title,
+  .exit-ticket-result
+    .exit-thank-you-message,
+  .exit-ticket-result
+    .exit-result-number,
+  .exit-ticket-result
+    .exit-result-secondary,
+  .exit-result-return,
+  .exit-result-return-track > span {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+}

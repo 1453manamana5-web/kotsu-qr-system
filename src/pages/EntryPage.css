@@ -2758,3 +2758,767 @@
     transition: none;
   }
 }
+
+/*
+  チケット入場成功画面
+*/
+.entry-ticket-result {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  min-height:
+    min(
+      53vh,
+      570px
+    );
+
+  border-color:
+    rgba(
+      255,
+      255,
+      255,
+      0.82
+    );
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(
+        255,
+        255,
+        255,
+        0.96
+      ) 0%,
+      rgba(
+        239,
+        253,
+        244,
+        0.92
+      ) 55%,
+      rgba(
+        221,
+        248,
+        231,
+        0.9
+      ) 100%
+    );
+
+  box-shadow:
+    0
+    28px
+    72px
+    rgba(
+      17,
+      116,
+      55,
+      0.22
+    ),
+    inset
+    0
+    1px
+    0
+    rgba(
+      255,
+      255,
+      255,
+      0.9
+    );
+}
+
+.entry-ticket-result::before {
+  position: absolute;
+  z-index: -2;
+
+  top: 50%;
+  left: 50%;
+
+  width:
+    min(
+      82vw,
+      720px
+    );
+
+  aspect-ratio: 1;
+
+  border-radius: 50%;
+
+  content: "";
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(
+        48,
+        211,
+        103,
+        0.34
+      ) 0%,
+      rgba(
+        48,
+        211,
+        103,
+        0.13
+      ) 42%,
+      transparent 70%
+    );
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    )
+    scale(
+      0.16
+    );
+
+  animation:
+    entry-ticket-success-bloom
+    1350ms
+    ease-out
+    both;
+}
+
+.entry-ticket-result::after {
+  position: absolute;
+  z-index: -1;
+
+  top: 34%;
+  left: 50%;
+
+  width:
+    clamp(
+      118px,
+      14vw,
+      190px
+    );
+
+  aspect-ratio: 1;
+
+  border:
+    clamp(
+      3px,
+      0.35vw,
+      5px
+    )
+    solid
+    rgba(
+      30,
+      188,
+      86,
+      0.45
+    );
+
+  border-radius: 50%;
+
+  content: "";
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    )
+    scale(
+      0.65
+    );
+
+  animation:
+    entry-ticket-success-wave
+    1250ms
+    160ms
+    ease-out
+    both;
+}
+
+.entry-ticket-result > * {
+  position: relative;
+  z-index: 1;
+}
+
+.entry-ticket-result
+  .entry-ticket-success-icon {
+  background:
+    linear-gradient(
+      145deg,
+      #42dc78 0%,
+      #20ba5a 50%,
+      #0b8738 100%
+    );
+
+  box-shadow:
+    0
+    20px
+    44px
+    rgba(
+      12,
+      133,
+      55,
+      0.32
+    ),
+    0
+    0
+    0
+    10px
+    rgba(
+      53,
+      213,
+      109,
+      0.12
+    );
+
+  animation:
+    entry-ticket-success-icon-in
+    680ms
+    cubic-bezier(
+      0.18,
+      1.28,
+      0.3,
+      1
+    )
+    both;
+}
+
+.entry-ticket-success-icon svg {
+  width: 84%;
+  height: 84%;
+
+  overflow: visible;
+}
+
+.entry-ticket-success-circle {
+  fill: none;
+
+  stroke:
+    rgba(
+      255,
+      255,
+      255,
+      0.34
+    );
+
+  stroke-width: 4;
+
+  stroke-dasharray: 302;
+  stroke-dashoffset: 302;
+
+  transform: rotate(-90deg);
+  transform-origin: center;
+
+  animation:
+    entry-ticket-success-draw
+    620ms
+    90ms
+    ease-out
+    forwards;
+}
+
+.entry-ticket-success-check {
+  fill: none;
+
+  stroke: #ffffff;
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  stroke-dasharray: 82;
+  stroke-dashoffset: 82;
+
+  filter:
+    drop-shadow(
+      0
+      3px
+      4px
+      rgba(
+        0,
+        81,
+        29,
+        0.22
+      )
+    );
+
+  animation:
+    entry-ticket-success-draw
+    430ms
+    430ms
+    cubic-bezier(
+      0.2,
+      0.8,
+      0.25,
+      1
+    )
+    forwards;
+}
+
+.entry-ticket-result
+  .entry-result-eyebrow {
+  color: #45805b;
+
+  animation:
+    entry-ticket-success-copy-in
+    440ms
+    390ms
+    ease-out
+    both;
+}
+
+.entry-ticket-result
+  .entry-ticket-success-title {
+  margin-top:
+    clamp(
+      5px,
+      0.8vh,
+      10px
+    );
+
+  color: #087a35;
+
+  font-size:
+    clamp(
+      58px,
+      7.5vw,
+      104px
+    );
+
+  letter-spacing: -0.07em;
+
+  text-shadow:
+    0
+    5px
+    18px
+    rgba(
+      13,
+      126,
+      53,
+      0.13
+    );
+
+  animation:
+    entry-ticket-success-title-in
+    560ms
+    500ms
+    cubic-bezier(
+      0.2,
+      1.18,
+      0.28,
+      1
+    )
+    both;
+}
+
+.entry-ticket-success-message {
+  margin:
+    clamp(
+      8px,
+      1.2vh,
+      14px
+    )
+    0
+    0;
+
+  color: #315c41;
+
+  font-size:
+    clamp(
+      17px,
+      2vw,
+      27px
+    );
+
+  font-weight: 750;
+  line-height: 1.28;
+
+  animation:
+    entry-ticket-success-copy-in
+    430ms
+    700ms
+    ease-out
+    both;
+}
+
+.entry-ticket-result
+  .entry-result-number {
+  display: flex;
+  align-items: center;
+
+  gap:
+    clamp(
+      8px,
+      1vw,
+      13px
+    );
+
+  padding:
+    9px
+    17px;
+
+  border:
+    1px
+    solid
+    rgba(
+      28,
+      155,
+      73,
+      0.15
+    );
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.62
+    );
+
+  color: #315c41;
+
+  box-shadow:
+    inset
+    0
+    1px
+    0
+    rgba(
+      255,
+      255,
+      255,
+      0.8
+    );
+
+  animation:
+    entry-ticket-success-copy-in
+    430ms
+    820ms
+    ease-out
+    both;
+}
+
+.entry-ticket-result
+  .entry-result-number span {
+  color: #178444;
+
+  font-size: 0.68em;
+  font-weight: 900;
+
+  letter-spacing: 0.14em;
+}
+
+.entry-result-return {
+  width:
+    min(
+      78%,
+      520px
+    );
+
+  margin-top:
+    clamp(
+      14px,
+      2vh,
+      22px
+    );
+
+  color: #607568;
+
+  font-size:
+    clamp(
+      12px,
+      1.25vw,
+      16px
+    );
+
+  font-weight: 700;
+
+  animation:
+    entry-ticket-success-copy-in
+    420ms
+    900ms
+    ease-out
+    both;
+}
+
+.entry-result-return-track {
+  width: 100%;
+  height:
+    clamp(
+      5px,
+      0.6vw,
+      8px
+    );
+
+  margin-top: 7px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background:
+    rgba(
+      19,
+      135,
+      61,
+      0.14
+    );
+}
+
+.entry-result-return-track > span {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      #49dc7d,
+      #149c47
+    );
+
+  transform-origin: left center;
+
+  animation:
+    entry-ticket-return-countdown
+    2500ms
+    linear
+    both;
+}
+
+@keyframes entry-ticket-success-bloom {
+  0% {
+    opacity: 0;
+
+    transform:
+      translate(
+        -50%,
+        -50%
+      )
+      scale(
+        0.16
+      );
+  }
+
+  44% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.68;
+
+    transform:
+      translate(
+        -50%,
+        -50%
+      )
+      scale(
+        1.18
+      );
+  }
+}
+
+@keyframes entry-ticket-success-wave {
+  0% {
+    opacity: 0;
+
+    transform:
+      translate(
+        -50%,
+        -50%
+      )
+      scale(
+        0.65
+      );
+  }
+
+  28% {
+    opacity: 0.72;
+  }
+
+  100% {
+    opacity: 0;
+
+    transform:
+      translate(
+        -50%,
+        -50%
+      )
+      scale(
+        3.1
+      );
+  }
+}
+
+@keyframes entry-ticket-success-icon-in {
+  0% {
+    opacity: 0;
+
+    transform:
+      scale(
+        0.56
+      )
+      rotate(
+        -7deg
+      );
+  }
+
+  64% {
+    opacity: 1;
+
+    transform:
+      scale(
+        1.08
+      )
+      rotate(
+        1deg
+      );
+  }
+
+  100% {
+    opacity: 1;
+
+    transform:
+      scale(
+        1
+      )
+      rotate(
+        0
+      );
+  }
+}
+
+@keyframes entry-ticket-success-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes entry-ticket-success-title-in {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(
+        14px
+      )
+      scale(
+        0.86
+      );
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(
+        0
+      )
+      scale(
+        1
+      );
+  }
+}
+
+@keyframes entry-ticket-success-copy-in {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(
+        9px
+      );
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(
+        0
+      );
+  }
+}
+
+@keyframes entry-ticket-return-countdown {
+  from {
+    transform:
+      scaleX(
+        1
+      );
+  }
+
+  to {
+    transform:
+      scaleX(
+        0
+      );
+  }
+}
+
+@media (
+  orientation: landscape
+) and (
+  max-height: 850px
+) {
+  .entry-ticket-result {
+    min-height: 0;
+
+    padding:
+      clamp(
+        18px,
+        2.6vh,
+        26px
+      )
+      34px;
+  }
+
+  .entry-ticket-result
+    .entry-ticket-success-icon {
+    width:
+      clamp(
+        78px,
+        9vh,
+        104px
+      );
+
+    height:
+      clamp(
+        78px,
+        9vh,
+        104px
+      );
+  }
+
+  .entry-ticket-result
+    .entry-ticket-success-title {
+    font-size:
+      clamp(
+        48px,
+        7vh,
+        68px
+      );
+  }
+
+  .entry-result-return {
+    margin-top: 11px;
+  }
+}
+
+@media (
+  prefers-reduced-motion:
+    reduce
+) {
+  .entry-ticket-result::before,
+  .entry-ticket-result::after,
+  .entry-ticket-success-icon,
+  .entry-ticket-success-circle,
+  .entry-ticket-success-check,
+  .entry-ticket-result
+    .entry-result-eyebrow,
+  .entry-ticket-success-title,
+  .entry-ticket-success-message,
+  .entry-ticket-result
+    .entry-result-number,
+  .entry-result-return,
+  .entry-result-return-track > span {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+}

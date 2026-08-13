@@ -1166,30 +1166,69 @@ function EntryPage({
 
         {receptionState ===
           "ticket-success" && (
-          <section className="entry-result-panel entry-ticket-result">
-            <div className="entry-result-icon">
-              ✓
+          <section
+            className="entry-result-panel entry-ticket-result"
+            role="status"
+            aria-live="polite"
+          >
+            <div
+              className="entry-result-icon entry-ticket-success-icon"
+              aria-hidden="true"
+            >
+              <svg
+                viewBox="0 0 120 120"
+                focusable="false"
+              >
+                <circle
+                  className="entry-ticket-success-circle"
+                  cx="60"
+                  cy="60"
+                  r="48"
+                />
+
+                <path
+                  className="entry-ticket-success-check"
+                  d="M35 61.5 52 78 86 42"
+                />
+              </svg>
             </div>
 
             <span className="entry-result-eyebrow">
-              ADMISSION ACCEPTED
+              ADMISSION COMPLETE
             </span>
 
-            <h2>
-              受付完了
+            <h2 className="entry-ticket-success-title">
+              {resultMessage.includes(
+                "再入場"
+              )
+                ? "再入場OK"
+                : "入場OK"}
             </h2>
 
-            <p className="entry-result-primary">
-              入場OK
+            <p className="entry-ticket-success-message">
+              {resultMessage}
             </p>
 
             <p className="entry-result-number">
+              <span>
+                TICKET
+              </span>
+
               {scannedQrNumber}
             </p>
 
-            <p className="entry-result-secondary">
-              {resultMessage}
-            </p>
+            <div
+              className="entry-result-return"
+              aria-hidden="true"
+            >
+              <span>
+                次の読み取り画面へ戻ります
+              </span>
+
+              <div className="entry-result-return-track">
+                <span />
+              </div>
+            </div>
           </section>
         )}
 

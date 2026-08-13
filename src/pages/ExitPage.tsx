@@ -1174,17 +1174,39 @@ function ExitPage({
 
         {receptionState ===
           "ticket-success" && (
-          <section className="exit-result-panel exit-ticket-result">
-            <div className="exit-result-icon">
-              ✓
+          <section
+            className="exit-result-panel exit-ticket-result"
+            role="status"
+            aria-live="polite"
+          >
+            <div
+              className="exit-result-icon exit-ticket-success-icon"
+              aria-hidden="true"
+            >
+              <svg
+                viewBox="0 0 120 120"
+                focusable="false"
+              >
+                <circle
+                  className="exit-ticket-success-circle"
+                  cx="60"
+                  cy="60"
+                  r="48"
+                />
+
+                <path
+                  className="exit-ticket-success-check"
+                  d="M35 61.5 52 78 86 42"
+                />
+              </svg>
             </div>
 
             <span className="exit-result-eyebrow">
-              EXIT ACCEPTED
+              EXIT COMPLETE
             </span>
 
-            <h2>
-              受付完了
+            <h2 className="exit-ticket-success-title">
+              退出OK
             </h2>
 
             <p className="exit-thank-you-message">
@@ -1192,12 +1214,29 @@ function ExitPage({
             </p>
 
             <p className="exit-result-number">
+              <span>
+                TICKET
+              </span>
+
               {scannedQrNumber}
             </p>
 
             <p className="exit-result-secondary">
               {resultMessage}
             </p>
+
+            <div
+              className="exit-result-return"
+              aria-hidden="true"
+            >
+              <span>
+                次の読み取り画面へ戻ります
+              </span>
+
+              <div className="exit-result-return-track">
+                <span />
+              </div>
+            </div>
           </section>
         )}
 
