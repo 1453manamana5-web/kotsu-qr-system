@@ -54,6 +54,7 @@ type TicketDesignSettings = {
   qrY: number;
   qrSize: number;
 
+  showTicketNumber: boolean;
   numberX: number;
   numberY: number;
   numberSize: number;
@@ -87,6 +88,7 @@ const defaultSettings: TicketDesignSettings = {
   qrY: 50,
   qrSize: 29,
 
+  showTicketNumber: true,
   numberX: 31,
   numberY: 72,
   numberSize: 18,
@@ -563,17 +565,19 @@ function TicketDesigner({
                 />
               </div>
 
-              <div
-                className="ticket-design-number"
-                style={{
-                  left: `${settings.numberX}%`,
-                  top: `${settings.numberY}%`,
-                  fontSize:
-                    `${settings.numberSize}px`,
-                }}
-              >
-                {ticket.qrNumber}
-              </div>
+              {settings.showTicketNumber && (
+                <div
+                  className="ticket-design-number"
+                  style={{
+                    left: `${settings.numberX}%`,
+                    top: `${settings.numberY}%`,
+                    fontSize:
+                      `${settings.numberSize}px`,
+                  }}
+                >
+                  {ticket.qrNumber}
+                </div>
+              )}
             </div>
           )
         )}
@@ -724,19 +728,21 @@ function TicketDesigner({
                     />
                   </div>
 
-                  <div
-                    className="ticket-design-number"
-                    style={{
-                      left: `${settings.numberX}%`,
-                      top: `${settings.numberY}%`,
-                      fontSize:
-                        `${settings.numberSize}px`,
-                    }}
-                  >
-                    {
-                      previewTicket.qrNumber
-                    }
-                  </div>
+                  {settings.showTicketNumber && (
+                    <div
+                      className="ticket-design-number"
+                      style={{
+                        left: `${settings.numberX}%`,
+                        top: `${settings.numberY}%`,
+                        fontSize:
+                          `${settings.numberSize}px`,
+                      }}
+                    >
+                      {
+                        previewTicket.qrNumber
+                      }
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1139,11 +1145,35 @@ function TicketDesigner({
                 チケット番号
               </h4>
 
+              <label className="ticket-visibility-setting">
+                <span>
+                  チケット番号を印刷する
+                </span>
+
+                <input
+                  type="checkbox"
+                  checked={
+                    settings.showTicketNumber
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    updateSetting(
+                      "showTicketNumber",
+                      event.target.checked
+                    )
+                  }
+                />
+              </label>
+
               <label>
                 横位置
 
                 <input
                   type="range"
+                  disabled={
+                    !settings.showTicketNumber
+                  }
                   min="0"
                   max="100"
                   value={
@@ -1172,6 +1202,9 @@ function TicketDesigner({
 
                 <input
                   type="range"
+                  disabled={
+                    !settings.showTicketNumber
+                  }
                   min="0"
                   max="100"
                   value={
@@ -1200,6 +1233,9 @@ function TicketDesigner({
 
                 <input
                   type="range"
+                  disabled={
+                    !settings.showTicketNumber
+                  }
                   min="10"
                   max="60"
                   value={
@@ -1372,17 +1408,19 @@ function TicketDesigner({
                 />
               </div>
 
-              <div
-                className="ticket-design-number"
-                style={{
-                  left: `${settings.numberX}%`,
-                  top: `${settings.numberY}%`,
-                  fontSize:
-                    `${settings.numberSize}px`,
-                }}
-              >
-                {ticket.qrNumber}
-              </div>
+              {settings.showTicketNumber && (
+                <div
+                  className="ticket-design-number"
+                  style={{
+                    left: `${settings.numberX}%`,
+                    top: `${settings.numberY}%`,
+                    fontSize:
+                      `${settings.numberSize}px`,
+                  }}
+                >
+                  {ticket.qrNumber}
+                </div>
+              )}
             </div>
           )
         )}
