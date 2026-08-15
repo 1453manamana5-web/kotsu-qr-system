@@ -248,9 +248,9 @@
 
   width:
     clamp(
-      270px,
-      29vw,
-      390px
+      235px,
+      26vw,
+      350px
     );
 
   min-height:
@@ -376,9 +376,9 @@
 .create-event-mode-copy strong {
   font-size:
     clamp(
-      19px,
-      2.1vw,
-      29px
+      21px,
+      2.25vw,
+      32px
     );
 
   font-weight: 800;
@@ -1814,9 +1814,9 @@
   .create-event-mode {
     width:
       clamp(
-        255px,
-        29vw,
-        315px
+        225px,
+        26vw,
+        285px
       );
 
     min-height: 66px;
@@ -1836,9 +1836,9 @@
   .create-event-mode-copy strong {
     font-size:
       clamp(
-        18px,
-        2vw,
-        24px
+        19px,
+        2.15vw,
+        26px
       );
   }
 
