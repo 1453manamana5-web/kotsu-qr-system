@@ -32,6 +32,15 @@ import {
   type EventStore,
 } from "./eventFirestore";
 
+import {
+  subscribeToTickets,
+} from "./ticketFirestore";
+
+import {
+  subscribeToEventMembers,
+  subscribeToMemberCards,
+} from "./memberFirestore";
+
 type NewEventData = {
   name: string;
   date: string;
@@ -109,6 +118,85 @@ const CURRENT_EVENT_ID_STORAGE_KEY =
 
 const LEGACY_CURRENT_EVENT_KEY =
   "qr-management-current-event";
+
+function isStoredEvent(
+  value: unknown
+): value is EventData {
+  if (
+    typeof value !== "object" ||
+    value === null
+  ) {
+    return false;
+  }
+
+  const event = value as
+    Partial<EventData>;
+
+  return (
+    typeof event.id === "string" &&
+    typeof event.name === "string" &&
+    typeof event.date === "string" &&
+    typeof event.startTime === "string" &&
+    typeof event.endTime === "string" &&
+    (
+      event.status === undefined ||
+      event.status === "scheduled" ||
+      event.status === "active" ||
+      event.status === "ended"
+    ) &&
+    (
+      event.endedAt === undefined ||
+      typeof event.endedAt === "string"
+    )
+  );
+}
+
+function loadStoredEventStore(): EventStore {
+  try {
+    const savedEvents =
+      localStorage.getItem(
+        EVENTS_STORAGE_KEY
+      );
+
+    const parsedEvents: unknown =
+      savedEvents === null
+        ? []
+        : JSON.parse(savedEvents);
+
+    const events = Array.isArray(
+      parsedEvents
+    )
+      ? parsedEvents.filter(
+          isStoredEvent
+        )
+      : [];
+
+    const savedCurrentEventId =
+      localStorage.getItem(
+        CURRENT_EVENT_ID_STORAGE_KEY
+      );
+
+    return {
+      events,
+      currentEventId:
+        typeof savedCurrentEventId ===
+          "string" &&
+        savedCurrentEventId !== ""
+          ? savedCurrentEventId
+          : null,
+    };
+  } catch (error) {
+    console.warn(
+      "保存済みイベント情報を読み込めませんでした。",
+      error
+    );
+
+    return {
+      events: [],
+      currentEventId: null,
+    };
+  }
+}
 
 function createSafeRandomId() {
   try {
@@ -545,10 +633,20 @@ function App() {
   const [
     eventStore,
     setEventStore,
-  ] = useState<EventStore>({
-    events: [],
-    currentEventId: null,
-  });
+  ] = useState<EventStore>(
+    loadStoredEventStore
+  );
+
+  const hasUsableEventsRef =
+    useRef(
+      eventStore.events.length > 0
+    );
+
+  const hasCurrentEventRef =
+    useRef(
+      eventStore.currentEventId !==
+        null
+    );
 
   const [
     page,
@@ -567,7 +665,11 @@ function App() {
   const [
     eventSyncReady,
     setEventSyncReady,
-  ] = useState(false);
+  ] = useState(
+    () =>
+      eventStore.events.length > 0 ||
+      navigator.onLine === false
+  );
 
   const [
     eventSyncError,
@@ -590,7 +692,20 @@ function App() {
   useEffect(() => {
     const unsubscribeEvents =
       subscribeToEvents(
-        (events) => {
+        (events, fromCache) => {
+          if (
+            fromCache &&
+            events.length === 0 &&
+            hasUsableEventsRef.current
+          ) {
+            setEventSyncReady(true);
+            setEventSyncError("");
+            return;
+          }
+
+          hasUsableEventsRef.current =
+            events.length > 0;
+
           setEventStore(
             (currentStore) => ({
               ...currentStore,
@@ -627,14 +742,31 @@ function App() {
           );
 
           setEventSyncError(
-            error.message
+            hasUsableEventsRef.current ||
+            navigator.onLine === false
+              ? ""
+              : error.message
           );
         }
       );
 
     const unsubscribeCurrentEvent =
       subscribeToCurrentEventId(
-        (currentEventId) => {
+        (
+          currentEventId,
+          fromCache
+        ) => {
+          if (
+            fromCache &&
+            currentEventId === null &&
+            hasCurrentEventRef.current
+          ) {
+            return;
+          }
+
+          hasCurrentEventRef.current =
+            currentEventId !== null;
+
           setEventStore(
             (currentStore) => ({
               ...currentStore,
@@ -666,7 +798,10 @@ function App() {
 
         (error) => {
           setEventSyncError(
-            error.message
+            hasUsableEventsRef.current ||
+            navigator.onLine === false
+              ? ""
+              : error.message
           );
         }
       );
@@ -726,6 +861,60 @@ function App() {
         event.id ===
         eventStore.currentEventId
     ) ?? null;
+
+  useEffect(() => {
+    const eventName =
+      currentEvent?.name ?? "";
+
+    if (eventName.trim() === "") {
+      return;
+    }
+
+    const handleCacheError = (
+      error: Error
+    ) => {
+      if (navigator.onLine) {
+        console.warn(
+          "オフライン受付データの準備に失敗しました。",
+          error
+        );
+      }
+    };
+
+    const unsubscribeTickets =
+      subscribeToTickets(
+        eventName,
+        () => {
+          // チケットを端末へ保存します。
+        },
+        handleCacheError
+      );
+
+    const unsubscribeCards =
+      subscribeToMemberCards(
+        () => {
+          // 部員QR台帳を端末へ保存します。
+        },
+        handleCacheError
+      );
+
+    const unsubscribeMembers =
+      subscribeToEventMembers(
+        eventName,
+        () => {
+          // 部員の入退室状態を端末へ保存します。
+        },
+        handleCacheError
+      );
+
+    return () => {
+      unsubscribeTickets();
+      unsubscribeCards();
+      unsubscribeMembers();
+    };
+  }, [
+    currentEvent?.name,
+  ]);
 
   const currentEventStatus =
     currentEvent === null
