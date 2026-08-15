@@ -3,6 +3,11 @@ import {
   useState,
 } from "react";
 
+import {
+  getPendingReceptionCount,
+  subscribeToPendingReceptionCount,
+} from "../offlineReceptionStore";
+
 import "./OnlineStatus.css";
 
 type ConnectionStatus =
@@ -22,6 +27,13 @@ function OnlineStatus() {
     setConnectionStatus,
   ] = useState<ConnectionStatus>(
     getCurrentConnectionStatus
+  );
+
+  const [
+    pendingCount,
+    setPendingCount,
+  ] = useState(
+    getPendingReceptionCount
   );
 
   useEffect(() => {
@@ -60,9 +72,25 @@ function OnlineStatus() {
     };
   }, []);
 
+  useEffect(() =>
+    subscribeToPendingReceptionCount(
+      setPendingCount
+    ), []);
+
   const isOnline =
     connectionStatus ===
     "online";
+
+  const isSyncPending =
+    pendingCount > 0;
+
+  const statusText = isOnline
+    ? isSyncPending
+      ? `同期中 ${pendingCount}件`
+      : "オンライン"
+    : isSyncPending
+      ? `オフライン・端末保存 ${pendingCount}件`
+      : "オフライン・端末保存";
 
   return (
     <div
@@ -75,8 +103,14 @@ function OnlineStatus() {
       aria-live="polite"
       aria-label={
         isOnline
-          ? "現在オンラインです"
-          : "現在オフラインです"
+          ? isSyncPending
+            ? `現在オンラインです。同期待ちが${pendingCount}件あります`
+            : "現在オンラインです"
+          : `現在オフラインです。受付データは端末に保存されます${
+              isSyncPending
+                ? `。同期待ちは${pendingCount}件です`
+                : ""
+            }`
       }
     >
       <span
@@ -85,9 +119,7 @@ function OnlineStatus() {
       />
 
       <span className="connection-status-text">
-        {isOnline
-          ? "オンライン"
-          : "オフライン"}
+        {statusText}
       </span>
     </div>
   );
