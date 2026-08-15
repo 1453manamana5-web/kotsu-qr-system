@@ -321,33 +321,33 @@
 
   width:
     clamp(
-      190px,
-      19vw,
-      250px
+      235px,
+      26vw,
+      350px
     );
 
   min-height:
     clamp(
-      58px,
-      7vh,
-      70px
+      72px,
+      9vh,
+      94px
     );
 
   flex-shrink: 0;
 
   gap:
     clamp(
-      8px,
-      1vw,
-      12px
+      10px,
+      1.3vw,
+      16px
     );
 
   padding:
-    9px
+    12px
     clamp(
-      14px,
-      1.5vw,
-      18px
+      17px,
+      2vw,
+      24px
     );
 
   border:
@@ -361,9 +361,9 @@
 
   border-radius:
     clamp(
-      17px,
-      1.8vw,
-      22px
+      20px,
+      2.2vw,
+      28px
     );
 
   background:
@@ -398,16 +398,16 @@
 
   width:
     clamp(
-      34px,
-      3.3vw,
-      42px
+      40px,
+      4vw,
+      54px
     );
 
   height:
     clamp(
-      34px,
-      3.3vw,
-      42px
+      40px,
+      4vw,
+      54px
     );
 
   flex-shrink: 0;
@@ -430,13 +430,13 @@
 }
 
 .admin-mode-copy small {
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 
   font-size:
     clamp(
       10px,
-      0.85vw,
-      12px
+      0.95vw,
+      13px
     );
 
   font-weight: 800;
@@ -449,9 +449,9 @@
 .admin-mode-copy strong {
   font-size:
     clamp(
-      19px,
-      1.9vw,
-      26px
+      21px,
+      2.25vw,
+      32px
     );
 
   font-weight: 800;
@@ -1730,31 +1730,31 @@
   .admin-mode-label {
     width:
       clamp(
-        185px,
-        20vw,
-        220px
+        225px,
+        26vw,
+        285px
       );
 
-    min-height: 56px;
+    min-height: 66px;
 
     padding:
-      7px
-      13px;
+      9px
+      15px;
 
-    border-radius: 17px;
+    border-radius: 20px;
   }
 
   .admin-mode-icon {
-    width: 34px;
-    height: 34px;
+    width: 39px;
+    height: 39px;
   }
 
   .admin-mode-copy strong {
     font-size:
       clamp(
         19px,
-        2vw,
-        24px
+        2.15vw,
+        26px
       );
   }
 
