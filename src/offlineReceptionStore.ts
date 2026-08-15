@@ -565,7 +565,11 @@ export function acceptTicketReceptionOffline(
   eventName: string,
   qrNumber: string,
   authToken: string,
-  action: "entry" | "exit"
+  action: "entry" | "exit",
+  receptionIdentity?: {
+    id: string;
+    capturedAt: string;
+  }
 ): OfflineTicketReceptionResult {
   const cache = readCache();
   const eventCache =
@@ -600,6 +604,7 @@ export function acceptTicketReceptionOffline(
   }
 
   const capturedAt =
+    receptionIdentity?.capturedAt ??
     new Date().toISOString();
 
   if (
@@ -628,7 +633,9 @@ export function acceptTicketReceptionOffline(
 
   const operation: PendingTicketReception = {
     version: 2,
-    id: createOperationId(),
+    id:
+      receptionIdentity?.id ??
+      createOperationId(),
     kind: "ticket",
     eventName,
     qrNumber,
@@ -660,7 +667,11 @@ export function acceptTicketReceptionOffline(
 export function acceptMemberReceptionOffline(
   eventName: string,
   qrNumber: string,
-  authToken: string
+  authToken: string,
+  receptionIdentity?: {
+    id: string;
+    capturedAt: string;
+  }
 ): OfflineMemberReceptionResult {
   const cache = readCache();
   const card =
@@ -705,6 +716,7 @@ export function acceptMemberReceptionOffline(
       : "exit";
 
   const capturedAt =
+    receptionIdentity?.capturedAt ??
     new Date().toISOString();
 
   if (
@@ -731,7 +743,9 @@ export function acceptMemberReceptionOffline(
 
   const operation: PendingMemberReception = {
     version: 2,
-    id: createOperationId(),
+    id:
+      receptionIdentity?.id ??
+      createOperationId(),
     kind: "member",
     eventName,
     qrNumber,
