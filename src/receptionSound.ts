@@ -17,7 +17,7 @@ type ScheduledTone = {
 };
 
 const RECORDED_SUCCESS_SOUND_PATH =
-  `${import.meta.env.BASE_URL}sounds/osaka_metro_qr_gate_success.wav?v=20260807`;
+  `${import.meta.env.BASE_URL}sounds/qr_gate_result_recreated_v2.wav?v=20260813-v2`;
 
 let audioContext:
   AudioContext |
