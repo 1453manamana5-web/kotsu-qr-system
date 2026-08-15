@@ -649,13 +649,19 @@ export async function findMemberByQrInFirestore(
 function processMemberReceptionOffline(
   eventName: string,
   qrNumber: string,
-  authToken: string
+  authToken: string,
+  activityId: string,
+  capturedAt: string
 ): MemberReceptionResult {
   const result =
     acceptMemberReceptionOffline(
       eventName,
       qrNumber,
-      authToken
+      authToken,
+      {
+        id: activityId,
+        capturedAt,
+      }
     );
 
   if (!result.success) {
@@ -718,7 +724,9 @@ export async function processMemberReceptionInFirestore(
     return processMemberReceptionOffline(
       eventName,
       qrNumber,
-      authToken
+      authToken,
+      activityId,
+      capturedAt
     );
   }
 
@@ -920,7 +928,9 @@ export async function processMemberReceptionInFirestore(
       return processMemberReceptionOffline(
         eventName,
         qrNumber,
-        authToken
+        authToken,
+        activityId,
+        capturedAt
       );
     }
 

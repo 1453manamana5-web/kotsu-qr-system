@@ -254,14 +254,20 @@ function isOfflineFirestoreError(
 async function processTicketEntryFromCache(
   eventName: string,
   qrNumber: string,
-  authToken: string
+  authToken: string,
+  activityId: string,
+  capturedAt: string
 ): Promise<TicketReceptionResult> {
   const result =
     acceptTicketReceptionOffline(
       eventName,
       qrNumber,
       authToken,
-      "entry"
+      "entry",
+      {
+        id: activityId,
+        capturedAt,
+      }
     );
 
   if (!result.success) {
@@ -295,14 +301,20 @@ async function processTicketEntryFromCache(
 async function processTicketExitFromCache(
   eventName: string,
   qrNumber: string,
-  authToken: string
+  authToken: string,
+  activityId: string,
+  capturedAt: string
 ): Promise<TicketReceptionResult> {
   const result =
     acceptTicketReceptionOffline(
       eventName,
       qrNumber,
       authToken,
-      "exit"
+      "exit",
+      {
+        id: activityId,
+        capturedAt,
+      }
     );
 
   if (!result.success) {
@@ -706,7 +718,9 @@ export async function processTicketEntryInFirestore(
     return processTicketEntryFromCache(
       eventName,
       qrNumber,
-      authToken
+      authToken,
+      activityId,
+      capturedAt
     );
   }
 
@@ -880,7 +894,9 @@ export async function processTicketEntryInFirestore(
       return processTicketEntryFromCache(
         eventName,
         qrNumber,
-        authToken
+        authToken,
+        activityId,
+        capturedAt
       );
     }
 
@@ -917,7 +933,9 @@ export async function processTicketExitInFirestore(
     return processTicketExitFromCache(
       eventName,
       qrNumber,
-      authToken
+      authToken,
+      activityId,
+      capturedAt
     );
   }
 
@@ -1096,7 +1114,9 @@ export async function processTicketExitInFirestore(
       return processTicketExitFromCache(
         eventName,
         qrNumber,
-        authToken
+        authToken,
+        activityId,
+        capturedAt
       );
     }
 
