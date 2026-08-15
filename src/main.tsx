@@ -6,6 +6,10 @@ import {
   installReceptionSoundUnlock,
 } from "./receptionSound";
 
+import {
+  startOfflineReceptionSync,
+} from "./offlineReceptionSync";
+
 import "./index.css";
 
 /*
@@ -16,6 +20,7 @@ import "./index.css";
   成功音を使える状態にします。
 */
 installReceptionSoundUnlock();
+startOfflineReceptionSync();
 
 const rootElement =
   document.getElementById(

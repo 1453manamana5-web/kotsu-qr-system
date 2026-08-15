@@ -15,6 +15,14 @@ import {
   db,
 } from "./firebase";
 
+import {
+  acceptMemberReceptionOffline,
+  cacheEventMembersForOffline,
+  cacheMemberCardsForOffline,
+  isTransientReceptionError,
+  updateCachedMemberStatus,
+} from "./offlineReceptionStore";
+
 export type MemberStatus =
   | "未入室"
   | "入室中"
@@ -43,12 +51,17 @@ export type MemberReceptionResult =
       action:
         | "entry"
         | "exit";
+      syncStatus:
+        | "synced"
+        | "pending";
     }
   | {
       success: false;
       reason:
         | "not-found"
-        | "invalid-token";
+        | "not-cached"
+        | "invalid-token"
+        | "duplicate";
     };
 
 const MEMBER_CARDS_COLLECTION =
@@ -266,6 +279,15 @@ export function subscribeToMemberCards(
               )
           );
 
+      if (
+        !snapshot.metadata.fromCache ||
+        cards.length > 0
+      ) {
+        cacheMemberCardsForOffline(
+          cards
+        );
+      }
+
       onCardsChanged(
         cards
       );
@@ -339,6 +361,16 @@ export function subscribeToEventMembers(
                 }
               )
           );
+
+      if (
+        !snapshot.metadata.fromCache ||
+        members.length > 0
+      ) {
+        cacheEventMembersForOffline(
+          eventName,
+          members
+        );
+      }
 
       onMembersChanged(
         members
@@ -614,6 +646,42 @@ export async function findMemberByQrInFirestore(
   );
 }
 
+function processMemberReceptionOffline(
+  eventName: string,
+  qrNumber: string,
+  authToken: string
+): MemberReceptionResult {
+  const result =
+    acceptMemberReceptionOffline(
+      eventName,
+      qrNumber,
+      authToken
+    );
+
+  if (!result.success) {
+    if (
+      result.reason ===
+      "storage-failed"
+    ) {
+      throw new Error(
+        "端末内へ部員受付データを保存できませんでした。"
+      );
+    }
+
+    return {
+      success: false,
+      reason: result.reason,
+    };
+  }
+
+  return {
+    success: true,
+    member: result.member,
+    action: result.action,
+    syncStatus: "pending",
+  };
+}
+
 export async function processMemberReceptionInFirestore(
   eventName: string,
   qrNumber: string,
@@ -633,17 +701,35 @@ export async function processMemberReceptionInFirestore(
   const activityId =
     createSafeRandomId();
 
+  const capturedAt =
+    new Date().toISOString();
+
   const activityDocument =
     getActivityDocument(
       eventName,
       activityId
     );
 
-  return runTransaction(
-    db,
-    async (
-      transaction
-    ) => {
+  if (
+    typeof navigator !==
+      "undefined" &&
+    navigator.onLine === false
+  ) {
+    return processMemberReceptionOffline(
+      eventName,
+      qrNumber,
+      authToken
+    );
+  }
+
+  try {
+    const result:
+      MemberReceptionResult =
+      await runTransaction(
+      db,
+      async (
+        transaction
+      ) => {
       const memberCardSnapshot =
         await transaction.get(
           memberCardDocument
@@ -750,6 +836,12 @@ export async function processMemberReceptionInFirestore(
           status:
             newStatus,
 
+          lastReceptionAt:
+            capturedAt,
+
+          lastReceptionOperationId:
+            activityId,
+
           updatedAt:
             serverTimestamp(),
         },
@@ -774,7 +866,7 @@ export async function processMemberReceptionInFirestore(
             memberCard.qrNumber,
 
           timestamp:
-            new Date().toISOString(),
+            capturedAt,
 
           source:
             "scanner",
@@ -792,9 +884,48 @@ export async function processMemberReceptionInFirestore(
           updatedMember,
 
         action,
+
+        syncStatus:
+          "synced",
       };
+      }
+    );
+
+    if (result.success) {
+      updateCachedMemberStatus(
+        eventName,
+        {
+          qrNumber:
+            result.member.qrNumber,
+          name:
+            result.member.name,
+          status:
+            result.member.status,
+        }
+      );
     }
-  );
+
+    return result;
+  } catch (error) {
+    if (
+      (
+        typeof navigator !==
+          "undefined" &&
+        navigator.onLine === false
+      ) ||
+      isTransientReceptionError(
+        error
+      )
+    ) {
+      return processMemberReceptionOffline(
+        eventName,
+        qrNumber,
+        authToken
+      );
+    }
+
+    throw error;
+  }
 }
 
 export async function deleteAllEventMembersFromFirestore(

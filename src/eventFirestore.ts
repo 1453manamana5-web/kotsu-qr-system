@@ -138,7 +138,8 @@ function convertEventSnapshot(
 
 export function subscribeToEvents(
   onEventsChanged: (
-    events: EventData[]
+    events: EventData[],
+    fromCache: boolean
   ) => void,
 
   onError?: (
@@ -163,7 +164,8 @@ export function subscribeToEvents(
         );
 
       onEventsChanged(
-        events
+        events,
+        snapshot.metadata.fromCache
       );
     },
 
@@ -186,7 +188,8 @@ export function subscribeToCurrentEventId(
   onCurrentEventIdChanged: (
     currentEventId:
       | string
-      | null
+      | null,
+    fromCache: boolean
   ) => void,
 
   onError?: (
@@ -210,7 +213,8 @@ export function subscribeToCurrentEventId(
         !snapshot.exists()
       ) {
         onCurrentEventIdChanged(
-          null
+          null,
+          snapshot.metadata.fromCache
         );
 
         return;
@@ -226,7 +230,8 @@ export function subscribeToCurrentEventId(
           : null;
 
       onCurrentEventIdChanged(
-        currentEventId
+        currentEventId,
+        snapshot.metadata.fromCache
       );
     },
 
