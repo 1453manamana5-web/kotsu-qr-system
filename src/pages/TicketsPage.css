@@ -335,9 +335,9 @@
 
   width:
     clamp(
-      250px,
-      27vw,
-      365px
+      235px,
+      26vw,
+      350px
     );
 
   min-height:
@@ -3169,8 +3169,8 @@
   .tickets-mode-label {
     width:
       clamp(
-        235px,
-        27vw,
+        225px,
+        26vw,
         285px
       );
 
