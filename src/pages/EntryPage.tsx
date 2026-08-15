@@ -10,7 +10,6 @@ import OnlineStatus from "./OnlineStatus";
 
 import {
   processTicketEntryInFirestore,
-  subscribeToTickets,
 } from "../ticketFirestore";
 
 import {
@@ -437,31 +436,6 @@ function EntryPage({
   }, []);
 
   useEffect(() => {
-    if (
-      currentEventName.trim() ===
-      ""
-    ) {
-      return;
-    }
-
-    return subscribeToTickets(
-      currentEventName,
-      () => {
-        // オンライン中に全チケットを端末へ保存して、
-        // 通信が切れた後も受付できるようにします。
-      },
-      (error) => {
-        console.warn(
-          "オフライン受付用のチケット準備に失敗しました。",
-          error
-        );
-      }
-    );
-  }, [
-    currentEventName,
-  ]);
-
-  useEffect(() => {
     const eventName =
       loadCurrentEventName();
 
@@ -477,6 +451,10 @@ function EntryPage({
 
     const sendHeartbeat =
       async () => {
+        if (!navigator.onLine) {
+          return;
+        }
+
         try {
           await sendReceptionHeartbeat(
             eventName,
@@ -516,14 +494,14 @@ function EntryPage({
       void removeReceptionPresence(
         eventName,
         receptionDeviceId
-      ).catch(
-        (error) => {
+      ).catch((error) => {
+        if (navigator.onLine) {
           console.warn(
             "入口受付端末の終了通知に失敗しました。",
             error
           );
         }
-      );
+      });
     };
   }, [
     receptionDeviceId,
@@ -851,6 +829,30 @@ function EntryPage({
           if (
             !result.success
           ) {
+            if (
+              result.reason ===
+                "not-cached"
+            ) {
+              showError(
+                "この端末に部員情報がありません。通信を確認してください",
+                parsedQr.qrNumber
+              );
+
+              return;
+            }
+
+            if (
+              result.reason ===
+                "duplicate"
+            ) {
+              showError(
+                "この部員QRは直前に受付済みです",
+                parsedQr.qrNumber
+              );
+
+              return;
+            }
+
             showError(
               "登録されていない部員QRです",
               parsedQr.qrNumber
@@ -862,10 +864,16 @@ function EntryPage({
           showMemberSuccess(
             result.member.name,
             result.member.qrNumber,
-            result.action ===
-              "entry"
-              ? "入室完了"
-              : "退出完了"
+            result.syncStatus ===
+              "pending"
+              ? result.action ===
+                  "entry"
+                ? "入室を端末に保存しました（自動同期）"
+                : "退出を端末に保存しました（自動同期）"
+              : result.action ===
+                  "entry"
+                ? "入室完了"
+                : "退出完了"
           );
         } catch (error) {
           console.error(
