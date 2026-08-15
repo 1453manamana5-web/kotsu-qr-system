@@ -4,6 +4,8 @@ import {
   useState,
 } from "react";
 
+import "./App.css";
+
 import HomePage from "./pages/HomePage";
 import EntryPage from "./pages/EntryPage";
 import ExitPage from "./pages/ExitPage";
