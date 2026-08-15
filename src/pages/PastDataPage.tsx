@@ -803,6 +803,12 @@ function PastDataPage({
           1
         );
 
+  const middleHourCount =
+    Math.ceil(
+      maximumHourCount /
+        2
+    );
+
   const loading =
     ticketsLoading ||
     activityLoading;
@@ -1303,7 +1309,7 @@ function PastDataPage({
                   </div>
 
                   <span>
-                    受付履歴　
+                    受付履歴{" "}
                     {
                       analysis.activityCount
                     }
@@ -1317,7 +1323,43 @@ function PastDataPage({
                     入場履歴がありません
                   </div>
                 ) : (
-                  <div className="past-data-chart">
+                  <div
+                    className="past-data-chart"
+                    role="img"
+                    aria-label={`時間帯別入場者数。${analysis.hourData
+                      .map(
+                        (hour) =>
+                          `${hour.label} ${hour.count}人`
+                      )
+                      .join("、")}`}
+                  >
+                    <div
+                      className="past-data-chart-scale"
+                      aria-hidden="true"
+                    >
+                      <strong>
+                        人数
+                      </strong>
+
+                      <div>
+                        <span>
+                          {
+                            maximumHourCount
+                          }
+                        </span>
+
+                        <span>
+                          {
+                            middleHourCount
+                          }
+                        </span>
+
+                        <span>
+                          0
+                        </span>
+                      </div>
+                    </div>
+
                     {analysis.hourData.map(
                       (
                         hour

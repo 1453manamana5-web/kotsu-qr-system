@@ -792,6 +792,12 @@ function AnalysisPage({
       1
     );
 
+  const middleHourCount =
+    Math.ceil(
+      maximumHourCount /
+        2
+    );
+
   const loading =
     ticketsLoading ||
     membersLoading ||
@@ -819,7 +825,7 @@ function AnalysisPage({
             <OnlineStatus />
 
             <div className="analysis-event-name">
-              イベント名　
+              イベント名{" "}
               {eventData?.name ??
                 "未設定"}
             </div>
@@ -918,7 +924,43 @@ function AnalysisPage({
           ) : !loading &&
             loadingError ===
               "" ? (
-            <div className="analysis-chart">
+            <div
+              className="analysis-chart"
+              role="img"
+              aria-label={`時間帯別入場者数。${analysisData.hourData
+                .map(
+                  (data) =>
+                    `${data.label} ${data.count}人`
+                )
+                .join("、")}`}
+            >
+              <div
+                className="analysis-chart-scale"
+                aria-hidden="true"
+              >
+                <strong>
+                  人数
+                </strong>
+
+                <div>
+                  <span>
+                    {
+                      maximumHourCount
+                    }
+                  </span>
+
+                  <span>
+                    {
+                      middleHourCount
+                    }
+                  </span>
+
+                  <span>
+                    0
+                  </span>
+                </div>
+              </div>
+
               {analysisData.hourData.map(
                 (data) => {
                   const barHeight =

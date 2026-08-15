@@ -517,6 +517,11 @@
   棒グラフ
 */
 .analysis-chart {
+  --analysis-chart-value-row:
+    clamp(30px, 4.2vh, 40px);
+  --analysis-chart-label-row:
+    clamp(40px, 5.5vh, 52px);
+
   position: relative;
 
   display: flex;
@@ -531,31 +536,25 @@
 
   padding:
     clamp(13px, 1.8vh, 20px)
-    clamp(9px, 1vw, 14px)
-    0;
-
-  border-bottom:
-    2px solid
-    rgba(75, 93, 121, 0.18);
-
-  border-left:
-    2px solid
-    rgba(75, 93, 121, 0.18);
-
-  border-radius:
-    12px
-    12px
+    clamp(10px, 1.1vw, 16px)
     0
     0;
+
+  border:
+    1px solid
+    rgba(75, 93, 121, 0.22);
+
+  border-radius: 14px;
 
   background:
     repeating-linear-gradient(
       to top,
-      rgba(86, 115, 157, 0.075) 0,
-      rgba(86, 115, 157, 0.075) 1px,
+      rgba(58, 76, 105, 0.13) 0,
+      rgba(58, 76, 105, 0.13) 1px,
       transparent 1px,
       transparent 25%
-    );
+    ),
+    #ffffff;
 
   overflow-x: auto;
   overflow-y: hidden;
@@ -564,6 +563,65 @@
   scrollbar-color:
     rgba(56, 113, 195, 0.3)
     transparent;
+}
+
+.analysis-chart-scale {
+  position: sticky;
+  z-index: 3;
+  left: 0;
+
+  display: grid;
+
+  grid-template-rows:
+    var(--analysis-chart-value-row)
+    minmax(0, 1fr)
+    var(--analysis-chart-label-row);
+
+  min-width: clamp(42px, 4vw, 54px);
+
+  align-items: end;
+
+  background:
+    linear-gradient(
+      90deg,
+      #ffffff 82%,
+      rgba(255, 255, 255, 0)
+    );
+}
+
+.analysis-chart-scale > strong {
+  align-self: center;
+
+  padding-right: 9px;
+
+  color: #475569;
+
+  font-size: clamp(11px, 1vw, 14px);
+  font-weight: 850;
+}
+
+.analysis-chart-scale > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-direction: column;
+
+  width: 100%;
+  height: 100%;
+
+  padding-right: 9px;
+
+  border-right:
+    1px solid
+    rgba(51, 65, 85, 0.28);
+}
+
+.analysis-chart-scale span {
+  color: #475569;
+
+  font-size: clamp(11px, 1vw, 14px);
+  font-weight: 800;
+  line-height: 1;
 }
 
 .analysis-chart::-webkit-scrollbar {
@@ -585,11 +643,11 @@
   display: grid;
 
   grid-template-rows:
-    clamp(27px, 4vh, 37px)
+    var(--analysis-chart-value-row)
     minmax(0, 1fr)
-    clamp(37px, 5.3vh, 49px);
+    var(--analysis-chart-label-row);
 
-  min-width: clamp(55px, 5.4vw, 75px);
+  min-width: clamp(62px, 5.8vw, 82px);
   flex: 1;
 
   align-items: end;
@@ -600,9 +658,9 @@
 .analysis-chart-value {
   align-self: center;
 
-  color: #315f9e;
+  color: #172033;
 
-  font-size: clamp(14px, 1.45vw, 20px);
+  font-size: clamp(16px, 1.6vw, 22px);
   font-weight: 850;
 }
 
@@ -619,47 +677,20 @@
 .analysis-chart-bar {
   position: relative;
 
-  width: min(58px, 68%);
+  width: min(60px, 72%);
 
   min-height: 0;
 
-  border-radius:
-    clamp(8px, 1vw, 12px)
-    clamp(8px, 1vw, 12px)
-    3px
-    3px;
+  border-radius: 7px 7px 2px 2px;
 
-  background:
-    linear-gradient(
-      180deg,
-      #73b3ff 0%,
-      #3e83e6 55%,
-      #2e6fc9 100%
-    );
+  background: #2563d9;
 
   box-shadow:
-    0 8px 18px
-    rgba(48, 111, 201, 0.23);
+    0 5px 10px
+    rgba(37, 99, 217, 0.2);
 
   transition:
     height 250ms ease;
-}
-
-.analysis-chart-bar::after {
-  position: absolute;
-
-  top: 4px;
-  right: 4px;
-  left: 4px;
-
-  height: 3px;
-
-  border-radius: 999px;
-
-  background:
-    rgba(255, 255, 255, 0.4);
-
-  content: "";
 }
 
 .analysis-chart-label {
@@ -667,10 +698,10 @@
 
   padding-top: clamp(6px, 0.8vh, 10px);
 
-  color: #667085;
+  color: #344054;
 
-  font-size: clamp(11px, 1.15vw, 16px);
-  font-weight: 750;
+  font-size: clamp(12px, 1.25vw, 17px);
+  font-weight: 800;
   line-height: 1;
 
   white-space: nowrap;
@@ -1446,7 +1477,8 @@
     padding: 9px 7px 0;
   }
 
-  .analysis-chart-column {
+  .analysis-chart-column,
+  .analysis-chart-scale {
     grid-template-rows:
       22px
       minmax(0, 1fr)
