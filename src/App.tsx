@@ -629,6 +629,120 @@ function getRuntimeStatus(
   return "active";
 }
 
+function findClosestSelectableEvent(
+  events: EventData[]
+) {
+  const today =
+    new Date();
+
+  today.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+  const todayTime =
+    today.getTime();
+
+  return (
+    events
+      .filter(
+        (event) =>
+          getRuntimeStatus(
+            event
+          ) !== "ended"
+      )
+      .map((event) => {
+        const eventDate =
+          createEventDateTime(
+            event.date,
+            "00:00"
+          );
+
+        return {
+          event,
+          eventTime:
+            eventDate?.getTime() ??
+            Number.NaN,
+        };
+      })
+      .filter(
+        ({ eventTime }) =>
+          Number.isFinite(
+            eventTime
+          )
+      )
+      .sort(
+        (
+          first,
+          second
+        ) => {
+          const firstDistance =
+            Math.abs(
+              first.eventTime -
+                todayTime
+            );
+
+          const secondDistance =
+            Math.abs(
+              second.eventTime -
+                todayTime
+            );
+
+          if (
+            firstDistance !==
+            secondDistance
+          ) {
+            return (
+              firstDistance -
+              secondDistance
+            );
+          }
+
+          const firstIsFuture =
+            first.eventTime >=
+            todayTime;
+
+          const secondIsFuture =
+            second.eventTime >=
+            todayTime;
+
+          if (
+            firstIsFuture !==
+            secondIsFuture
+          ) {
+            return firstIsFuture
+              ? -1
+              : 1;
+          }
+
+          if (
+            first.eventTime !==
+            second.eventTime
+          ) {
+            return (
+              first.eventTime -
+              second.eventTime
+            );
+          }
+
+          const timeOrder =
+            first.event.startTime.localeCompare(
+              second.event.startTime
+            );
+
+          return timeOrder !== 0
+            ? timeOrder
+            : first.event.id.localeCompare(
+                second.event.id
+              );
+        }
+      )[0]?.event ??
+    null
+  );
+}
+
 function App() {
   const [
     eventStore,
@@ -648,6 +762,22 @@ function App() {
         null
     );
 
+  const autoSelectingEventIdRef =
+    useRef<
+      string |
+      null
+    >(
+      null
+    );
+
+  const [
+    currentEventSyncReady,
+    setCurrentEventSyncReady,
+  ] = useState(
+    () =>
+      navigator.onLine === false
+  );
+
   const [
     page,
     setPage,
@@ -656,16 +786,17 @@ function App() {
   );
 
   /*
-    受付で使う3画面と管理メニューは、ブラウザ全体が
-    スクロールしないよう表示領域に固定します。
-    一覧など内部スクロールが必要な画面では、この指定を外します。
+    受付で使う3画面・管理メニュー・イベント管理は、
+    ブラウザ全体がスクロールしないよう表示領域に固定します。
+    イベント一覧など、必要な場所だけ内側でスクロールします。
   */
   useEffect(() => {
     const shouldLockViewport =
       page === "home" ||
       page === "entry" ||
       page === "exit" ||
-      page === "admin";
+      page === "admin" ||
+      page === "events";
 
     document.documentElement.classList.toggle(
       "viewport-locked",
@@ -800,6 +931,10 @@ function App() {
           hasCurrentEventRef.current =
             currentEventId !== null;
 
+          setCurrentEventSyncReady(
+            true
+          );
+
           setEventStore(
             (currentStore) => ({
               ...currentStore,
@@ -830,6 +965,10 @@ function App() {
         },
 
         (error) => {
+          setCurrentEventSyncReady(
+            true
+          );
+
           setEventSyncError(
             hasUsableEventsRef.current ||
             navigator.onLine === false
@@ -844,6 +983,92 @@ function App() {
       unsubscribeCurrentEvent();
     };
   }, []);
+
+  /*
+    現在のイベントが未設定・削除済み・終了済みの場合は、
+    今日に最も近い未終了イベントを自動設定します。
+
+    手動で有効なイベントを選択した場合は、
+    その選択を維持します。
+  */
+  useEffect(() => {
+    if (
+      !eventSyncReady ||
+      !currentEventSyncReady ||
+      eventStore.events.length ===
+        0
+    ) {
+      return;
+    }
+
+    const currentEvent =
+      eventStore.events.find(
+        (event) =>
+          event.id ===
+          eventStore.currentEventId
+      );
+
+    if (
+      currentEvent !==
+        undefined &&
+      getRuntimeStatus(
+        currentEvent
+      ) !== "ended"
+    ) {
+      autoSelectingEventIdRef.current =
+        null;
+
+      return;
+    }
+
+    const closestEvent =
+      findClosestSelectableEvent(
+        eventStore.events
+      );
+
+    if (
+      closestEvent ===
+        null ||
+      closestEvent.id ===
+        eventStore.currentEventId ||
+      autoSelectingEventIdRef.current ===
+        closestEvent.id
+    ) {
+      return;
+    }
+
+    autoSelectingEventIdRef.current =
+      closestEvent.id;
+
+    const selectClosestEvent =
+      async () => {
+        try {
+          await setCurrentEventIdInFirestore(
+            closestEvent.id
+          );
+        } catch (error) {
+          console.error(
+            "日付が最も近いイベントの自動設定に失敗しました。",
+            error
+          );
+        } finally {
+          if (
+            autoSelectingEventIdRef.current ===
+            closestEvent.id
+          ) {
+            autoSelectingEventIdRef.current =
+              null;
+          }
+        }
+      };
+
+    void selectClosestEvent();
+  }, [
+    currentEventSyncReady,
+    eventStore.currentEventId,
+    eventStore.events,
+    eventSyncReady,
+  ]);
 
   /*
     従来の画面との互換性のため、
