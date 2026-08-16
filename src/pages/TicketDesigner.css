@@ -386,6 +386,84 @@
   font-weight: bold;
 }
 
+.ticket-marker-instruction {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 10px;
+
+  margin-top: 12px;
+  padding: 12px;
+
+  border: 1px solid #efafd9;
+  border-radius: 12px;
+
+  background: #fff3fb;
+}
+
+.ticket-marker-instruction p {
+  margin: 0;
+
+  color: #57203f;
+
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1.5;
+}
+
+.ticket-marker-swatch {
+  width: 20px;
+  height: 20px;
+
+  flex-shrink: 0;
+
+  margin-top: 1px;
+
+  border: 2px solid #b00072;
+  border-radius: 4px;
+
+  background: #ff00ff;
+
+  box-shadow:
+    0 0 0 2px #fff;
+}
+
+.ticket-marker-status {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+
+  border: 1px solid transparent;
+  border-radius: 10px;
+
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1.45;
+}
+
+.ticket-marker-status-detecting {
+  border-color: #a9c9ea;
+  color: #174d7f;
+  background: #edf6ff;
+}
+
+.ticket-marker-status-success {
+  border-color: #a6d4b8;
+  color: #225d3d;
+  background: #edf9f1;
+}
+
+.ticket-marker-status-not-found {
+  border-color: #e2c675;
+  color: #6b4c00;
+  background: #fff9e6;
+}
+
+.ticket-marker-status-error {
+  border-color: #e2aaa7;
+  color: #812d29;
+  background: #fff1f0;
+}
+
 .ticket-remove-background {
   min-height: 44px;
   margin-top: 14px;
