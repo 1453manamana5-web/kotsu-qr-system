@@ -8,28 +8,43 @@ import "./AppSplashScreen.css";
 
 type AppSplashScreenProps = {
   children: ReactNode;
+  canFinish: boolean;
 };
 
-const SPLASH_DURATION_MS =
-  2150;
+const MINIMUM_SPLASH_DURATION_MS =
+  1750;
+
+const SPLASH_EXIT_DURATION_MS =
+  400;
 
 function AppSplashScreen({
   children,
+  canFinish,
 }: AppSplashScreenProps) {
   const [
     showSplash,
     setShowSplash,
   ] = useState(true);
 
+  const [
+    isLeaving,
+    setIsLeaving,
+  ] = useState(false);
+
+  const [
+    minimumTimeElapsed,
+    setMinimumTimeElapsed,
+  ] = useState(false);
+
   useEffect(() => {
     const timerId =
       window.setTimeout(
         () => {
-          setShowSplash(
-            false
+          setMinimumTimeElapsed(
+            true
           );
         },
-        SPLASH_DURATION_MS
+        MINIMUM_SPLASH_DURATION_MS
       );
 
     return () => {
@@ -39,13 +54,55 @@ function AppSplashScreen({
     };
   }, []);
 
+  useEffect(() => {
+    if (
+      !canFinish ||
+      !minimumTimeElapsed
+    ) {
+      return;
+    }
+
+    const leaveTimerId =
+      window.setTimeout(
+        () => {
+          setIsLeaving(true);
+        },
+        0
+      );
+
+    const hideTimerId =
+      window.setTimeout(
+        () => {
+          setShowSplash(false);
+        },
+        SPLASH_EXIT_DURATION_MS
+      );
+
+    return () => {
+      window.clearTimeout(
+        leaveTimerId
+      );
+
+      window.clearTimeout(
+        hideTimerId
+      );
+    };
+  }, [
+    canFinish,
+    minimumTimeElapsed,
+  ]);
+
   return (
     <>
       {children}
 
       {showSplash && (
         <div
-          className="app-splash-screen"
+          className={`app-splash-screen${
+            isLeaving
+              ? " is-leaving"
+              : ""
+          }`}
           role="status"
           aria-label="アプリを起動しています"
         >
