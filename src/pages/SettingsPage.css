@@ -698,6 +698,60 @@
     0.04em;
 }
 
+.settings-version-button {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 9px;
+
+  border: none;
+
+  font-size:
+    clamp(
+      15px,
+      1.55vw,
+      21px
+    );
+
+  font-weight: 850;
+
+  cursor: pointer;
+
+  transition:
+    transform 150ms ease,
+    background 150ms ease;
+}
+
+.settings-version-button small {
+  padding-left: 9px;
+
+  border-left:
+    1px solid
+    rgba(
+      116,
+      67,
+      203,
+      0.22
+    );
+
+  font-size: 0.63em;
+  font-weight: 800;
+
+  letter-spacing: 0.04em;
+}
+
+.settings-version-button:hover {
+  background: #e4d8ff;
+
+  transform:
+    translateY(-1px);
+}
+
+.settings-version-button:active {
+  transform:
+    scale(0.97);
+}
+
 /*
   受付画面変更
 */
@@ -1484,9 +1538,10 @@
 }
 
 /*
-  初期化確認モーダル
+  モーダル背景
 */
-.settings-reset-background {
+.settings-reset-background,
+.settings-update-background {
   position: fixed;
   z-index: 5000;
 
@@ -1517,6 +1572,360 @@
   -webkit-backdrop-filter:
     blur(10px);
 }
+
+/*
+  アップデート内容
+*/
+.settings-update-window {
+  width:
+    min(
+      100%,
+      720px
+    );
+
+  max-height:
+    min(
+      90dvh,
+      760px
+    );
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  padding:
+    clamp(
+      25px,
+      3.4vw,
+      42px
+    );
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.92
+    );
+
+  border-radius:
+    clamp(
+      28px,
+      3.5vw,
+      42px
+    );
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(
+        253,
+        252,
+        255,
+        0.99
+      ),
+      rgba(
+        247,
+        244,
+        255,
+        0.99
+      )
+    );
+
+  box-shadow:
+    0 30px 80px
+    rgba(
+      22,
+      28,
+      43,
+      0.32
+    );
+}
+
+.settings-update-heading {
+  text-align: center;
+}
+
+.settings-update-version {
+  display: inline-flex;
+
+  padding:
+    7px
+    13px;
+
+  border-radius: 999px;
+
+  background: #eee6ff;
+
+  color: #7443cb;
+
+  font-size:
+    clamp(
+      11px,
+      1.1vw,
+      15px
+    );
+
+  font-weight: 850;
+
+  letter-spacing: 0.11em;
+}
+
+.settings-update-heading h2 {
+  margin:
+    clamp(
+      11px,
+      1.6vh,
+      17px
+    )
+    0
+    0;
+
+  color: #252d40;
+
+  font-size:
+    clamp(
+      30px,
+      4vw,
+      50px
+    );
+
+  font-weight: 850;
+  line-height: 1.08;
+
+  letter-spacing:
+    -0.045em;
+}
+
+.settings-update-heading p {
+  margin:
+    11px
+    0
+    0;
+
+  color: #69758a;
+
+  font-size:
+    clamp(
+      13px,
+      1.4vw,
+      19px
+    );
+
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.settings-update-list {
+  display: grid;
+
+  gap:
+    clamp(
+      9px,
+      1.3vh,
+      14px
+    );
+
+  margin:
+    clamp(
+      20px,
+      2.8vh,
+      29px
+    )
+    0
+    0;
+
+  padding: 0;
+
+  list-style: none;
+}
+
+.settings-update-list li {
+  display: grid;
+
+  grid-template-columns:
+    auto
+    minmax(
+      0,
+      1fr
+    );
+
+  align-items: start;
+
+  gap:
+    clamp(
+      11px,
+      1.5vw,
+      16px
+    );
+
+  padding:
+    clamp(
+      12px,
+      1.6vw,
+      17px
+    );
+
+  border:
+    1px solid
+    rgba(
+      116,
+      67,
+      203,
+      0.1
+    );
+
+  border-radius:
+    clamp(
+      15px,
+      1.8vw,
+      21px
+    );
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.78
+    );
+}
+
+.settings-update-check {
+  display: grid;
+
+  width:
+    clamp(
+      31px,
+      3.3vw,
+      41px
+    );
+
+  height:
+    clamp(
+      31px,
+      3.3vw,
+      41px
+    );
+
+  place-items: center;
+
+  border-radius: 50%;
+
+  background:
+    linear-gradient(
+      145deg,
+      #9670e7,
+      #7042ca
+    );
+
+  color: #ffffff;
+
+  font-size:
+    clamp(
+      16px,
+      1.8vw,
+      23px
+    );
+
+  font-weight: 900;
+}
+
+.settings-update-list li > div {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  gap: 4px;
+}
+
+.settings-update-list strong {
+  color: #30384c;
+
+  font-size:
+    clamp(
+      15px,
+      1.55vw,
+      21px
+    );
+
+  font-weight: 850;
+}
+
+.settings-update-list li > div > span {
+  color: #707b8e;
+
+  font-size:
+    clamp(
+      12px,
+      1.25vw,
+      17px
+    );
+
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.settings-update-close {
+  width: 100%;
+
+  min-height:
+    clamp(
+      51px,
+      6.7vh,
+      65px
+    );
+
+  margin-top:
+    clamp(
+      19px,
+      2.7vh,
+      28px
+    );
+
+  padding:
+    8px
+    14px;
+
+  border: none;
+
+  border-radius:
+    clamp(
+      15px,
+      1.8vw,
+      21px
+    );
+
+  background:
+    linear-gradient(
+      135deg,
+      #8f66e4,
+      #6e3fc8
+    );
+
+  color: #ffffff;
+
+  font-size:
+    clamp(
+      15px,
+      1.6vw,
+      21px
+    );
+
+  font-weight: 850;
+
+  cursor: pointer;
+}
+
+.settings-update-close:active {
+  transform:
+    scale(0.985);
+}
+
+/*
+  初期化確認モーダル
+*/
 
 .settings-reset-window {
   width:
@@ -2179,7 +2588,8 @@
   .settings-toggle,
   .settings-toggle::before,
   .settings-initialize-button,
-  .settings-return-button {
+  .settings-return-button,
+  .settings-version-button {
     transition: none;
   }
 }
