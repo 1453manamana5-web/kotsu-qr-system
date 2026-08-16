@@ -2,6 +2,8 @@ import ReactDOM from "react-dom/client";
 
 import App from "./App";
 
+import AppSplashScreen from "./AppSplashScreen";
+
 import {
   installReceptionSoundUnlock,
 } from "./receptionSound";
@@ -39,5 +41,7 @@ if (
 ReactDOM.createRoot(
   rootElement
 ).render(
-  <App />
+  <AppSplashScreen>
+    <App />
+  </AppSplashScreen>
 );

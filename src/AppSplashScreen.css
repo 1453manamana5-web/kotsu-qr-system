@@ -1,0 +1,277 @@
+.app-splash-screen {
+  position: fixed;
+  z-index: 10000;
+
+  inset: 0;
+
+  display: grid;
+
+  place-items: center;
+
+  box-sizing: border-box;
+
+  padding: 24px;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 50% 42%,
+      rgba(
+        128,
+        84,
+        242,
+        0.13
+      ),
+      transparent 38%
+    ),
+    linear-gradient(
+      145deg,
+      #fbfaff,
+      #f1edff
+    );
+
+  color: #22283a;
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "SF Pro Text",
+    "Hiragino Sans",
+    "Yu Gothic UI",
+    "Yu Gothic",
+    sans-serif;
+
+  animation:
+    app-splash-screen-out
+    2150ms
+    ease
+    forwards;
+}
+
+.app-splash-screen *,
+.app-splash-screen *::before,
+.app-splash-screen *::after {
+  box-sizing: border-box;
+}
+
+.app-splash-brand {
+  display: grid;
+
+  justify-items: center;
+
+  gap:
+    clamp(
+      19px,
+      3vh,
+      27px
+    );
+}
+
+.app-splash-icon {
+  position: relative;
+
+  width:
+    clamp(
+      132px,
+      22vw,
+      196px
+    );
+
+  aspect-ratio: 1 / 1;
+
+  overflow: hidden;
+
+  border-radius: 28%;
+
+  opacity: 0;
+
+  transform:
+    translateY(12px)
+    scale(0.86);
+
+  animation:
+    app-splash-icon-in
+    720ms
+    cubic-bezier(
+      0.2,
+      0.78,
+      0.24,
+      1
+    )
+    120ms
+    forwards;
+}
+
+.app-splash-icon img {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+}
+
+.app-splash-scan-line {
+  position: absolute;
+  z-index: 2;
+
+  top: 28%;
+  left: 22%;
+
+  width: 56%;
+  height:
+    clamp(
+      3px,
+      0.45vw,
+      5px
+    );
+
+  border-radius: 999px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 0 18px
+    rgba(
+      255,
+      255,
+      255,
+      0.82
+    );
+
+  opacity: 0;
+
+  animation:
+    app-splash-scan-pass
+    700ms
+    ease-in-out
+    620ms
+    forwards;
+}
+
+.app-splash-brand h1 {
+  margin: 0;
+
+  color: #2c3040;
+
+  font-size:
+    clamp(
+      24px,
+      3.2vw,
+      42px
+    );
+
+  font-weight: 800;
+  line-height: 1.2;
+
+  letter-spacing:
+    -0.035em;
+
+  text-align: center;
+
+  opacity: 0;
+
+  transform:
+    translateY(8px);
+
+  animation:
+    app-splash-title-in
+    520ms
+    ease-out
+    820ms
+    forwards;
+}
+
+@keyframes app-splash-icon-in {
+  0% {
+    opacity: 0;
+
+    transform:
+      translateY(12px)
+      scale(0.86);
+  }
+
+  70% {
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1.025);
+  }
+
+  100% {
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+@keyframes app-splash-scan-pass {
+  0% {
+    top: 28%;
+
+    opacity: 0;
+
+    transform:
+      scaleX(0.62);
+  }
+
+  20% {
+    opacity: 0.9;
+  }
+
+  80% {
+    opacity: 0.9;
+  }
+
+  100% {
+    top: 66%;
+
+    opacity: 0;
+
+    transform:
+      scaleX(1);
+  }
+}
+
+@keyframes app-splash-title-in {
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+}
+
+@keyframes app-splash-screen-out {
+  0%,
+  76% {
+    visibility: visible;
+
+    opacity: 1;
+
+    pointer-events: auto;
+  }
+
+  100% {
+    visibility: hidden;
+
+    opacity: 0;
+
+    pointer-events: none;
+  }
+}
+
+@media (
+  prefers-reduced-motion: reduce
+) {
+  .app-splash-screen,
+  .app-splash-icon,
+  .app-splash-scan-line,
+  .app-splash-brand h1 {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+}
