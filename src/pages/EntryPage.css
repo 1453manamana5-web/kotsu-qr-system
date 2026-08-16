@@ -18,7 +18,8 @@
   width: 100%;
   height: 100vh;
   height: 100dvh;
-  min-height: 620px;
+  min-height: 0;
+  max-height: 100dvh;
 
   overflow: hidden;
 
@@ -1721,7 +1722,7 @@
   max-height: 850px
 ) {
   .entry-reception-page {
-    min-height: 100dvh;
+    min-height: 0;
 
     padding:
       18px
@@ -1953,10 +1954,47 @@
   orientation: portrait
 ) {
   .entry-reception-page {
-    height: auto;
-    min-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    max-height: 100dvh;
 
-    overflow: auto;
+    overflow: hidden;
+  }
+
+  .entry-reception-main {
+    min-height: 0;
+  }
+
+  .entry-scanner-wrapper
+    .camera-qr-scanner {
+    width:
+      min(
+        100%,
+        720px
+      );
+
+    height: 100%;
+    max-height: 100%;
+
+    aspect-ratio: 4 / 3;
+  }
+}
+
+/*
+  狭い画面
+*/
+@media (
+  max-width: 680px
+) {
+  .entry-reception-page {
+    height: 100%;
+    min-height: 0;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    overscroll-behavior: contain;
   }
 
   .entry-reception-header {
@@ -1976,39 +2014,6 @@
     flex-wrap: wrap;
   }
 
-  .entry-reception-main {
-    min-height: 650px;
-  }
-
-  .entry-scanner-wrapper
-    .camera-qr-scanner {
-    width:
-      min(
-        100%,
-        720px
-      );
-
-    height: auto;
-
-    aspect-ratio: 4 / 3;
-  }
-
-  .entry-reception-footer {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .entry-reception-footer button {
-    width: 100%;
-  }
-}
-
-/*
-  狭い画面
-*/
-@media (
-  max-width: 680px
-) {
   .entry-current-event {
     width: 100%;
   }
@@ -2028,6 +2033,20 @@
 
   .entry-scan-instruction-copy strong {
     line-height: 1.25;
+  }
+
+  .entry-reception-main {
+    min-height: 650px;
+    flex: none;
+  }
+
+  .entry-reception-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .entry-reception-footer button {
+    width: 100%;
   }
 }
 
