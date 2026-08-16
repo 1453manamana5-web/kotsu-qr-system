@@ -1,0 +1,46 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAuthorizedUser() {
+      return isSignedIn()
+        && exists(
+          /databases/$(database)/documents/authorized-users/$(request.auth.uid)
+        );
+    }
+
+    // 利用者本人は、自分が許可済みかどうかだけ確認できます。
+    // 許可データの作成・変更・削除はFirebaseコンソールで行います。
+    match /authorized-users/{userId} {
+      allow get: if isSignedIn()
+        && request.auth.uid == userId;
+      allow list, create, update, delete: if false;
+    }
+
+    // 現在アプリが使用しているデータだけを、許可済み端末へ開放します。
+    match /events/{document=**} {
+      allow read, write: if isAuthorizedUser();
+    }
+
+    match /system/{document=**} {
+      allow read, write: if isAuthorizedUser();
+    }
+
+    match /event-data/{document=**} {
+      allow read, write: if isAuthorizedUser();
+    }
+
+    match /member-cards/{document=**} {
+      allow read, write: if isAuthorizedUser();
+    }
+
+    // 上記以外のコレクションは常に拒否します。
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

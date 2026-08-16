@@ -4,13 +4,11 @@ import App from "./App";
 
 import AppSplashScreen from "./AppSplashScreen";
 
+import DeviceAuthGate from "./DeviceAuthGate";
+
 import {
   installReceptionSoundUnlock,
 } from "./receptionSound";
-
-import {
-  startOfflineReceptionSync,
-} from "./offlineReceptionSync";
 
 import "./index.css";
 
@@ -22,7 +20,6 @@ import "./index.css";
   成功音を使える状態にします。
 */
 installReceptionSoundUnlock();
-startOfflineReceptionSync();
 
 const rootElement =
   document.getElementById(
@@ -41,7 +38,9 @@ if (
 ReactDOM.createRoot(
   rootElement
 ).render(
-  <AppSplashScreen>
-    <App />
-  </AppSplashScreen>
+  <DeviceAuthGate>
+    <AppSplashScreen>
+      <App />
+    </AppSplashScreen>
+  </DeviceAuthGate>
 );
