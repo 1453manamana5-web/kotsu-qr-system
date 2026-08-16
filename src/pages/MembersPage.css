@@ -332,6 +332,7 @@
 
 .members-add-button,
 .members-bulk-edit-button,
+.members-design-button,
 .members-shift-button {
   display: flex;
   align-items: center;
@@ -427,6 +428,29 @@
   content: "✎";
 }
 
+.members-design-button {
+  justify-content: center;
+
+  background:
+    linear-gradient(
+      135deg,
+      #eee8ff,
+      #ded4ff
+    );
+
+  color: #6745a8;
+
+  text-align: center;
+}
+
+.members-design-button::before {
+  margin-right: 10px;
+
+  font-size: 1.15em;
+
+  content: "▣";
+}
+
 .members-shift-button {
   justify-content: center;
 
@@ -453,12 +477,14 @@
 }
 
 .members-add-button:hover:not(:disabled),
-.members-bulk-edit-button:hover:not(:disabled) {
+.members-bulk-edit-button:hover:not(:disabled),
+.members-design-button:hover:not(:disabled) {
   transform: translateY(-2px);
 }
 
 .members-add-button:active:not(:disabled),
-.members-bulk-edit-button:active:not(:disabled) {
+.members-bulk-edit-button:active:not(:disabled),
+.members-design-button:active:not(:disabled) {
   transform: scale(0.985);
 }
 
@@ -1663,28 +1689,11 @@
   height: min(300px, 58vw);
 }
 
-.member-qr-name {
-  overflow: hidden;
-
+.member-qr-number {
   margin:
     clamp(17px, 2.4vh, 24px)
     0
-    5px;
-
-  color: #223044;
-
-  font-size: clamp(27px, 3.5vw, 45px);
-  font-weight: 850;
-
-  letter-spacing: -0.04em;
-
-  text-overflow: ellipsis;
-
-  white-space: nowrap;
-}
-
-.member-qr-number {
-  margin: 0;
+    0;
 
   color: #397253;
 
@@ -1829,7 +1838,8 @@
   }
 
   .members-add-button,
-  .members-bulk-edit-button {
+  .members-bulk-edit-button,
+  .members-design-button {
     min-height: 55px;
 
     padding: 7px 10px;
@@ -2096,6 +2106,7 @@
 ) {
   .members-add-button,
   .members-bulk-edit-button,
+  .members-design-button,
   .members-qr-button,
   .members-delete-button,
   .members-return-button,
