@@ -656,15 +656,16 @@ function App() {
   );
 
   /*
-    受付で使う3画面だけは、ブラウザ全体が
+    受付で使う3画面と管理メニューは、ブラウザ全体が
     スクロールしないよう表示領域に固定します。
-    管理画面などへ移動すると、この指定は外れます。
+    一覧など内部スクロールが必要な画面では、この指定を外します。
   */
   useEffect(() => {
     const shouldLockViewport =
       page === "home" ||
       page === "entry" ||
-      page === "exit";
+      page === "exit" ||
+      page === "admin";
 
     document.documentElement.classList.toggle(
       "viewport-locked",
