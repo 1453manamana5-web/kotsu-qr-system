@@ -1,0 +1,306 @@
+.device-auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+
+  box-sizing: border-box;
+  padding: clamp(20px, 4vw, 52px);
+
+  color: #172033;
+
+  background:
+    radial-gradient(
+      circle at 88% 10%,
+      rgba(209, 190, 255, 0.58),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 8% 92%,
+      rgba(191, 218, 255, 0.4),
+      transparent 32%
+    ),
+    linear-gradient(
+      145deg,
+      #fafbfd,
+      #f2eff9
+    );
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Hiragino Sans",
+    "Yu Gothic UI",
+    "Yu Gothic",
+    sans-serif;
+}
+
+.device-auth-card {
+  width: min(520px, 100%);
+
+  box-sizing: border-box;
+  padding: clamp(27px, 4.5vw, 48px);
+
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: clamp(24px, 3.5vw, 38px);
+
+  background: rgba(255, 255, 255, 0.91);
+
+  box-shadow:
+    0 26px 70px rgba(49, 39, 79, 0.16),
+    0 4px 14px rgba(49, 39, 79, 0.08);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.device-auth-logo {
+  display: grid;
+  place-items: center;
+
+  width: 74px;
+  height: 74px;
+
+  margin: 0 auto 22px;
+
+  border-radius: 22px;
+
+  color: #fff;
+  background:
+    linear-gradient(
+      145deg,
+      #9368eb,
+      #6532c8
+    );
+
+  box-shadow:
+    0 12px 26px rgba(103, 49, 198, 0.27);
+}
+
+.device-auth-logo span {
+  font-size: 27px;
+  font-weight: 900;
+  letter-spacing: -0.06em;
+}
+
+.device-auth-heading,
+.device-auth-message,
+.device-auth-loading {
+  text-align: center;
+}
+
+.device-auth-heading h1,
+.device-auth-message h1,
+.device-auth-loading h1 {
+  margin: 0;
+
+  color: #111827;
+
+  font-size: clamp(28px, 5vw, 40px);
+  font-weight: 850;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+}
+
+.device-auth-heading p,
+.device-auth-message p,
+.device-auth-loading p {
+  margin: 12px 0 0;
+
+  color: #687386;
+
+  font-size: clamp(15px, 2vw, 18px);
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.device-auth-form {
+  display: flex;
+  flex-direction: column;
+
+  gap: 17px;
+  margin-top: 28px;
+}
+
+.device-auth-form label {
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+
+  color: #354056;
+
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.device-auth-form input {
+  width: 100%;
+  min-height: 54px;
+
+  box-sizing: border-box;
+  padding: 10px 14px;
+
+  border: 2px solid #dfe3eb;
+  border-radius: 14px;
+  outline: none;
+
+  color: #172033;
+  background: #fff;
+
+  font: inherit;
+  font-size: 18px;
+
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.device-auth-form input:focus {
+  border-color: #8956e5;
+
+  box-shadow:
+    0 0 0 5px rgba(137, 86, 229, 0.12);
+}
+
+.device-auth-form button,
+.device-auth-actions button {
+  min-height: 55px;
+
+  padding: 10px 18px;
+  border: none;
+  border-radius: 15px;
+
+  color: #fff;
+  background:
+    linear-gradient(
+      135deg,
+      #8f61e8,
+      #6836c8
+    );
+
+  font: inherit;
+  font-size: 17px;
+  font-weight: 850;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 10px 22px rgba(103, 49, 198, 0.2);
+}
+
+.device-auth-form button {
+  margin-top: 3px;
+}
+
+.device-auth-error {
+  margin: -3px 0 0;
+  padding: 11px 13px;
+
+  border: 1px solid #efb5b1;
+  border-radius: 11px;
+
+  color: #8a2c27;
+  background: #fff2f1;
+
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.device-auth-note {
+  margin: 20px 0 0;
+
+  color: #7b8494;
+
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.device-auth-message code {
+  display: block;
+
+  margin-top: 20px;
+  padding: 13px;
+
+  border: 1px solid #dcdfe8;
+  border-radius: 11px;
+
+  color: #3f315e;
+  background: #f5f2fb;
+
+  font-size: 13px;
+  font-weight: 750;
+
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.device-auth-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+
+  gap: 11px;
+  margin-top: 24px;
+}
+
+.device-auth-actions .device-auth-secondary {
+  border: 1px solid #d2d6df;
+
+  color: #354056;
+  background: #fff;
+
+  box-shadow: none;
+}
+
+.device-auth-loading {
+  padding: 12px 0 8px;
+}
+
+.device-auth-spinner {
+  display: block;
+
+  width: 48px;
+  height: 48px;
+
+  margin: 0 auto 24px;
+
+  border: 5px solid #e7def8;
+  border-top-color: #7441d2;
+  border-radius: 50%;
+
+  animation:
+    device-auth-spin 0.8s linear infinite;
+}
+
+@keyframes device-auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 560px) {
+  .device-auth-page {
+    align-items: stretch;
+    padding: 10px;
+  }
+
+  .device-auth-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    min-height: calc(100dvh - 20px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .device-auth-spinner {
+    animation-duration: 1.8s;
+  }
+}
