@@ -57,16 +57,13 @@
 }
 
 .app-splash-brand {
+  position: relative;
+
   display: grid;
 
-  justify-items: center;
+  width: 100%;
 
-  gap:
-    clamp(
-      19px,
-      3vh,
-      27px
-    );
+  justify-items: center;
 }
 
 .app-splash-icon {
@@ -150,6 +147,26 @@
 }
 
 .app-splash-brand h1 {
+  position: absolute;
+
+  top:
+    calc(
+      100% +
+      clamp(
+        19px,
+        3vh,
+        27px
+      )
+    );
+
+  left: 50%;
+
+  width:
+    min(
+      90vw,
+      620px
+    );
+
   margin: 0;
 
   color: #2c3040;
@@ -172,7 +189,10 @@
   opacity: 0;
 
   transform:
-    translateY(8px);
+    translate(
+      -50%,
+      8px
+    );
 
   animation:
     app-splash-title-in
@@ -241,7 +261,10 @@
     opacity: 1;
 
     transform:
-      translateY(0);
+      translate(
+        -50%,
+        0
+      );
   }
 }
 
