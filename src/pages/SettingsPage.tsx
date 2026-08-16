@@ -24,7 +24,7 @@ type AppSettings = {
 };
 
 const APP_VERSION =
-  "2.5.3";
+  "2.6.0";
 
 const SETTINGS_STORAGE_KEY =
   "qr-management-app-settings";
@@ -197,6 +197,11 @@ function SettingsPage({
   const [
     showResetModal,
     setShowResetModal,
+  ] = useState(false);
+
+  const [
+    showVersionModal,
+    setShowVersionModal,
   ] = useState(false);
 
   const saveSettings = (
@@ -640,6 +645,20 @@ function SettingsPage({
       onResetAllData();
     };
 
+  const openVersionModal =
+    () => {
+      setShowVersionModal(
+        true
+      );
+    };
+
+  const closeVersionModal =
+    () => {
+      setShowVersionModal(
+        false
+      );
+    };
+
   return (
     <div className="settings-page">
       <header className="settings-header">
@@ -681,9 +700,23 @@ function SettingsPage({
               バージョン情報
             </span>
 
-            <strong className="settings-version">
-              {APP_VERSION}
-            </strong>
+            <button
+              type="button"
+              className="settings-version settings-version-button"
+              aria-haspopup="dialog"
+              aria-label={`バージョン${APP_VERSION}のアップデート内容を表示`}
+              onClick={
+                openVersionModal
+              }
+            >
+              <span>
+                {APP_VERSION}
+              </span>
+
+              <small>
+                更新内容
+              </small>
+            </button>
           </div>
 
           <div className="settings-info-row">
@@ -914,6 +947,120 @@ function SettingsPage({
       >
         管理モードに戻る
       </button>
+
+      {showVersionModal && (
+        <div
+          className="settings-update-background"
+          role="presentation"
+          onPointerDown={(
+            event
+          ) => {
+            if (
+              event.target ===
+              event.currentTarget
+            ) {
+              closeVersionModal();
+            }
+          }}
+        >
+          <section
+            className="settings-update-window"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="settings-update-title"
+          >
+            <div className="settings-update-heading">
+              <span className="settings-update-version">
+                VERSION {APP_VERSION}
+              </span>
+
+              <h2 id="settings-update-title">
+                アップデート内容
+              </h2>
+
+              <p>
+                受付をより安定して、分かりやすく使えるように改善しました。
+              </p>
+            </div>
+
+            <ul className="settings-update-list">
+              <li>
+                <span className="settings-update-check">
+                  ✓
+                </span>
+
+                <div>
+                  <strong>
+                    オフライン受付に対応
+                  </strong>
+
+                  <span>
+                    通信が切れても受付を端末へ保存し、復旧後に自動で同期します。
+                  </span>
+                </div>
+              </li>
+
+              <li>
+                <span className="settings-update-check">
+                  ✓
+                </span>
+
+                <div>
+                  <strong>
+                    受付音のタイミングを改善
+                  </strong>
+
+                  <span>
+                    QR認識時に「ピッ」、結果画面の表示時に成功チャイムが鳴ります。
+                  </span>
+                </div>
+              </li>
+
+              <li>
+                <span className="settings-update-check">
+                  ✓
+                </span>
+
+                <div>
+                  <strong>
+                    アプリアイコンを刷新
+                  </strong>
+
+                  <span>
+                    スキャンゲートを使った新しいアイコンへ統一しました。
+                  </span>
+                </div>
+              </li>
+
+              <li>
+                <span className="settings-update-check">
+                  ✓
+                </span>
+
+                <div>
+                  <strong>
+                    iPad向け画面表示を調整
+                  </strong>
+
+                  <span>
+                    受付画面の不要なスクロールを止め、分析グラフなども見やすくしました。
+                  </span>
+                </div>
+              </li>
+            </ul>
+
+            <button
+              type="button"
+              className="settings-update-close"
+              onClick={
+                closeVersionModal
+              }
+            >
+              閉じる
+            </button>
+          </section>
+        </div>
+      )}
 
       {showResetModal && (
         <div
