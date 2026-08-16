@@ -22,6 +22,9 @@ const QR_DETECTED_SOUND_PATH =
 const RECORDED_SUCCESS_SOUND_PATH =
   `${import.meta.env.BASE_URL}sounds/qr_result_chime.wav?v=20260816-v1`;
 
+const RECORDED_ERROR_SOUND_PATH =
+  `${import.meta.env.BASE_URL}sounds/qr_gate_error_chime_v1.wav?v=20260816-v1`;
+
 let audioContext:
   AudioContext |
   null = null;
@@ -31,6 +34,10 @@ let recordedSuccessAudio:
   null = null;
 
 let qrDetectedAudio:
+  HTMLAudioElement |
+  null = null;
+
+let recordedErrorAudio:
   HTMLAudioElement |
   null = null;
 
@@ -104,7 +111,6 @@ function getAudioContext():
     return null;
   }
 }
-
 function createRecordedAudio(
   soundPath: string
 ): HTMLAudioElement {
@@ -170,6 +176,31 @@ function getRecordedSuccessAudio():
     );
 
   return recordedSuccessAudio;
+}
+
+function getRecordedErrorAudio():
+  HTMLAudioElement |
+  null {
+  if (
+    typeof window ===
+    "undefined"
+  ) {
+    return null;
+  }
+
+  if (
+    recordedErrorAudio !==
+    null
+  ) {
+    return recordedErrorAudio;
+  }
+
+  recordedErrorAudio =
+    createRecordedAudio(
+      RECORDED_ERROR_SOUND_PATH
+    );
+
+  return recordedErrorAudio;
 }
 
 function removeUnlockListeners() {
@@ -377,6 +408,10 @@ export async function unlockReceptionSound():
 
       unlockRecordedAudio(
         getRecordedSuccessAudio()
+      ),
+
+      unlockRecordedAudio(
+        getRecordedErrorAudio()
       ),
     ]);
 
@@ -749,44 +784,12 @@ export async function playMemberSuccessSound() {
 }
 
 /*
-  QR受付エラー音。
+  QR受付エラー時は、下降するオリジナルチャイムを再生します。
 */
 export async function playReceptionErrorSound() {
-  return playToneSequence([
-    {
-      frequency:
-        440,
-
-      startDelay:
-        0,
-
-      duration:
-        0.16,
-
-      volume:
-        0.17,
-
-      wave:
-        "square",
-    },
-
-    {
-      frequency:
-        330,
-
-      startDelay:
-        0.2,
-
-      duration:
-        0.2,
-
-      volume:
-        0.18,
-
-      wave:
-        "square",
-    },
-  ]);
+  return playRecordedSound(
+    getRecordedErrorAudio()
+  );
 }
 
 /*
@@ -869,6 +872,16 @@ export function stopReceptionSounds() {
     recordedSuccessAudio.currentTime =
       0;
   }
+
+  if (
+    recordedErrorAudio !==
+    null
+  ) {
+    recordedErrorAudio.pause();
+
+    recordedErrorAudio.currentTime =
+      0;
+  }
 }
 
 export async function closeReceptionAudio() {
@@ -880,6 +893,9 @@ export async function closeReceptionAudio() {
     null;
 
   qrDetectedAudio =
+    null;
+
+  recordedErrorAudio =
     null;
 
   const context =
