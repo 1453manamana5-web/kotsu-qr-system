@@ -8,7 +8,10 @@ import {
 
 import { QRCodeSVG } from "qrcode.react";
 
-import { detectPinkQrMarkerFromDataUrl } from "../pinkQrMarkerDetection";
+import {
+  analyzeTicketBackgroundFromDataUrl,
+  type PresetTicketRatio,
+} from "../pinkQrMarkerDetection";
 
 import "./TicketDesigner.css";
 
@@ -34,12 +37,7 @@ type TicketDesignerProps = {
 };
 
 type CardRatio =
-  | "16:9"
-  | "4:3"
-  | "3:2"
-  | "card"
-  | "square"
-  | "9:16"
+  | PresetTicketRatio
   | "custom";
 
 type TicketDesignSettings = {
@@ -450,14 +448,16 @@ function TicketDesigner({
       setMarkerDetectionStatus({
         kind: "detecting",
         message:
-          "ピンクのQR位置マーカーを探しています…",
+          "画像の縦横比とピンクのQR位置マーカーを解析しています…",
       });
 
       try {
-        const marker =
-          await detectPinkQrMarkerFromDataUrl(
+        const analysis =
+          await analyzeTicketBackgroundFromDataUrl(
             backgroundImage
           );
+        const marker =
+          analysis.marker;
 
         if (
           markerDetectionIdRef.current !==
@@ -467,10 +467,18 @@ function TicketDesigner({
         }
 
         if (marker === null) {
+          setSettings(
+            (currentSettings) => ({
+              ...currentSettings,
+              backgroundImage,
+              cardRatio:
+                analysis.ratio.cardRatio,
+            })
+          );
           setMarkerDetectionStatus({
             kind: "not-found",
             message:
-              "ピンクの正方形を見つけられませんでした。QRコード欄のスライダーで手動調整できます。",
+              `画像比率を${analysis.ratio.label}に自動設定しました。ピンクの正方形は見つからなかったため、QRコード欄のスライダーで手動調整できます。`,
           });
 
           return;
@@ -495,6 +503,8 @@ function TicketDesigner({
           (currentSettings) => ({
             ...currentSettings,
             backgroundImage,
+            cardRatio:
+              analysis.ratio.cardRatio,
             qrX: roundPercent(
               clamp(
                 marker.centerXPercent,
@@ -523,8 +533,8 @@ function TicketDesigner({
           kind: "success",
           message:
             marker.candidateCount > 1
-              ? "ピンクの正方形を複数検出したため、最も大きい候補にQRコードを配置しました。"
-              : "ピンクの正方形を検出し、QRコードの位置と大きさを自動設定しました。",
+              ? `画像比率を${analysis.ratio.label}に設定しました。ピンクの正方形を複数検出したため、最も大きい候補にQRコードを配置しました。`
+              : `画像比率を${analysis.ratio.label}に設定し、ピンクの正方形へQRコードを自動配置しました。`,
         });
       } catch (error) {
         console.warn(
@@ -1176,6 +1186,10 @@ function TicketDesigner({
 
               <p className="ticket-designer-help">
                 KeynoteやPowerPointから書き出したPNG画像も使用できます。
+              </p>
+
+              <p className="ticket-designer-help">
+                画像の縦横比は、カスタムを除く最も近いチケット比率へ自動設定します。
               </p>
 
               <div className="ticket-marker-instruction">

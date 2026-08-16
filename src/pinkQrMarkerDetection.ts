@@ -5,6 +5,170 @@ export type PinkQrMarker = {
   candidateCount: number;
 };
 
+export type PresetTicketRatio =
+  | "16:9"
+  | "4:3"
+  | "3:2"
+  | "card"
+  | "square"
+  | "9:16";
+
+export type TicketRatioDetection = {
+  cardRatio: PresetTicketRatio;
+  label: string;
+  width: number;
+  height: number;
+};
+
+export type TicketBackgroundAnalysis = {
+  imageWidth: number;
+  imageHeight: number;
+  ratio: TicketRatioDetection;
+  marker: PinkQrMarker | null;
+};
+
+const ticketRatioPresets:
+  TicketRatioDetection[] = [
+  {
+    cardRatio: "16:9",
+    label: "16:9",
+    width: 16,
+    height: 9,
+  },
+  {
+    cardRatio: "4:3",
+    label: "4:3",
+    width: 4,
+    height: 3,
+  },
+  {
+    cardRatio: "3:2",
+    label: "3:2",
+    width: 3,
+    height: 2,
+  },
+  {
+    cardRatio: "card",
+    label: "カード比率",
+    width: 1.586,
+    height: 1,
+  },
+  {
+    cardRatio: "square",
+    label: "正方形",
+    width: 1,
+    height: 1,
+  },
+  {
+    cardRatio: "9:16",
+    label: "9:16",
+    width: 9,
+    height: 16,
+  },
+];
+
+export function findClosestTicketRatio(
+  imageWidth: number,
+  imageHeight: number
+): TicketRatioDetection {
+  if (
+    imageWidth <= 0 ||
+    imageHeight <= 0
+  ) {
+    return ticketRatioPresets[0];
+  }
+
+  const imageRatio =
+    imageWidth / imageHeight;
+
+  return ticketRatioPresets.reduce(
+    (closestRatio, candidate) => {
+      const closestDifference =
+        Math.abs(
+          Math.log(
+            imageRatio /
+              (closestRatio.width /
+                closestRatio.height)
+          )
+        );
+      const candidateDifference =
+        Math.abs(
+          Math.log(
+            imageRatio /
+              (candidate.width /
+                candidate.height)
+          )
+        );
+
+      return candidateDifference <
+        closestDifference
+        ? candidate
+        : closestRatio;
+    }
+  );
+}
+
+export function mapMarkerToTicketRatio(
+  marker: PinkQrMarker,
+  imageWidth: number,
+  imageHeight: number,
+  ticketRatio: TicketRatioDetection
+): PinkQrMarker {
+  const imageRatio =
+    imageWidth / imageHeight;
+  const cardRatio =
+    ticketRatio.width /
+    ticketRatio.height;
+
+  if (
+    !Number.isFinite(imageRatio) ||
+    imageRatio <= 0
+  ) {
+    return marker;
+  }
+
+  if (imageRatio > cardRatio) {
+    const displayedHeightRatio =
+      cardRatio / imageRatio;
+    const topOffset =
+      (1 - displayedHeightRatio) /
+      2;
+
+    return {
+      ...marker,
+      centerYPercent:
+        (topOffset +
+          (marker.centerYPercent /
+            100) *
+            displayedHeightRatio) *
+        100,
+    };
+  }
+
+  if (imageRatio < cardRatio) {
+    const displayedWidthRatio =
+      imageRatio / cardRatio;
+    const leftOffset =
+      (1 - displayedWidthRatio) /
+      2;
+
+    return {
+      ...marker,
+      centerXPercent:
+        (leftOffset +
+          (marker.centerXPercent /
+            100) *
+            displayedWidthRatio) *
+        100,
+      sizePercent:
+        marker.sizePercent *
+        displayedWidthRatio,
+    };
+  }
+
+  return marker;
+}
+
 type MarkerCandidate = PinkQrMarker & {
   score: number;
 };
@@ -301,9 +465,9 @@ function loadImage(
   );
 }
 
-export async function detectPinkQrMarkerFromDataUrl(
+export async function analyzeTicketBackgroundFromDataUrl(
   dataUrl: string
-) {
+): Promise<TicketBackgroundAnalysis> {
   const image = await loadImage(
     dataUrl
   );
@@ -363,9 +527,30 @@ export async function detectPinkQrMarkerFromDataUrl(
       height
     );
 
-  return detectPinkQrMarker(
+  const ratio =
+    findClosestTicketRatio(
+      image.naturalWidth,
+      image.naturalHeight
+    );
+  const marker = detectPinkQrMarker(
     imageData.data,
     width,
     height
   );
+
+  return {
+    imageWidth: image.naturalWidth,
+    imageHeight:
+      image.naturalHeight,
+    ratio,
+    marker:
+      marker === null
+        ? null
+        : mapMarkerToTicketRatio(
+            marker,
+            image.naturalWidth,
+            image.naturalHeight,
+            ratio
+          ),
+  };
 }
