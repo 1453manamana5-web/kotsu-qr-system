@@ -260,6 +260,11 @@ function MembersPage({
     string | null
   >(null);
 
+  const [
+    showDesigner,
+    setShowDesigner,
+  ] = useState(false);
+
   useEffect(() => {
     setCardsLoading(
       true
@@ -392,16 +397,6 @@ function MembersPage({
             selectedMemberQrNumber
         ) ?? null;
 
-  const designerMember =
-    designerMemberQrNumber ===
-      null
-      ? null
-      : members.find(
-          (member) =>
-            member.qrNumber ===
-            designerMemberQrNumber
-        ) ?? null;
-
   useEffect(() => {
     if (
       selectedMemberQrNumber !==
@@ -416,22 +411,6 @@ function MembersPage({
   }, [
     selectedMember,
     selectedMemberQrNumber,
-  ]);
-
-  useEffect(() => {
-    if (
-      designerMemberQrNumber !==
-        null &&
-      designerMember ===
-        null
-    ) {
-      setDesignerMemberQrNumber(
-        null
-      );
-    }
-  }, [
-    designerMember,
-    designerMemberQrNumber,
   ]);
 
   const createNextQrNumber =
@@ -1184,6 +1163,29 @@ function MembersPage({
 
           <button
             type="button"
+            className="members-design-button"
+            disabled={
+              memberCards.length ===
+                0 ||
+              loading ||
+              saving
+            }
+            onClick={() => {
+              setDesignerMemberQrNumber(
+                null
+              );
+              setShowDesigner(
+                true
+              );
+            }}
+          >
+            デザイン・
+            <br />
+            まとめて印刷
+          </button>
+
+          <button
+            type="button"
             className="members-shift-button"
             disabled
           >
@@ -1774,11 +1776,6 @@ function MembersPage({
                 />
               </div>
 
-              <p className="member-qr-name">
-                {selectedMember.name ||
-                  "名前未設定"}
-              </p>
-
               <p className="member-qr-number">
                 {
                   selectedMember.qrNumber
@@ -1796,6 +1793,10 @@ function MembersPage({
                 onClick={() => {
                   setDesignerMemberQrNumber(
                     selectedMember.qrNumber
+                  );
+
+                  setShowDesigner(
+                    true
                   );
 
                   setSelectedMemberQrNumber(
@@ -1840,24 +1841,26 @@ function MembersPage({
         </div>
       )}
 
-      {designerMember !==
-        null && (
+      {showDesigner && (
         <MemberCardDesigner
-          memberName={
-            designerMember.name ||
-            "名前未設定"
+          members={
+            memberCards
           }
-          qrNumber={
-            designerMember.qrNumber
+          eventName={
+            eventName
           }
-          qrValue={createQrValue(
-            designerMember
-          )}
-          onClose={() =>
+          initialQrNumber={
+            designerMemberQrNumber ??
+            undefined
+          }
+          onClose={() => {
+            setShowDesigner(
+              false
+            );
             setDesignerMemberQrNumber(
               null
-            )
-          }
+            );
+          }}
         />
       )}
     </div>
