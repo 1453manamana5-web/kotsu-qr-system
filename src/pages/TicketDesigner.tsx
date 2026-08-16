@@ -2,10 +2,13 @@ import {
   type ChangeEvent,
   type CSSProperties,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
 import { QRCodeSVG } from "qrcode.react";
+
+import { detectPinkQrMarkerFromDataUrl } from "../pinkQrMarkerDetection";
 
 import "./TicketDesigner.css";
 
@@ -71,6 +74,16 @@ type PrintSheetStyle = CSSProperties & {
   "--ticket-print-width": string;
   "--ticket-print-height": string;
   "--ticket-print-gap": string;
+};
+
+type QrMarkerDetectionStatus = {
+  kind:
+    | "idle"
+    | "detecting"
+    | "success"
+    | "not-found"
+    | "error";
+  message: string;
 };
 
 const defaultSettings: TicketDesignSettings = {
@@ -208,6 +221,17 @@ function TicketDesigner({
     manualPrintMode,
     setManualPrintMode,
   ] = useState(false);
+
+  const [
+    markerDetectionStatus,
+    setMarkerDetectionStatus,
+  ] = useState<QrMarkerDetectionStatus>({
+    kind: "idle",
+    message: "",
+  });
+
+  const markerDetectionIdRef =
+    useRef(0);
 
   const updateSetting = <
     Key extends keyof TicketDesignSettings,
@@ -403,7 +427,7 @@ function TicketDesigner({
     const reader =
       new FileReader();
 
-    reader.onload = () => {
+    reader.onload = async () => {
       if (
         typeof reader.result !==
         "string"
@@ -411,10 +435,114 @@ function TicketDesigner({
         return;
       }
 
+      const backgroundImage =
+        reader.result;
+      const detectionId =
+        markerDetectionIdRef.current +
+        1;
+
+      markerDetectionIdRef.current =
+        detectionId;
       updateSetting(
         "backgroundImage",
-        reader.result
+        backgroundImage
       );
+      setMarkerDetectionStatus({
+        kind: "detecting",
+        message:
+          "ピンクのQR位置マーカーを探しています…",
+      });
+
+      try {
+        const marker =
+          await detectPinkQrMarkerFromDataUrl(
+            backgroundImage
+          );
+
+        if (
+          markerDetectionIdRef.current !==
+          detectionId
+        ) {
+          return;
+        }
+
+        if (marker === null) {
+          setMarkerDetectionStatus({
+            kind: "not-found",
+            message:
+              "ピンクの正方形を見つけられませんでした。QRコード欄のスライダーで手動調整できます。",
+          });
+
+          return;
+        }
+
+        const roundPercent = (
+          value: number
+        ) =>
+          Math.round(value * 10) /
+          10;
+        const clamp = (
+          value: number,
+          minimum: number,
+          maximum: number
+        ) =>
+          Math.min(
+            maximum,
+            Math.max(minimum, value)
+          );
+
+        setSettings(
+          (currentSettings) => ({
+            ...currentSettings,
+            backgroundImage,
+            qrX: roundPercent(
+              clamp(
+                marker.centerXPercent,
+                5,
+                95
+              )
+            ),
+            qrY: roundPercent(
+              clamp(
+                marker.centerYPercent,
+                5,
+                95
+              )
+            ),
+            qrSize: roundPercent(
+              clamp(
+                marker.sizePercent *
+                  1.05,
+                12,
+                55
+              )
+            ),
+          })
+        );
+        setMarkerDetectionStatus({
+          kind: "success",
+          message:
+            marker.candidateCount > 1
+              ? "ピンクの正方形を複数検出したため、最も大きい候補にQRコードを配置しました。"
+              : "ピンクの正方形を検出し、QRコードの位置と大きさを自動設定しました。",
+        });
+      } catch (error) {
+        console.warn(
+          "QR位置マーカーを解析できませんでした。",
+          error
+        );
+
+        if (
+          markerDetectionIdRef.current ===
+          detectionId
+        ) {
+          setMarkerDetectionStatus({
+            kind: "error",
+            message:
+              "QR位置の自動検出に失敗しました。背景画像は読み込めているため、手動調整はそのまま使えます。",
+          });
+        }
+      }
     };
 
     reader.onerror = () => {
@@ -424,6 +552,18 @@ function TicketDesigner({
     };
 
     reader.readAsDataURL(file);
+  };
+
+  const removeBackgroundImage = () => {
+    markerDetectionIdRef.current += 1;
+    updateSetting(
+      "backgroundImage",
+      ""
+    );
+    setMarkerDetectionStatus({
+      kind: "idle",
+      message: "",
+    });
   };
 
   const saveDesign = () => {
@@ -465,6 +605,11 @@ function TicketDesigner({
 
     setSettings({
       ...defaultSettings,
+    });
+    markerDetectionIdRef.current += 1;
+    setMarkerDetectionStatus({
+      kind: "idle",
+      message: "",
     });
 
     try {
@@ -1033,16 +1178,37 @@ function TicketDesigner({
                 KeynoteやPowerPointから書き出したPNG画像も使用できます。
               </p>
 
+              <div className="ticket-marker-instruction">
+                <span
+                  className="ticket-marker-swatch"
+                  aria-hidden="true"
+                />
+
+                <p>
+                  QRを置きたい場所に、鮮やかなピンク（目安
+                  #FF00FF）の塗りつぶし正方形を1つ置いてください。近いピンク色でも自動検出します。
+                </p>
+              </div>
+
+              {markerDetectionStatus.kind !==
+                "idle" && (
+                <p
+                  className={`ticket-marker-status ticket-marker-status-${markerDetectionStatus.kind}`}
+                  aria-live="polite"
+                >
+                  {
+                    markerDetectionStatus.message
+                  }
+                </p>
+              )}
+
               {settings.backgroundImage !==
                 "" && (
                 <button
                   type="button"
                   className="ticket-remove-background"
-                  onClick={() =>
-                    updateSetting(
-                      "backgroundImage",
-                      ""
-                    )
+                  onClick={
+                    removeBackgroundImage
                   }
                 >
                   背景画像を削除
@@ -1062,6 +1228,7 @@ function TicketDesigner({
                   type="range"
                   min="5"
                   max="95"
+                  step="0.1"
                   value={
                     settings.qrX
                   }
@@ -1090,6 +1257,7 @@ function TicketDesigner({
                   type="range"
                   min="5"
                   max="95"
+                  step="0.1"
                   value={
                     settings.qrY
                   }
@@ -1118,6 +1286,7 @@ function TicketDesigner({
                   type="range"
                   min="12"
                   max="55"
+                  step="0.1"
                   value={
                     settings.qrSize
                   }
