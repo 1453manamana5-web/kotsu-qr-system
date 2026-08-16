@@ -1,4 +1,5 @@
 import {
+  lazy,
   useEffect,
   useRef,
   useState,
@@ -7,18 +8,60 @@ import {
 import "./App.css";
 
 import HomePage from "./pages/HomePage";
-import EntryPage from "./pages/EntryPage";
-import ExitPage from "./pages/ExitPage";
-import AdminPage from "./pages/AdminPage";
-import AdminAuthPage from "./pages/AdminAuthPage";
-import EventManagementPage from "./pages/EventManagementPage";
-import CreateEventPage from "./pages/CreateEventPage";
-import MembersPage from "./pages/MembersPage";
-import TicketsPage from "./pages/TicketsPage";
-import AnalysisPage from "./pages/AnalysisPage";
-import PastDataPage from "./pages/PastDataPage";
-import SettingsPage from "./pages/SettingsPage";
-import FirebaseTestPage from "./pages/FirebaseTestPage";
+
+const loadEntryPage = () =>
+  import("./pages/EntryPage");
+
+const loadExitPage = () =>
+  import("./pages/ExitPage");
+
+const EntryPage = lazy(
+  loadEntryPage
+);
+
+const ExitPage = lazy(
+  loadExitPage
+);
+
+const AdminPage = lazy(() =>
+  import("./pages/AdminPage")
+);
+
+const AdminAuthPage = lazy(() =>
+  import("./pages/AdminAuthPage")
+);
+
+const EventManagementPage = lazy(() =>
+  import("./pages/EventManagementPage")
+);
+
+const CreateEventPage = lazy(() =>
+  import("./pages/CreateEventPage")
+);
+
+const MembersPage = lazy(() =>
+  import("./pages/MembersPage")
+);
+
+const TicketsPage = lazy(() =>
+  import("./pages/TicketsPage")
+);
+
+const AnalysisPage = lazy(() =>
+  import("./pages/AnalysisPage")
+);
+
+const PastDataPage = lazy(() =>
+  import("./pages/PastDataPage")
+);
+
+const SettingsPage = lazy(() =>
+  import("./pages/SettingsPage")
+);
+
+const FirebaseTestPage = lazy(() =>
+  import("./pages/FirebaseTestPage")
+);
 
 import {
   createEventInFirestore,
@@ -744,6 +787,25 @@ function findClosestSelectableEvent(
 }
 
 function App() {
+  useEffect(() => {
+    const preloadTimer =
+      window.setTimeout(
+        () => {
+          void Promise.all([
+            loadEntryPage(),
+            loadExitPage(),
+          ]);
+        },
+        1200
+      );
+
+    return () => {
+      window.clearTimeout(
+        preloadTimer
+      );
+    };
+  }, []);
+
   const [
     eventStore,
     setEventStore,
