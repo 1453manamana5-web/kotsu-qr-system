@@ -1,27 +1,16 @@
 import {
-  type FormEvent,
   type ReactNode,
-  useCallback,
   useEffect,
   useState,
 } from "react";
 
 import {
   onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signOut,
-  type User,
+  signInAnonymously,
 } from "firebase/auth";
 
 import {
-  doc,
-  getDoc,
-  getDocFromCache,
-} from "firebase/firestore";
-
-import {
   auth,
-  db,
 } from "./firebase";
 
 import {
@@ -36,17 +25,10 @@ type DeviceAuthGateProps = {
 
 type AuthScreenState =
   | "checking"
-  | "signed-out"
-  | "signing-in"
-  | "checking-access"
-  | "authorized"
-  | "unauthorized"
+  | "ready"
   | "error";
 
-const AUTHORIZED_USERS_COLLECTION =
-  "authorized-users";
-
-function getSignInErrorMessage(
+function getAnonymousAuthErrorMessage(
   error: unknown
 ) {
   const code =
@@ -58,55 +40,17 @@ function getSignInErrorMessage(
       : "";
 
   switch (code) {
-    case "auth/invalid-credential":
-    case "auth/user-not-found":
-    case "auth/wrong-password":
-      return "メールアドレスまたはパスワードが違います。";
-
-    case "auth/user-disabled":
-      return "この端末アカウントは無効になっています。";
-
-    case "auth/too-many-requests":
-      return "試行回数が多すぎます。少し待ってからやり直してください。";
+    case "auth/operation-not-allowed":
+      return "Firebaseで匿名認証がまだ有効になっていません。";
 
     case "auth/network-request-failed":
-      return "通信できませんでした。初回認証はオンラインで行ってください。";
+      return "初回の自動接続にはインターネット接続が必要です。オンラインにして、もう一度お試しください。";
 
-    case "auth/operation-not-allowed":
-      return "Firebaseでメール認証がまだ有効になっていません。";
+    case "auth/too-many-requests":
+      return "接続が集中しています。少し待ってから、もう一度お試しください。";
 
     default:
-      return "端末認証に失敗しました。もう一度やり直してください。";
-  }
-}
-
-async function isAuthorizedUser(
-  user: User
-) {
-  const authorizationDocument =
-    doc(
-      db,
-      AUTHORIZED_USERS_COLLECTION,
-      user.uid
-    );
-
-  try {
-    const snapshot = await getDoc(
-      authorizationDocument
-    );
-
-    return snapshot.exists();
-  } catch (onlineError) {
-    try {
-      const cachedSnapshot =
-        await getDocFromCache(
-          authorizationDocument
-        );
-
-      return cachedSnapshot.exists();
-    } catch {
-      throw onlineError;
-    }
+      return "受付システムへ接続できませんでした。通信状態を確認してください。";
   }
 }
 
@@ -130,54 +74,42 @@ function DeviceAuthGate({
   ] = useState<AuthScreenState>(
     "checking"
   );
-  const [
-    currentUser,
-    setCurrentUser,
-  ] = useState<User | null>(null);
-  const [email, setEmail] =
-    useState("");
-  const [password, setPassword] =
-    useState("");
   const [errorMessage, setErrorMessage] =
     useState("");
-
-  const verifyAuthorization =
-    useCallback(
-      async (user: User) => {
-        setScreenState(
-          "checking-access"
-        );
-        setErrorMessage("");
-
-        try {
-          const authorized =
-            await isAuthorizedUser(
-              user
-            );
-
-          setScreenState(
-            authorized
-              ? "authorized"
-              : "unauthorized"
-          );
-        } catch (error) {
-          console.error(
-            "端末の利用許可を確認できませんでした。",
-            error
-          );
-          setErrorMessage(
-            navigator.onLine
-              ? "端末の利用許可を確認できませんでした。Firebaseの設定を確認してください。"
-              : "オフラインで利用許可を確認できませんでした。一度オンラインで認証してください。"
-          );
-          setScreenState("error");
-        }
-      },
-      []
-    );
+  const [retryCount, setRetryCount] =
+    useState(0);
 
   useEffect(() => {
     let active = true;
+    let signInStarted = false;
+
+    const startAnonymousSignIn =
+      async () => {
+        if (signInStarted) {
+          return;
+        }
+
+        signInStarted = true;
+
+        try {
+          await signInAnonymously(auth);
+        } catch (error) {
+          if (!active) {
+            return;
+          }
+
+          console.error(
+            "受付システムの自動認証に失敗しました。",
+            error
+          );
+          setErrorMessage(
+            getAnonymousAuthErrorMessage(
+              error
+            )
+          );
+          setScreenState("error");
+        }
+      };
 
     const unsubscribe =
       onAuthStateChanged(
@@ -187,18 +119,12 @@ function DeviceAuthGate({
             return;
           }
 
-          setCurrentUser(user);
-
-          if (user === null) {
-            setScreenState(
-              "signed-out"
-            );
+          if (user !== null) {
+            setScreenState("ready");
             return;
           }
 
-          void verifyAuthorization(
-            user
-          );
+          void startAnonymousSignIn();
         },
         (error) => {
           if (!active) {
@@ -206,11 +132,11 @@ function DeviceAuthGate({
           }
 
           console.error(
-            "端末認証の状態を読み込めませんでした。",
+            "自動認証の状態を読み込めませんでした。",
             error
           );
           setErrorMessage(
-            "端末認証の状態を読み込めませんでした。"
+            "受付システムへ接続できませんでした。通信状態を確認してください。"
           );
           setScreenState("error");
         }
@@ -220,85 +146,24 @@ function DeviceAuthGate({
       active = false;
       unsubscribe();
     };
-  }, [verifyAuthorization]);
+  }, [retryCount]);
 
   useEffect(() => {
-    if (
-      screenState === "authorized"
-    ) {
+    if (screenState === "ready") {
       startOfflineReceptionSync();
     }
   }, [screenState]);
 
-  const handleSignIn = async (
-    event: FormEvent<HTMLFormElement>
-  ) => {
-    event.preventDefault();
-
-    if (
-      email.trim() === "" ||
-      password === ""
-    ) {
-      setErrorMessage(
-        "メールアドレスとパスワードを入力してください。"
-      );
-      return;
-    }
-
-    setScreenState("signing-in");
-    setErrorMessage("");
-
-    try {
-      await signInWithEmailAndPassword(
-        auth,
-        email.trim(),
-        password
-      );
-      setPassword("");
-    } catch (error) {
-      console.warn(
-        "端末認証に失敗しました。",
-        error
-      );
-      setErrorMessage(
-        getSignInErrorMessage(error)
-      );
-      setScreenState("signed-out");
-    }
-  };
-
-  const handleSignOut = async () => {
-    setErrorMessage("");
-
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error(
-        "端末認証を解除できませんでした。",
-        error
-      );
-      setErrorMessage(
-        "端末認証を解除できませんでした。"
-      );
-      setScreenState("error");
-    }
-  };
-
-  if (screenState === "authorized") {
+  if (screenState === "ready") {
     return children;
   }
-
-  const isLoading =
-    screenState === "checking" ||
-    screenState === "signing-in" ||
-    screenState === "checking-access";
 
   return (
     <main className="device-auth-page">
       <section className="device-auth-card">
         <AuthLogo />
 
-        {isLoading ? (
+        {screenState === "checking" ? (
           <div
             className="device-auth-loading"
             aria-live="polite"
@@ -309,130 +174,17 @@ function DeviceAuthGate({
             />
 
             <h1>
-              {screenState ===
-              "signing-in"
-                ? "端末を認証しています"
-                : "利用許可を確認しています"}
+              受付システムを準備しています
             </h1>
 
             <p>
               そのままお待ちください
             </p>
           </div>
-        ) : screenState ===
-          "signed-out" ? (
-          <>
-            <div className="device-auth-heading">
-              <h1>
-                端末認証
-              </h1>
-
-              <p>
-                許可された端末アカウントでログインしてください。
-              </p>
-            </div>
-
-            <form
-              className="device-auth-form"
-              onSubmit={handleSignIn}
-            >
-              <label>
-                メールアドレス
-
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(event) =>
-                    setEmail(
-                      event.target.value
-                    )
-                  }
-                  autoComplete="username"
-                  inputMode="email"
-                  required
-                />
-              </label>
-
-              <label>
-                パスワード
-
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(event) =>
-                    setPassword(
-                      event.target.value
-                    )
-                  }
-                  autoComplete="current-password"
-                  required
-                />
-              </label>
-
-              {errorMessage !== "" && (
-                <p
-                  className="device-auth-error"
-                  role="alert"
-                >
-                  {errorMessage}
-                </p>
-              )}
-
-              <button type="submit">
-                この端末でログイン
-              </button>
-            </form>
-
-            <p className="device-auth-note">
-              ログイン状態はこの端末に保存されます。共用端末では、使用後に設定画面から認証を解除してください。
-            </p>
-          </>
-        ) : screenState ===
-          "unauthorized" ? (
-          <div className="device-auth-message">
-            <h1>
-              このアカウントは未許可です
-            </h1>
-
-            <p>
-              Firebaseの許可済み端末一覧へ、次のUIDを登録してください。
-            </p>
-
-            <code>
-              {currentUser?.uid ?? ""}
-            </code>
-
-            <div className="device-auth-actions">
-              <button
-                type="button"
-                onClick={() => {
-                  if (
-                    currentUser !== null
-                  ) {
-                    void verifyAuthorization(
-                      currentUser
-                    );
-                  }
-                }}
-              >
-                登録後に再確認
-              </button>
-
-              <button
-                type="button"
-                className="device-auth-secondary"
-                onClick={() =>
-                  void handleSignOut()
-                }
-              >
-                別のアカウントを使う
-              </button>
-            </div>
-          </div>
         ) : (
           <div className="device-auth-message">
             <h1>
-              認証を確認できませんでした
+              接続できませんでした
             </h1>
 
             <p role="alert">
@@ -440,27 +192,20 @@ function DeviceAuthGate({
             </p>
 
             <div className="device-auth-actions">
-              {currentUser !== null && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    void verifyAuthorization(
-                      currentUser
-                    )
-                  }
-                >
-                  もう一度確認
-                </button>
-              )}
-
               <button
                 type="button"
-                className="device-auth-secondary"
-                onClick={() =>
-                  void handleSignOut()
-                }
+                onClick={() => {
+                  setScreenState(
+                    "checking"
+                  );
+                  setErrorMessage("");
+                  setRetryCount(
+                    (currentCount) =>
+                      currentCount + 1
+                  );
+                }}
               >
-                ログイン画面に戻る
+                もう一度試す
               </button>
             </div>
           </div>
