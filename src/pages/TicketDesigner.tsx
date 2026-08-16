@@ -29,10 +29,15 @@ type Ticket = {
   createdAt: string;
 };
 
+export type CardDesignKind =
+  | "ticket"
+  | "member";
+
 type TicketDesignerProps = {
   tickets: Ticket[];
   eventName: string;
   initialTicketNumber?: string;
+  designKind?: CardDesignKind;
   onClose: () => void;
 };
 
@@ -105,17 +110,23 @@ const defaultSettings: TicketDesignSettings = {
   numberSize: 18,
 };
 
-function createTicketQrValue(ticket: Ticket) {
+function createQrValue(
+  ticket: Ticket,
+  designKind: CardDesignKind
+) {
   return [
     "QRM1",
-    "TICKET",
+    designKind === "member"
+      ? "MEMBER"
+      : "TICKET",
     ticket.qrNumber,
     ticket.authToken,
   ].join(":");
 }
 
 function createDesignStorageKey(
-  eventName: string
+  eventName: string,
+  designKind: CardDesignKind
 ) {
   const safeEventName =
     eventName.trim() === ""
@@ -124,19 +135,26 @@ function createDesignStorageKey(
           eventName.trim()
         );
 
-  return `qr-management-ticket-design-${safeEventName}`;
+  return `qr-management-${designKind}-design-${safeEventName}`;
 }
 
 function loadDesignSettings(
-  eventName: string
+  eventName: string,
+  designKind: CardDesignKind
 ): TicketDesignSettings {
   try {
     const savedDesign =
       localStorage.getItem(
         createDesignStorageKey(
-          eventName
+          eventName,
+          designKind
         )
-      );
+      ) ??
+      (designKind === "member"
+        ? localStorage.getItem(
+            "qr-management-member-card-design"
+          )
+        : null);
 
     if (savedDesign === null) {
       return defaultSettings;
@@ -153,7 +171,11 @@ function loadDesignSettings(
     };
   } catch (error) {
     console.error(
-      "チケットデザインの読み込みに失敗しました。",
+      `${
+        designKind === "member"
+          ? "部員証"
+          : "チケット"
+      }デザインの読み込みに失敗しました。`,
       error
     );
 
@@ -165,16 +187,34 @@ function TicketDesigner({
   tickets,
   eventName,
   initialTicketNumber,
+  designKind = "ticket",
   onClose,
 }: TicketDesignerProps) {
+  const isMemberDesign =
+    designKind === "member";
+
+  const cardLabel =
+    isMemberDesign
+      ? "部員証"
+      : "チケット";
+
+  const numberLabel =
+    isMemberDesign
+      ? "部員番号"
+      : "チケット番号";
+
   const printableTickets =
     useMemo(
       () =>
         tickets.filter(
           (ticket) =>
+            isMemberDesign ||
             ticket.status !== "無効"
         ),
-      [tickets]
+      [
+        isMemberDesign,
+        tickets,
+      ]
     );
 
   const foundInitialIndex =
@@ -193,7 +233,8 @@ function TicketDesigner({
     useState<TicketDesignSettings>(
       () =>
         loadDesignSettings(
-          eventName
+          eventName,
+          designKind
         )
     );
 
@@ -580,7 +621,8 @@ function TicketDesigner({
     try {
       localStorage.setItem(
         createDesignStorageKey(
-          eventName
+          eventName,
+          designKind
         ),
         JSON.stringify(settings)
       );
@@ -589,11 +631,11 @@ function TicketDesigner({
         `${
           eventName ||
           "現在のイベント"
-        }のチケットデザインを保存しました。`
+        }の${cardLabel}デザインを保存しました。`
       );
     } catch (error) {
       console.error(
-        "チケットデザインの保存に失敗しました。",
+        `${cardLabel}デザインの保存に失敗しました。`,
         error
       );
 
@@ -625,7 +667,8 @@ function TicketDesigner({
     try {
       localStorage.removeItem(
         createDesignStorageKey(
-          eventName
+          eventName,
+          designKind
         )
       );
     } catch (error) {
@@ -641,7 +684,7 @@ function TicketDesigner({
       selectedTickets.length === 0
     ) {
       alert(
-        "印刷できるチケットがありません。"
+        `印刷できる${cardLabel}がありません。`
       );
 
       return;
@@ -711,8 +754,9 @@ function TicketDesigner({
                 }}
               >
                 <QRCodeSVG
-                  value={createTicketQrValue(
-                    ticket
+                  value={createQrValue(
+                    ticket,
+                    designKind
                   )}
                   size={500}
                   level="M"
@@ -746,11 +790,13 @@ function TicketDesigner({
       <div className="ticket-designer-background">
         <section className="ticket-designer-empty">
           <h2>
-            印刷できるチケットがありません
+            印刷できる{cardLabel}がありません
           </h2>
 
           <p>
-            チケットを発行するか、無効状態を解除してください。
+            {isMemberDesign
+              ? "部員QRを登録してください。"
+              : "チケットを発行するか、無効状態を解除してください。"}
           </p>
 
           <button
@@ -783,7 +829,9 @@ function TicketDesigner({
             <strong>
               印刷対象：
               {selectedTickets.length}
-              枚
+              {isMemberDesign
+                ? "人分"
+                : "枚"}
             </strong>
           </div>
 
@@ -812,11 +860,11 @@ function TicketDesigner({
         <header className="ticket-designer-header">
           <div>
             <h2>
-              チケットデザイン・印刷
+              {cardLabel}デザイン・印刷
             </h2>
 
             <p>
-              背景画像にQRコードとチケット番号を配置します
+              背景画像にQRコードと{numberLabel}を配置します
             </p>
           </div>
 
@@ -874,8 +922,9 @@ function TicketDesigner({
                     }}
                   >
                     <QRCodeSVG
-                      value={createTicketQrValue(
-                        previewTicket
+                      value={createQrValue(
+                        previewTicket,
+                        designKind
                       )}
                       size={500}
                       level="M"
@@ -909,7 +958,7 @@ function TicketDesigner({
 
               <div className="ticket-range-inputs">
                 <label>
-                  最初のチケット
+                  最初の{cardLabel}
 
                   <select
                     value={
@@ -963,7 +1012,7 @@ function TicketDesigner({
                 <span>～</span>
 
                 <label>
-                  最後のチケット
+                  最後の{cardLabel}
 
                   <select
                     value={
@@ -1014,12 +1063,16 @@ function TicketDesigner({
                   {
                     selectedTickets.length
                   }
-                  枚
+                  {isMemberDesign
+                    ? "人分"
+                    : "枚"}
                 </strong>
 
-                <span>
-                  ※無効なチケットは除外されます
-                </span>
+                {!isMemberDesign && (
+                  <span>
+                    ※無効なチケットは除外されます
+                  </span>
+                )}
               </div>
             </section>
           </section>
@@ -1031,7 +1084,7 @@ function TicketDesigner({
 
             <div className="ticket-setting-group">
               <h4>
-                チケットサイズ
+                {cardLabel}サイズ
               </h4>
 
               <label className="ticket-select-setting">
@@ -1189,7 +1242,7 @@ function TicketDesigner({
               </p>
 
               <p className="ticket-designer-help">
-                画像の縦横比は、カスタムを除く最も近いチケット比率へ自動設定します。
+                画像の縦横比は、カスタムを除く最も近い比率へ自動設定します。
               </p>
 
               <div className="ticket-marker-instruction">
@@ -1325,12 +1378,12 @@ function TicketDesigner({
 
             <div className="ticket-setting-group">
               <h4>
-                チケット番号
+                {numberLabel}
               </h4>
 
               <label className="ticket-visibility-setting">
                 <span>
-                  チケット番号を印刷する
+                  {numberLabel}を印刷する
                 </span>
 
                 <input
@@ -1489,7 +1542,7 @@ function TicketDesigner({
               </label>
 
               <label className="ticket-number-setting">
-                チケット間の余白
+                {cardLabel}間の余白
 
                 <input
                   type="number"
@@ -1582,8 +1635,9 @@ function TicketDesigner({
                 }}
               >
                 <QRCodeSVG
-                  value={createTicketQrValue(
-                    ticket
+                  value={createQrValue(
+                    ticket,
+                    designKind
                   )}
                   size={500}
                   level="M"
