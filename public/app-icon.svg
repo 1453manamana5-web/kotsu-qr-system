@@ -1,0 +1,75 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 512 512"
+  role="img"
+  aria-labelledby="title description"
+>
+  <title id="title">QR受付 スキャンゲート</title>
+  <desc id="description">
+    紫から青の背景に、QR読み取り枠を備えた白いゲート
+  </desc>
+
+  <defs>
+    <linearGradient
+      id="app-icon-background"
+      x1="62"
+      y1="42"
+      x2="458"
+      y2="474"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="#8b5cf6" />
+      <stop offset="0.48" stop-color="#6d52ef" />
+      <stop offset="1" stop-color="#1478ed" />
+    </linearGradient>
+
+    <radialGradient
+      id="app-icon-highlight"
+      cx="0"
+      cy="0"
+      r="1"
+      gradientTransform="translate(155 106) rotate(48) scale(304)"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="#ffffff" stop-opacity="0.2" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#app-icon-background)" />
+  <rect width="512" height="512" fill="url(#app-icon-highlight)" />
+
+  <path
+    d="M124 388V166c0-25 20-45 45-45h174c25 0 45 20 45 45v222"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="36"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <path
+    d="M180 204v-34h34M298 170h34v34M180 288v34h34M298 322h34v-34"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="22"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <path
+    d="M172 252h168"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="18"
+    stroke-linecap="round"
+  />
+
+  <path
+    d="M92 388h328"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="36"
+    stroke-linecap="round"
+  />
+</svg>
