@@ -606,6 +606,10 @@
   content: "DATA MANAGEMENT";
 }
 
+.settings-auth-section h3::before {
+  content: "DEVICE AUTHENTICATION";
+}
+
 /*
   システム情報
 */
@@ -1270,6 +1274,77 @@
 .settings-import-button:active {
   transform:
     scale(0.98);
+}
+
+/*
+  端末認証
+*/
+.settings-auth-section {
+  grid-column:
+    1 / -1;
+}
+
+.settings-auth-release-button {
+  width: 100%;
+  min-height:
+    clamp(
+      49px,
+      6.3vh,
+      61px
+    );
+
+  margin-top:
+    clamp(
+      11px,
+      1.4vh,
+      16px
+    );
+
+  padding:
+    9px 14px;
+
+  border:
+    1px solid
+    rgba(
+      112,
+      82,
+      165,
+      0.2
+    );
+
+  border-radius:
+    clamp(
+      14px,
+      1.6vw,
+      19px
+    );
+
+  color: #5f3b9d;
+  background: #f1eafd;
+
+  font-size:
+    clamp(
+      14px,
+      1.45vw,
+      19px
+    );
+
+  font-weight: 850;
+
+  cursor: pointer;
+
+  transition:
+    transform 150ms ease,
+    background 150ms ease;
+}
+
+.settings-auth-release-button:hover {
+  background: #e9defb;
+  transform: translateY(-1px);
+}
+
+.settings-auth-release-button:active {
+  transform: scale(0.99);
 }
 
 /*
