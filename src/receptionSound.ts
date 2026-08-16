@@ -16,11 +16,11 @@ type ScheduledTone = {
   wave: OscillatorType;
 };
 
-const QR_DETECTED_SOUND_PATH =
-  `${import.meta.env.BASE_URL}sounds/qr_scan_detected.wav?v=20260816-v1`;
-
 const RECORDED_SUCCESS_SOUND_PATH =
-  `${import.meta.env.BASE_URL}sounds/qr_result_chime.wav?v=20260816-v1`;
+  `${import.meta.env.BASE_URL}sounds/qr_gate_result_recreated_v2.wav?v=20260813-v2`;
+
+const RECORDED_ERROR_SOUND_PATH =
+  `${import.meta.env.BASE_URL}sounds/qr_gate_error_chime_v1.wav?v=20260816-v1`;
 
 let audioContext:
   AudioContext |
@@ -30,7 +30,7 @@ let recordedSuccessAudio:
   HTMLAudioElement |
   null = null;
 
-let qrDetectedAudio:
+let recordedErrorAudio:
   HTMLAudioElement |
   null = null;
 
@@ -105,48 +105,6 @@ function getAudioContext():
   }
 }
 
-function createRecordedAudio(
-  soundPath: string
-): HTMLAudioElement {
-  const audio =
-    new Audio(
-      soundPath
-    );
-
-  audio.preload =
-    "auto";
-
-  audio.volume =
-    1;
-
-  audio.load();
-
-  return audio;
-}
-
-function getQrDetectedAudio():
-  HTMLAudioElement |
-  null {
-  if (
-    typeof window ===
-    "undefined"
-  ) {
-    return null;
-  }
-
-  if (
-    qrDetectedAudio ===
-    null
-  ) {
-    qrDetectedAudio =
-      createRecordedAudio(
-        QR_DETECTED_SOUND_PATH
-      );
-  }
-
-  return qrDetectedAudio;
-}
-
 function getRecordedSuccessAudio():
   HTMLAudioElement |
   null {
@@ -164,12 +122,59 @@ function getRecordedSuccessAudio():
     return recordedSuccessAudio;
   }
 
-  recordedSuccessAudio =
-    createRecordedAudio(
+  const audio =
+    new Audio(
       RECORDED_SUCCESS_SOUND_PATH
     );
 
+  audio.preload =
+    "auto";
+
+  audio.volume =
+    1;
+
+  audio.load();
+
+  recordedSuccessAudio =
+    audio;
+
   return recordedSuccessAudio;
+}
+
+function getRecordedErrorAudio():
+  HTMLAudioElement |
+  null {
+  if (
+    typeof window ===
+    "undefined"
+  ) {
+    return null;
+  }
+
+  if (
+    recordedErrorAudio !==
+    null
+  ) {
+    return recordedErrorAudio;
+  }
+
+  const audio =
+    new Audio(
+      RECORDED_ERROR_SOUND_PATH
+    );
+
+  audio.preload =
+    "auto";
+
+  audio.volume =
+    1;
+
+  audio.load();
+
+  recordedErrorAudio =
+    audio;
+
+  return recordedErrorAudio;
 }
 
 function removeUnlockListeners() {
@@ -244,12 +249,11 @@ export function installReceptionSoundUnlock() {
   );
 }
 
-async function unlockRecordedAudio(
-  audio:
-    HTMLAudioElement |
-    null
-):
+async function unlockRecordedSuccessSound():
   Promise<boolean> {
+  const audio =
+    getRecordedSuccessAudio();
+
   if (
     audio ===
     null
@@ -282,7 +286,52 @@ async function unlockRecordedAudio(
       1;
 
     console.warn(
-      "QR受付音の有効化に失敗しました。",
+      "大阪メトロQR改札音の有効化に失敗しました。",
+      error
+    );
+
+    return false;
+  }
+}
+
+async function unlockRecordedErrorSound():
+  Promise<boolean> {
+  const audio =
+    getRecordedErrorAudio();
+
+  if (
+    audio ===
+    null
+  ) {
+    return false;
+  }
+
+  audio.pause();
+
+  audio.currentTime =
+    0;
+
+  audio.volume =
+    0.01;
+
+  try {
+    await audio.play();
+
+    audio.pause();
+
+    audio.currentTime =
+      0;
+
+    audio.volume =
+      1;
+
+    return true;
+  } catch (error) {
+    audio.volume =
+      1;
+
+    console.warn(
+      "QR受付エラー音の有効化に失敗しました。",
       error
     );
 
@@ -370,31 +419,27 @@ export async function unlockReceptionSound():
     iPad・Safariの自動再生制限を解除します。
   */
   const recordedSoundPromise =
-    Promise.all([
-      unlockRecordedAudio(
-        getQrDetectedAudio()
-      ),
+    unlockRecordedSuccessSound();
 
-      unlockRecordedAudio(
-        getRecordedSuccessAudio()
-      ),
-    ]);
+  const recordedErrorSoundPromise =
+    unlockRecordedErrorSound();
 
   const audioContextPromise =
     unlockAudioContext();
 
   const [
-    recordedSoundResults,
+    recordedSoundReady,
+    recordedErrorSoundReady,
     audioContextReady,
   ] = await Promise.all([
     recordedSoundPromise,
+    recordedErrorSoundPromise,
     audioContextPromise,
   ]);
 
   soundUnlocked =
-    recordedSoundResults.some(
-      Boolean
-    ) ||
+    recordedSoundReady ||
+    recordedErrorSoundReady ||
     audioContextReady;
 
   if (
@@ -460,12 +505,11 @@ async function prepareAudioContext():
   return context;
 }
 
-async function playRecordedSound(
-  audio:
-    HTMLAudioElement |
-    null
-):
+async function playRecordedSuccessSound():
   Promise<boolean> {
+  const audio =
+    getRecordedSuccessAudio();
+
   if (
     audio ===
     null
@@ -496,7 +540,56 @@ async function playRecordedSound(
       !warnedAboutBlockedSound
     ) {
       console.warn(
-        "QR受付音を再生できません。画面を一度タップしてください。",
+        "大阪メトロQR改札音を再生できません。画面を一度タップしてください。",
+        error
+      );
+
+      warnedAboutBlockedSound =
+        true;
+    }
+
+    installReceptionSoundUnlock();
+
+    return false;
+  }
+}
+
+async function playRecordedErrorSound():
+  Promise<boolean> {
+  const audio =
+    getRecordedErrorAudio();
+
+  if (
+    audio ===
+    null
+  ) {
+    return false;
+  }
+
+  try {
+    audio.pause();
+
+    audio.currentTime =
+      0;
+
+    audio.volume =
+      1;
+
+    await audio.play();
+
+    soundUnlocked =
+      true;
+
+    warnedAboutBlockedSound =
+      false;
+
+    return true;
+  } catch (error) {
+    if (
+      !warnedAboutBlockedSound
+    ) {
+      console.warn(
+        "QR受付エラー音を再生できません。画面を一度タップしてください。",
         error
       );
 
@@ -661,22 +754,11 @@ async function playToneSequence(
 }
 
 /*
-  QRコードを読み取った瞬間の短い確認音。
-*/
-export async function playQrDetectedSound() {
-  return playRecordedSound(
-    getQrDetectedAudio()
-  );
-}
-
-/*
   来場者チケットの通常受付成功音。
-  結果画面へ切り替わる瞬間にチャイムを再生します。
+  録音から切り出した大阪メトロQR改札音を再生します。
 */
 export async function playReceptionSuccessSound() {
-  return playRecordedSound(
-    getRecordedSuccessAudio()
-  );
+  return playRecordedSuccessSound();
 }
 
 /*
@@ -684,9 +766,7 @@ export async function playReceptionSuccessSound() {
   通常受付と同じ大阪メトロQR改札音を再生します。
 */
 export async function playReEntrySound() {
-  return playRecordedSound(
-    getRecordedSuccessAudio()
-  );
+  return playRecordedSuccessSound();
 }
 
 /*
@@ -749,44 +829,10 @@ export async function playMemberSuccessSound() {
 }
 
 /*
-  QR受付エラー音。
+  QR受付エラー時は、下降するオリジナルチャイムを再生します。
 */
 export async function playReceptionErrorSound() {
-  return playToneSequence([
-    {
-      frequency:
-        440,
-
-      startDelay:
-        0,
-
-      duration:
-        0.16,
-
-      volume:
-        0.17,
-
-      wave:
-        "square",
-    },
-
-    {
-      frequency:
-        330,
-
-      startDelay:
-        0.2,
-
-      duration:
-        0.2,
-
-      volume:
-        0.18,
-
-      wave:
-        "square",
-    },
-  ]);
+  return playRecordedErrorSound();
 }
 
 /*
@@ -851,22 +897,22 @@ export function stopReceptionSounds() {
   stopActiveSounds();
 
   if (
-    qrDetectedAudio !==
-    null
-  ) {
-    qrDetectedAudio.pause();
-
-    qrDetectedAudio.currentTime =
-      0;
-  }
-
-  if (
     recordedSuccessAudio !==
     null
   ) {
     recordedSuccessAudio.pause();
 
     recordedSuccessAudio.currentTime =
+      0;
+  }
+
+  if (
+    recordedErrorAudio !==
+    null
+  ) {
+    recordedErrorAudio.pause();
+
+    recordedErrorAudio.currentTime =
       0;
   }
 }
@@ -879,7 +925,7 @@ export async function closeReceptionAudio() {
   recordedSuccessAudio =
     null;
 
-  qrDetectedAudio =
+  recordedErrorAudio =
     null;
 
   const context =
