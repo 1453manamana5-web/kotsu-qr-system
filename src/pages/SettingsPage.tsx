@@ -3,14 +3,6 @@ import {
   useState,
 } from "react";
 
-import {
-  signOut,
-} from "firebase/auth";
-
-import {
-  auth,
-} from "../firebase";
-
 import OnlineStatus from "./OnlineStatus";
 
 import "./SettingsPage.css";
@@ -667,30 +659,6 @@ function SettingsPage({
       );
     };
 
-  const releaseDeviceAuth =
-    async () => {
-      const confirmed =
-        window.confirm(
-          "この端末の認証を解除しますか？\n次回はメールアドレスとパスワードの入力が必要です。"
-        );
-
-      if (!confirmed) {
-        return;
-      }
-
-      try {
-        await signOut(auth);
-      } catch (error) {
-        console.error(
-          "端末認証を解除できませんでした。",
-          error
-        );
-        alert(
-          "端末認証を解除できませんでした。"
-        );
-      }
-    };
-
   return (
     <div className="settings-page">
       <header className="settings-header">
@@ -943,32 +911,21 @@ function SettingsPage({
 
         <section className="settings-section settings-auth-section">
           <h3>
-            端末認証
+            データ接続
           </h3>
 
           <div className="settings-info-row">
             <span>
-              ログイン中
+              接続方式
             </span>
 
             <strong>
-              {auth.currentUser?.email ??
-                "認証済み端末"}
+              自動認証
             </strong>
           </div>
 
-          <button
-            type="button"
-            className="settings-auth-release-button"
-            onClick={() =>
-              void releaseDeviceAuth()
-            }
-          >
-            この端末の認証を解除
-          </button>
-
           <p className="settings-help">
-            端末を譲渡・交換するときだけ解除してください。通常はログイン状態が保存されます。
+            サイトを開くと自動で接続します。初めて開くときだけ、インターネット接続が必要です。
           </p>
         </section>
 
