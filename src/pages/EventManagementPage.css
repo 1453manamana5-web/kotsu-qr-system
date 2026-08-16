@@ -2697,10 +2697,11 @@
   max-width: 900px
 ) {
   .event-management-page {
-    height: auto;
-    min-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
 
-    overflow: auto;
+    overflow: hidden;
   }
 
   .event-management-header {
@@ -2726,14 +2727,15 @@
   }
 
   .event-management-main {
-    min-height: 800px;
-    flex: none;
+    min-height: 0;
+    flex: 1;
 
-    overflow: visible;
+    overflow: hidden;
   }
 
   .event-list-section {
-    min-height: 650px;
+    min-height: 0;
+    flex: 1;
   }
 
   .event-management-footer {
