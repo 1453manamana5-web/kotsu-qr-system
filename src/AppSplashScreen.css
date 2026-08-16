@@ -43,9 +43,12 @@
     "Yu Gothic",
     sans-serif;
 
+}
+
+.app-splash-screen.is-leaving {
   animation:
     app-splash-screen-out
-    2150ms
+    400ms
     ease
     forwards;
 }
@@ -269,8 +272,7 @@
 }
 
 @keyframes app-splash-screen-out {
-  0%,
-  76% {
+  0% {
     visibility: visible;
 
     opacity: 1;

@@ -21,6 +21,9 @@ import "./DeviceAuthGate.css";
 
 type DeviceAuthGateProps = {
   children: ReactNode;
+  onScreenStateChange?: (
+    state: AuthScreenState
+  ) => void;
 };
 
 type AuthScreenState =
@@ -67,6 +70,7 @@ function AuthLogo() {
 
 function DeviceAuthGate({
   children,
+  onScreenStateChange,
 }: DeviceAuthGateProps) {
   const [
     screenState,
@@ -153,6 +157,15 @@ function DeviceAuthGate({
       startOfflineReceptionSync();
     }
   }, [screenState]);
+
+  useEffect(() => {
+    onScreenStateChange?.(
+      screenState
+    );
+  }, [
+    onScreenStateChange,
+    screenState,
+  ]);
 
   if (screenState === "ready") {
     return children;
