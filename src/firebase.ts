@@ -3,6 +3,10 @@ import {
 } from "firebase/app";
 
 import {
+  getAuth,
+} from "firebase/auth";
+
+import {
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
@@ -35,6 +39,9 @@ const firebaseApp =
   initializeApp(
     firebaseConfig
   );
+
+export const auth =
+  getAuth(firebaseApp);
 
 export const db =
   initializeFirestore(
