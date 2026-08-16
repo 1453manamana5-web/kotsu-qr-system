@@ -23,6 +23,7 @@ import {
 } from "../receptionPresenceFirestore";
 
 import {
+  playQrDetectedSound,
   playReceptionErrorSound,
   playReceptionSuccessSound,
 } from "../receptionSound";
@@ -649,6 +650,8 @@ function ExitPage({
               successAnimationTimerRef.current =
                 null;
 
+              void playReceptionSuccessSound();
+
               setReceptionState(
                 resultState
               );
@@ -665,8 +668,6 @@ function ExitPage({
         ticketNumber: string,
         message: string
       ) => {
-        void playReceptionSuccessSound();
-
         setResultMessage(
           message
         );
@@ -695,8 +696,6 @@ function ExitPage({
         qrNumber: string,
         actionMessage: string
       ) => {
-        void playReceptionSuccessSound();
-
         setResultName(
           memberName.trim() ===
             ""
@@ -942,6 +941,8 @@ function ExitPage({
 
           return;
         }
+
+        void playQrDetectedSound();
 
         setReceptionState(
           "processing"
