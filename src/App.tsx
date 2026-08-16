@@ -655,6 +655,38 @@ function App() {
     "home"
   );
 
+  /*
+    受付で使う3画面だけは、ブラウザ全体が
+    スクロールしないよう表示領域に固定します。
+    管理画面などへ移動すると、この指定は外れます。
+  */
+  useEffect(() => {
+    const shouldLockViewport =
+      page === "home" ||
+      page === "entry" ||
+      page === "exit";
+
+    document.documentElement.classList.toggle(
+      "viewport-locked",
+      shouldLockViewport
+    );
+
+    document.body.classList.toggle(
+      "viewport-locked",
+      shouldLockViewport
+    );
+
+    return () => {
+      document.documentElement.classList.remove(
+        "viewport-locked"
+      );
+
+      document.body.classList.remove(
+        "viewport-locked"
+      );
+    };
+  }, [page]);
+
   const [
     adminOrigin,
     setAdminOrigin,

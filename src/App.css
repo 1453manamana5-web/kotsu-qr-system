@@ -32,6 +32,23 @@ body {
   color: #111a2e;
 }
 
+html.viewport-locked,
+body.viewport-locked {
+  height: 100%;
+  min-height: 0;
+
+  overflow: hidden;
+
+  overscroll-behavior: none;
+}
+
+body.viewport-locked #root {
+  height: 100%;
+  min-height: 0;
+
+  overflow: hidden;
+}
+
 button,
 input,
 select,
