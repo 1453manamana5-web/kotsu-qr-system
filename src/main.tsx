@@ -1,3 +1,7 @@
+import {
+  Suspense,
+} from "react";
+
 import ReactDOM from "react-dom/client";
 
 import App from "./App";
@@ -21,6 +25,22 @@ import "./index.css";
 */
 installReceptionSoundUnlock();
 
+const pageLoadingFallback = (
+  <main
+    className="app-route-loading"
+    aria-live="polite"
+  >
+    <span
+      className="app-route-loading-spinner"
+      aria-hidden="true"
+    />
+
+    <strong>
+      画面を読み込んでいます
+    </strong>
+  </main>
+);
+
 const rootElement =
   document.getElementById(
     "root"
@@ -40,7 +60,13 @@ ReactDOM.createRoot(
 ).render(
   <DeviceAuthGate>
     <AppSplashScreen>
-      <App />
+      <Suspense
+        fallback={
+          pageLoadingFallback
+        }
+      >
+        <App />
+      </Suspense>
     </AppSplashScreen>
   </DeviceAuthGate>
 );

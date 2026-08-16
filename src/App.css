@@ -61,6 +61,57 @@ button {
     transparent;
 }
 
+.app-route-loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  gap: 18px;
+
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+
+  color: #4d3d6f;
+  background: #f5f6f8;
+}
+
+.app-route-loading-spinner {
+  width: 46px;
+  height: 46px;
+
+  border: 5px solid #e5def2;
+  border-top-color: #7850c2;
+  border-radius: 50%;
+
+  animation:
+    app-route-loading-spin
+    0.8s
+    linear
+    infinite;
+}
+
+.app-route-loading strong {
+  font-size: clamp(
+    18px,
+    2.4vw,
+    25px
+  );
+}
+
+@keyframes app-route-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-route-loading-spinner {
+    animation-duration: 1.8s;
+  }
+}
+
 img,
 svg {
   max-width: 100%;

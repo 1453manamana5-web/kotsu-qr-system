@@ -5,11 +5,6 @@ import {
   useState,
 } from "react";
 
-import html2canvas from "html2canvas";
-import {
-  jsPDF,
-} from "jspdf";
-
 import {
   subscribeToTickets,
   type Ticket,
@@ -830,6 +825,21 @@ function PastDataPage({
         setIsCreatingPdf(
           true
         );
+
+        const [
+          html2canvasModule,
+          jsPdfModule,
+        ] = await Promise.all([
+          import("html2canvas"),
+          import("jspdf"),
+        ]);
+
+        const html2canvas =
+          html2canvasModule.default;
+
+        const {
+          jsPDF,
+        } = jsPdfModule;
 
         const reportElement =
           reportRef.current;
