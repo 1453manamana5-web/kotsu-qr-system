@@ -15,6 +15,8 @@ import {
   type ActivityLog,
 } from "../activityFirestore";
 
+import OnlineStatus from "./OnlineStatus";
+
 import "./PastDataPage.css";
 
 type EventStatus =
@@ -1066,13 +1068,18 @@ function PastDataPage({
             交通研究部QRコード管理システム
           </h1>
 
-          <h2>
-            過去のデータ
-          </h2>
+          <div
+            style={{
+              marginTop:
+                "clamp(9px, 1.3vh, 14px)",
+            }}
+          >
+            <OnlineStatus />
+          </div>
         </div>
 
         <div className="past-data-mode-label">
-          管理モード
+          過去のデータ
         </div>
       </header>
 
