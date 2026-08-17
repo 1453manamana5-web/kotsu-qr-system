@@ -39,7 +39,11 @@ body:has(.members-page),
 html:has(.settings-page),
 body:has(.settings-page),
 html:has(.analysis-page),
-body:has(.analysis-page) {
+body:has(.analysis-page),
+html:has(.tickets-page),
+body:has(.tickets-page),
+html:has(.past-data-page),
+body:has(.past-data-page) {
   height: 100%;
   min-height: 0;
 
@@ -51,7 +55,9 @@ body:has(.analysis-page) {
 body.viewport-locked #root,
 body:has(.members-page) #root,
 body:has(.settings-page) #root,
-body:has(.analysis-page) #root {
+body:has(.analysis-page) #root,
+body:has(.tickets-page) #root,
+body:has(.past-data-page) #root {
   height: 100%;
   min-height: 0;
 
