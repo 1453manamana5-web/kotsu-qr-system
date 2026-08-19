@@ -6,25 +6,18 @@ type ShareNavigator = Navigator & {
   share?: (
     data: ShareData
   ) => Promise<void>;
-
   canShare?: (
     data?: ShareData
   ) => boolean;
 };
 
-const CSS_PIXELS_PER_INCH =
-  96;
-
-const MILLIMETERS_PER_INCH =
-  25.4;
-
-const PRINT_MARGIN_MM =
-  8;
+const CSS_PIXELS_PER_INCH = 96;
+const MILLIMETERS_PER_INCH = 25.4;
+const PRINT_MARGIN_MM = 8;
 
 function isStandaloneApp() {
   const displayModeStandalone =
-    typeof window.matchMedia ===
-      "function" &&
+    typeof window.matchMedia === "function" &&
     window.matchMedia(
       "(display-mode: standalone)"
     ).matches;
@@ -101,21 +94,11 @@ function createStatusElement(
 
   status.className =
     "ticket-manual-print-status";
-
-  status.style.marginTop =
-    "8px";
-
-  status.style.fontSize =
-    "16px";
-
-  status.style.fontWeight =
-    "700";
-
-  status.style.lineHeight =
-    "1.45";
-
-  status.style.color =
-    "#52606d";
+  status.style.marginTop = "8px";
+  status.style.fontSize = "16px";
+  status.style.fontWeight = "700";
+  status.style.lineHeight = "1.45";
+  status.style.color = "#52606d";
 
   status.setAttribute(
     "aria-live",
@@ -153,8 +136,7 @@ async function createPrintPdf(
   const printSheet =
     printPage?.querySelector<HTMLElement>(
       ".ticket-print-sheet"
-    ) ??
-    null;
+    ) ?? null;
 
   const cards =
     printSheet === null
@@ -170,7 +152,7 @@ async function createPrintPdf(
     cards.length === 0
   ) {
     throw new Error(
-      "印刷するチケットが見つかりません。"
+      "印刷対象が見つかりません。"
     );
   }
 
@@ -255,12 +237,10 @@ async function createPrintPdf(
       );
 
     const outputWidth =
-      cardWidthMm *
-      fitScale;
+      cardWidthMm * fitScale;
 
     const outputHeight =
-      cardHeightMm *
-      fitScale;
+      cardHeightMm * fitScale;
 
     const columns =
       Math.max(
@@ -358,12 +338,9 @@ async function createPrintPdf(
         index + 1
       } / ${cards.length}`;
 
-    const card =
-      cards[index];
-
     const canvas =
       await html2canvas(
-        card,
+        cards[index],
         {
           scale: 2.5,
           useCORS: true,
@@ -420,11 +397,8 @@ async function createPrintPdf(
       "FAST"
     );
 
-    canvas.width =
-      1;
-
-    canvas.height =
-      1;
+    canvas.width = 1;
+    canvas.height = 1;
   }
 
   status.textContent =
@@ -458,14 +432,9 @@ function downloadPdfFile(
       "a"
     );
 
-  link.href =
-    objectUrl;
-
-  link.download =
-    file.name;
-
-  link.rel =
-    "noopener";
+  link.href = objectUrl;
+  link.download = file.name;
+  link.rel = "noopener";
 
   document.body.appendChild(
     link
@@ -496,7 +465,7 @@ function sharePreparedPdf(
     files: [file],
   };
 
-  if (
+  const canUseShare =
     typeof shareNavigator.share ===
       "function" &&
     (
@@ -505,58 +474,56 @@ function sharePreparedPdf(
       shareNavigator.canShare(
         shareData
       )
-    )
+    );
+
+  if (
+    !canUseShare ||
+    shareNavigator.share ===
+      undefined
   ) {
     status.textContent =
-      "共有シートの「プリント」を選んでください。";
+      "この端末ではPDF共有を使えないため、PDFをダウンロードします。";
 
-    const shareResult =
-      shareNavigator.share(
-        shareData
-      );
-
-    if (
-      shareResult !== undefined &&
-      typeof shareResult.catch ===
-        "function"
-    ) {
-      void shareResult.catch(
-        (error: unknown) => {
-          if (
-            error instanceof DOMException &&
-            error.name ===
-              "AbortError"
-          ) {
-            status.textContent =
-              "共有をキャンセルしました。もう一度「共有して印刷」を押せます。";
-
-            return;
-          }
-
-          console.error(
-            "印刷用PDFを共有できませんでした。",
-            error
-          );
-
-          status.textContent =
-            "共有画面を開けなかったため、PDFをダウンロードします。";
-
-          downloadPdfFile(
-            file
-          );
-        }
-      );
-    }
+    downloadPdfFile(
+      file
+    );
 
     return;
   }
 
   status.textContent =
-    "この端末ではPDF共有を使えないため、PDFをダウンロードします。";
+    "共有シートの「プリント」を選んでください。";
 
-  downloadPdfFile(
-    file
-  );
+  void shareNavigator
+    .share(
+      shareData
+    )
+    .catch(
+      (error: unknown) => {
+        if (
+          error instanceof DOMException &&
+          error.name ===
+            "AbortError"
+        ) {
+          status.textContent =
+            "共有をキャンセルしました。もう一度「共有して印刷」を押せます。";
+
+          return;
+        }
+
+        console.error(
+          "印刷用PDFを共有できませんでした。",
+          error
+        );
+
+        status.textContent =
+          "共有画面を開けなかったため、PDFをダウンロードします。";
+
+        downloadPdfFile(
+          file
+        );
+      }
+    );
 }
 
 function enhanceManualPrintToolbar() {
@@ -566,10 +533,20 @@ function enhanceManualPrintToolbar() {
     );
 
   if (
-    toolbar === null
+    toolbar === null ||
+    toolbar.dataset.manualPrintEnhanced ===
+      "true"
   ) {
     return;
   }
+
+  /*
+    ここを最初に設定しておくことで、
+    この後の文言変更やボタン追加をMutationObserverが
+    再検知しても同じツールバーを二重処理しません。
+  */
+  toolbar.dataset.manualPrintEnhanced =
+    "true";
 
   const standalone =
     isStandaloneApp();
@@ -584,19 +561,8 @@ function enhanceManualPrintToolbar() {
   ) {
     instruction.textContent =
       standalone
-        ? "ホーム画面アプリでは直接プリント画面を開けない場合があります。まず印刷用PDFを作成し、次に「共有して印刷」を押して、共有シートの「プリント」を選択してください。"
+        ? "ホーム画面アプリでは、まず「印刷用PDFを作成」を押してください。PDF作成後に「共有して印刷」を押し、共有シートから「プリント」を選択してください。"
         : "右の「印刷する」を押すか、Safariの共有ボタンから「プリント」を選択してください。";
-  }
-
-  const existingPrintButton =
-    toolbar.querySelector<HTMLButtonElement>(
-      ".ticket-manual-print-button"
-    );
-
-  if (
-    existingPrintButton !== null
-  ) {
-    return;
   }
 
   const printButton =
@@ -604,15 +570,11 @@ function enhanceManualPrintToolbar() {
       "button"
     );
 
-  printButton.type =
-    "button";
-
+  printButton.type = "button";
   printButton.className =
     "ticket-manual-print-button";
-
   printButton.style.background =
     "#ccebd8";
-
   printButton.style.borderColor =
     "#9bc9ad";
 
@@ -623,8 +585,7 @@ function enhanceManualPrintToolbar() {
 
   let preparedPdf:
     File |
-    null =
-    null;
+    null = null;
 
   if (
     standalone
@@ -646,9 +607,7 @@ function enhanceManualPrintToolbar() {
           return;
         }
 
-        printButton.disabled =
-          true;
-
+        printButton.disabled = true;
         printButton.textContent =
           "PDF作成中…";
 
@@ -657,15 +616,11 @@ function enhanceManualPrintToolbar() {
         )
           .then(
             (file) => {
-              preparedPdf =
-                file;
-
+              preparedPdf = file;
               printButton.disabled =
                 false;
-
               printButton.textContent =
                 "⬆️ 共有して印刷";
-
               status.textContent =
                 "PDFができました。「共有して印刷」を押し、共有シートから「プリント」を選んでください。";
             }
@@ -679,10 +634,8 @@ function enhanceManualPrintToolbar() {
 
               printButton.disabled =
                 false;
-
               printButton.textContent =
                 "📄 印刷用PDFを作成";
-
               status.textContent =
                 error instanceof Error
                   ? error.message
