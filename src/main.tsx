@@ -6,6 +6,10 @@ import {
   installReceptionSoundUnlock,
 } from "./receptionSound";
 
+import {
+  installManualPrintSupport,
+} from "./manualPrintSupport";
+
 import "./index.css";
 
 /*
@@ -16,6 +20,13 @@ import "./index.css";
   成功音を使える状態にします。
 */
 installReceptionSoundUnlock();
+
+/*
+  iPadのホーム画面アプリではSafariの共有ボタンが
+  表示されないため、印刷専用画面に直接印刷できる
+  ボタンを追加します。
+*/
+installManualPrintSupport();
 
 const rootElement =
   document.getElementById(
