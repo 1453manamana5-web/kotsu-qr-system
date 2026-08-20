@@ -3,6 +3,10 @@ import {
   useState,
 } from "react";
 
+import {
+  resetEventMemberStatusesInFirestore,
+} from "../memberStatusReset";
+
 import OnlineStatus from "./OnlineStatus";
 
 import "./SettingsPage.css";
@@ -67,19 +71,6 @@ function loadSettings():
 
     return defaultSettings;
   }
-}
-
-function createEventMembersStorageKey(
-  eventName: string
-) {
-  const safeEventName =
-    eventName.trim() === ""
-      ? "event-not-set"
-      : encodeURIComponent(
-          eventName.trim()
-        );
-
-  return `qr-management-event-members-${safeEventName}`;
 }
 
 function SettingsIcon() {
@@ -204,6 +195,11 @@ function SettingsPage({
     setShowVersionModal,
   ] = useState(false);
 
+  const [
+    resettingMemberStatuses,
+    setResettingMemberStatuses,
+  ] = useState(false);
+
   const saveSettings = (
     newSettings:
       AppSettings
@@ -261,7 +257,13 @@ function SettingsPage({
     };
 
   const resetMemberStatuses =
-    () => {
+    async () => {
+      if (
+        resettingMemberStatuses
+      ) {
+        return;
+      }
+
       if (
         eventName.trim() ===
         ""
@@ -284,20 +286,19 @@ function SettingsPage({
         return;
       }
 
+      setResettingMemberStatuses(
+        true
+      );
+
       try {
-        const storageKey =
-          createEventMembersStorageKey(
+        const resetCount =
+          await resetEventMemberStatusesInFirestore(
             eventName
           );
 
-        const savedMembers =
-          localStorage.getItem(
-            storageKey
-          );
-
         if (
-          savedMembers ===
-          null
+          resetCount ===
+          0
         ) {
           alert(
             "リセットする部員情報がありません。"
@@ -306,51 +307,21 @@ function SettingsPage({
           return;
         }
 
-        const parsedMembers:
-          unknown =
-          JSON.parse(
-            savedMembers
-          );
-
-        if (
-          !Array.isArray(
-            parsedMembers
-          )
-        ) {
-          alert(
-            "部員情報の形式が正しくありません。"
-          );
-
-          return;
-        }
-
-        const resetMembers =
-          parsedMembers.map(
-            (member) => ({
-              ...member,
-              status:
-                "未入室",
-            })
-          );
-
-        localStorage.setItem(
-          storageKey,
-          JSON.stringify(
-            resetMembers
-          )
-        );
-
         alert(
-          "部員の状態を全員「未入室」に戻しました。"
+          `${resetCount}人の部員状態を全員「未入室」に戻しました。`
         );
       } catch (error) {
         console.error(
-          "部員状態のリセットに失敗しました。",
+          "Firestoreの部員状態リセットに失敗しました。",
           error
         );
 
         alert(
-          "部員状態をリセットできませんでした。"
+          "部員状態をリセットできませんでした。\n通信状態を確認して、もう一度試してください。"
+        );
+      } finally {
+        setResettingMemberStatuses(
+          false
         );
       }
     };
@@ -896,11 +867,19 @@ function SettingsPage({
             <button
               type="button"
               className="settings-status-reset-button"
-              onClick={
-                resetMemberStatuses
+              disabled={
+                resettingMemberStatuses
               }
+              aria-busy={
+                resettingMemberStatuses
+              }
+              onClick={() => {
+                void resetMemberStatuses();
+              }}
             >
-              部員の状態をリセット
+              {resettingMemberStatuses
+                ? "部員状態をリセット中…"
+                : "部員の状態をリセット"}
             </button>
           </div>
 
