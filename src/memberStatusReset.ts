@@ -11,6 +11,7 @@ import {
 
 import {
   cacheEventMembersForOffline,
+  getPendingReceptionOperations,
 } from "./offlineReceptionStore";
 
 import type {
@@ -47,6 +48,31 @@ export async function resetEventMemberStatusesInFirestore(
     ""
   ) {
     return 0;
+  }
+
+  /*
+    まだFirestoreへ送れていない部員受付が残っている状態で
+    リセットすると、あとからその受付が同期されて状態が
+    再び変わる可能性があります。
+
+    そのため、部員受付の同期待ちがある間はリセットしません。
+  */
+  const hasPendingMemberReception =
+    getPendingReceptionOperations()
+      .some(
+        (operation) =>
+          operation.kind ===
+            "member" &&
+          operation.eventName.trim() ===
+            normalizedEventName
+      );
+
+  if (
+    hasPendingMemberReception
+  ) {
+    throw new Error(
+      "部員受付の同期待ちデータがあります。同期が完了してから、もう一度リセットしてください。"
+    );
   }
 
   const membersCollection =
