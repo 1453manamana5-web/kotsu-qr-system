@@ -19,7 +19,7 @@ import {
   ACTIVITY_COLLECTION,
   EVENT_DATA_COLLECTION,
   TICKETS_COLLECTION,
-  createSafeEventId,
+  getEventDataId,
   createSafeRandomId,
 } from "./firestorePaths";
 
@@ -137,7 +137,7 @@ function getTicketsCollection(
   return collection(
     db,
     EVENT_DATA_COLLECTION,
-    createSafeEventId(
+    getEventDataId(
       eventName
     ),
     TICKETS_COLLECTION
@@ -151,7 +151,7 @@ function getTicketDocument(
   return doc(
     db,
     EVENT_DATA_COLLECTION,
-    createSafeEventId(
+    getEventDataId(
       eventName
     ),
     TICKETS_COLLECTION,
@@ -166,7 +166,7 @@ function getActivityDocument(
   return doc(
     db,
     EVENT_DATA_COLLECTION,
-    createSafeEventId(
+    getEventDataId(
       eventName
     ),
     ACTIVITY_COLLECTION,

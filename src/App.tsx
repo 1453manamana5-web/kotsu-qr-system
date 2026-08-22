@@ -86,9 +86,14 @@ import {
 } from "./memberFirestore";
 
 import {
-  createSafeEventId,
+  getEventDataId,
   createSafeRandomId,
+  registerEventDataId,
 } from "./firestorePaths";
+
+import {
+  migrateAllEventDataToIds,
+} from "./eventDataMigration";
 
 type NewEventData = {
   name: string;
@@ -196,6 +201,12 @@ function isStoredEvent(
     (
       event.endedAt === undefined ||
       typeof event.endedAt === "string"
+    ) &&
+    (
+      event.dataDocumentId ===
+        undefined ||
+      typeof event.dataDocumentId ===
+        "string"
     )
   );
 }
@@ -225,6 +236,20 @@ function loadStoredEventStore(): EventStore {
         CURRENT_EVENT_ID_STORAGE_KEY
       );
 
+    events.forEach(
+      (event) => {
+        if (
+          event.dataDocumentId !==
+          undefined
+        ) {
+          registerEventDataId(
+            event.name,
+            event.dataDocumentId
+          );
+        }
+      }
+    );
+
     return {
       events,
       currentEventId:
@@ -250,7 +275,7 @@ function loadStoredEventStore(): EventStore {
 function createTicketStorageKey(
   eventName: string
 ) {
-  return `qr-management-event-tickets-${createSafeEventId(
+  return `qr-management-event-tickets-${getEventDataId(
     eventName
   )}`;
 }
@@ -258,7 +283,7 @@ function createTicketStorageKey(
 function createMemberStorageKey(
   eventName: string
 ) {
-  return `qr-management-event-members-${createSafeEventId(
+  return `qr-management-event-members-${getEventDataId(
     eventName
   )}`;
 }
@@ -266,7 +291,7 @@ function createMemberStorageKey(
 function createActivityStorageKey(
   eventName: string
 ) {
-  return `qr-management-event-activity-${createSafeEventId(
+  return `qr-management-event-activity-${getEventDataId(
     eventName
   )}`;
 }
@@ -796,6 +821,20 @@ function App() {
         null
     );
 
+  const allowEventDataMigrationRef =
+    useRef(
+      navigator.onLine
+    );
+
+  const needsInitialEventDataMigrationRef =
+    useRef(
+      eventStore.events.some(
+        (event) =>
+          event.dataDocumentId !==
+          event.id
+      )
+    );
+
   const autoSelectingEventIdRef =
     useRef<
       string |
@@ -865,8 +904,15 @@ function App() {
     setEventSyncReady,
   ] = useState(
     () =>
-      eventStore.events.length > 0 ||
-      navigator.onLine === false
+      navigator.onLine === false ||
+      (
+        eventStore.events.length > 0 &&
+        eventStore.events.every(
+          (event) =>
+            event.dataDocumentId ===
+            event.id
+        )
+      )
   );
 
   const [
@@ -888,6 +934,52 @@ function App() {
     リアルタイム受信します。
   */
   useEffect(() => {
+    let active =
+      true;
+
+    let migrationQueue =
+      Promise.resolve();
+
+    const applyEvents = (
+      events: EventData[]
+    ) => {
+      if (!active) {
+        return;
+      }
+
+      hasUsableEventsRef.current =
+        events.length > 0;
+
+      setEventStore(
+        (currentStore) => ({
+          ...currentStore,
+          events,
+        })
+      );
+
+      try {
+        localStorage.setItem(
+          EVENTS_STORAGE_KEY,
+          JSON.stringify(
+            events
+          )
+        );
+      } catch (error) {
+        console.warn(
+          "イベントのローカル保存に失敗しました。",
+          error
+        );
+      }
+
+      setEventSyncReady(
+        true
+      );
+
+      setEventSyncError(
+        ""
+      );
+    };
+
     const unsubscribeEvents =
       subscribeToEvents(
         (events, fromCache) => {
@@ -896,42 +988,83 @@ function App() {
             events.length === 0 &&
             hasUsableEventsRef.current
           ) {
-            setEventSyncReady(true);
+            if (
+              !allowEventDataMigrationRef.current ||
+              !needsInitialEventDataMigrationRef.current
+            ) {
+              setEventSyncReady(
+                true
+              );
+            }
+
             setEventSyncError("");
             return;
           }
 
-          hasUsableEventsRef.current =
-            events.length > 0;
-
-          setEventStore(
-            (currentStore) => ({
-              ...currentStore,
-              events,
-            })
-          );
-
-          try {
-            localStorage.setItem(
-              EVENTS_STORAGE_KEY,
-              JSON.stringify(
-                events
-              )
+          const needsMigration =
+            events.some(
+              (event) =>
+                event.dataDocumentId !==
+                event.id
             );
-          } catch (error) {
-            console.warn(
-              "イベントのローカル保存に失敗しました。",
-              error
-            );
+
+          if (
+            fromCache &&
+            allowEventDataMigrationRef.current &&
+            navigator.onLine &&
+            needsMigration
+          ) {
+            hasUsableEventsRef.current =
+              events.length > 0;
+
+            return;
           }
 
-          setEventSyncReady(
-            true
-          );
+          if (
+            fromCache ||
+            navigator.onLine ===
+              false ||
+            !allowEventDataMigrationRef.current
+          ) {
+            applyEvents(events);
 
-          setEventSyncError(
-            ""
-          );
+            return;
+          }
+
+          migrationQueue =
+            migrationQueue.then(
+              async () => {
+                try {
+                  const migration =
+                    await migrateAllEventDataToIds(
+                      events
+                    );
+
+                  applyEvents(
+                    migration.events
+                  );
+
+                  if (
+                    migration.changed &&
+                    active
+                  ) {
+                    window.setTimeout(
+                      () => {
+                        window.location.reload();
+                      },
+                      100
+                    );
+                  }
+                } catch (error) {
+                  console.error(
+                    "イベントデータをID形式へ移行できませんでした。旧形式のまま継続します。",
+                    error
+                  );
+
+                  applyEvents(events);
+                }
+              }
+            );
         },
 
         (error) => {
@@ -1013,6 +1146,8 @@ function App() {
       );
 
     return () => {
+      active = false;
+
       unsubscribeEvents();
       unsubscribeCurrentEvent();
     };
@@ -1404,10 +1539,16 @@ function App() {
   ) => {
     const runCreateEvent =
       async () => {
+        const eventId =
+          createSafeRandomId();
+
         const newEvent:
           EventData = {
           id:
-            createSafeRandomId(),
+            eventId,
+
+          dataDocumentId:
+            eventId,
 
           ...newEventData,
 

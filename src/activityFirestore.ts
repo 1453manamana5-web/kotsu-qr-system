@@ -13,7 +13,7 @@ import {
 import {
   ACTIVITY_COLLECTION,
   EVENT_DATA_COLLECTION,
-  createSafeEventId,
+  getEventDataId,
 } from "./firestorePaths";
 
 export type ActivityType =
@@ -121,7 +121,7 @@ function getActivityCollection(
   return collection(
     db,
     EVENT_DATA_COLLECTION,
-    createSafeEventId(
+    getEventDataId(
       eventName
     ),
     ACTIVITY_COLLECTION

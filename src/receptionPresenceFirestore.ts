@@ -16,7 +16,7 @@ import {
 import {
   EVENT_DATA_COLLECTION,
   RECEPTION_DEVICES_COLLECTION,
-  createSafeEventId,
+  getEventDataId,
   createSafeRandomId,
 } from "./firestorePaths";
 
@@ -87,7 +87,7 @@ function getReceptionDevicesCollection(
   return collection(
     db,
     EVENT_DATA_COLLECTION,
-    createSafeEventId(
+    getEventDataId(
       eventName
     ),
     RECEPTION_DEVICES_COLLECTION
@@ -101,7 +101,7 @@ function getReceptionDeviceDocument(
   return doc(
     db,
     EVENT_DATA_COLLECTION,
-    createSafeEventId(
+    getEventDataId(
       eventName
     ),
     RECEPTION_DEVICES_COLLECTION,

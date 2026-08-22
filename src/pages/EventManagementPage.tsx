@@ -7,7 +7,7 @@ import {
 import OnlineStatus from "./OnlineStatus";
 
 import {
-  createSafeEventId,
+  getEventDataId,
   createSafeRandomId,
 } from "../firestorePaths";
 
@@ -100,7 +100,7 @@ type EventManagementPageProps = {
 function createTicketStorageKey(
   eventName: string
 ) {
-  return `qr-management-event-tickets-${createSafeEventId(
+  return `qr-management-event-tickets-${getEventDataId(
     eventName
   )}`;
 }
@@ -108,7 +108,7 @@ function createTicketStorageKey(
 function createMemberStorageKey(
   eventName: string
 ) {
-  return `qr-management-event-members-${createSafeEventId(
+  return `qr-management-event-members-${getEventDataId(
     eventName
   )}`;
 }
@@ -116,7 +116,7 @@ function createMemberStorageKey(
 function createActivityStorageKey(
   eventName: string
 ) {
-  return `qr-management-event-activity-${createSafeEventId(
+  return `qr-management-event-activity-${getEventDataId(
     eventName
   )}`;
 }
