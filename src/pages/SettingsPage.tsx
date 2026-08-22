@@ -7,6 +7,14 @@ import {
   resetEventMemberStatusesInFirestore,
 } from "../memberStatusReset";
 
+import {
+  createFullBackup,
+  getBackupSummary,
+  parseFullBackup,
+  restoreFullBackup,
+  type FullBackupFile,
+} from "../backupRestore";
+
 import OnlineStatus from "./OnlineStatus";
 
 import "./SettingsPage.css";
@@ -200,6 +208,16 @@ function SettingsPage({
     setResettingMemberStatuses,
   ] = useState(false);
 
+  const [
+    backupBusy,
+    setBackupBusy,
+  ] = useState(false);
+
+  const [
+    backupStatus,
+    setBackupStatus,
+  ] = useState("");
+
   const saveSettings = (
     newSettings:
       AppSettings
@@ -326,123 +344,112 @@ function SettingsPage({
       }
     };
 
-  const exportData =
-    () => {
-      try {
-        const exportedStorage:
-          Record<
-            string,
-            string
-          > = {};
-
-        for (
-          let index = 0;
-          index <
-          localStorage.length;
-          index += 1
-        ) {
-          const key =
-            localStorage.key(
-              index
-            );
-
-          if (
-            key !== null &&
-            key.startsWith(
-              "qr-management-"
-            )
-          ) {
-            const value =
-              localStorage.getItem(
-                key
-              );
-
-            if (
-              value !== null
-            ) {
-              exportedStorage[
-                key
-              ] = value;
-            }
-          }
+  const downloadBackup = (
+    backup:
+      FullBackupFile,
+    fileNamePrefix:
+      string
+  ) => {
+    const blob =
+      new Blob(
+        [
+          JSON.stringify(
+            backup,
+            null,
+            2
+          ),
+        ],
+        {
+          type:
+            "application/json",
         }
+      );
 
-        const exportFile = {
-          appName:
-            "交通研究部QRコード管理システム",
+    const downloadUrl =
+      URL.createObjectURL(
+        blob
+      );
 
-          version:
-            APP_VERSION,
+    const link =
+      document.createElement(
+        "a"
+      );
 
-          exportedAt:
-            new Date().toISOString(),
-
-          data:
-            exportedStorage,
-        };
-
-        const blob =
-          new Blob(
-            [
-              JSON.stringify(
-                exportFile,
-                null,
-                2
-              ),
-            ],
-            {
-              type:
-                "application/json",
-            }
-          );
-
-        const downloadUrl =
-          URL.createObjectURL(
-            blob
-          );
-
-        const link =
-          document.createElement(
-            "a"
-          );
-
-        const dateText =
-          new Date()
-            .toISOString()
-            .slice(
-              0,
-              10
-            );
-
-        link.href =
-          downloadUrl;
-
-        link.download =
-          `QR管理システムバックアップ-${dateText}.json`;
-
-        document.body.appendChild(
-          link
+    const dateText =
+      new Date()
+        .toISOString()
+        .replace(
+          /[:.]/g,
+          "-"
         );
 
-        link.click();
-        link.remove();
+    link.href =
+      downloadUrl;
 
-        URL.revokeObjectURL(
-          downloadUrl
+    link.download =
+      `${fileNamePrefix}-${dateText}.json`;
+
+    document.body.appendChild(
+      link
+    );
+
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(
+      downloadUrl
+    );
+  };
+
+  const exportData =
+    async () => {
+      if (
+        backupBusy
+      ) {
+        return;
+      }
+
+      setBackupBusy(true);
+      setBackupStatus(
+        "Firestoreから全データを集めています…"
+      );
+
+      try {
+        const backup =
+          await createFullBackup(
+            APP_VERSION
+          );
+
+        downloadBackup(
+          backup,
+          "QR管理システム完全バックアップ"
+        );
+
+        const summary =
+          getBackupSummary(
+            backup
+          );
+
+        setBackupStatus(
+          `書き出し完了：イベント${summary.events}件・チケット${summary.tickets}件・部員${summary.members}件・受付履歴${summary.activityLogs}件`
         );
       } catch (error) {
         console.error(
-          "データの書き出しに失敗しました。",
+          "完全バックアップの作成に失敗しました。",
           error
         );
 
+        setBackupStatus("");
+
         alert(
-          "データを書き出せませんでした。"
+          "完全バックアップを作成できませんでした。\nインターネット接続とFirestoreの状態を確認してください。"
         );
+      } finally {
+        setBackupBusy(false);
       }
     };
 
-  const importData = (
+  const importData = async (
     event:
       ChangeEvent<HTMLInputElement>
   ) => {
@@ -461,6 +468,12 @@ function SettingsPage({
     }
 
     if (
+      backupBusy
+    ) {
+      return;
+    }
+
+    if (
       !file.name
         .toLowerCase()
         .endsWith(
@@ -474,125 +487,98 @@ function SettingsPage({
       return;
     }
 
-    const reader =
-      new FileReader();
+    if (
+      file.size >
+      50 * 1024 * 1024
+    ) {
+      alert(
+        "バックアップファイルが大きすぎます。"
+      );
 
-    reader.onload =
-      () => {
-        try {
-          if (
-            typeof reader.result !==
-            "string"
-          ) {
-            throw new Error(
-              "ファイルを読み込めませんでした。"
-            );
-          }
+      return;
+    }
 
-          const parsedFile:
-            unknown =
-            JSON.parse(
-              reader.result
-            );
-
-          if (
-            typeof parsedFile !==
-              "object" ||
-            parsedFile ===
-              null ||
-            !(
-              "data" in
-              parsedFile
-            )
-          ) {
-            throw new Error(
-              "バックアップファイルの形式が違います。"
-            );
-          }
-
-          const data = (
-            parsedFile as {
-              data:
-                unknown;
-            }
-          ).data;
-
-          if (
-            typeof data !==
-              "object" ||
-            data ===
-              null ||
-            Array.isArray(
-              data
-            )
-          ) {
-            throw new Error(
-              "バックアップデータが正しくありません。"
-            );
-          }
-
-          const confirmed =
-            window.confirm(
-              "バックアップデータを読み込みますか？\n同じ項目の現在データは上書きされます。"
-            );
-
-          if (
-            !confirmed
-          ) {
-            return;
-          }
-
-          Object.entries(
-            data
-          ).forEach(
-            (
-              [
-                key,
-                value,
-              ]
-            ) => {
-              if (
-                key.startsWith(
-                  "qr-management-"
-                ) &&
-                typeof value ===
-                  "string"
-              ) {
-                localStorage.setItem(
-                  key,
-                  value
-                );
-              }
-            }
-          );
-
-          alert(
-            "データを読み込みました。画面を再読み込みします。"
-          );
-
-          window.location.reload();
-        } catch (error) {
-          console.error(
-            "データの読み込みに失敗しました。",
-            error
-          );
-
-          alert(
-            "バックアップファイルを読み込めませんでした。"
-          );
-        }
-      };
-
-    reader.onerror =
-      () => {
-        alert(
-          "ファイルを読み込めませんでした。"
-        );
-      };
-
-    reader.readAsText(
-      file
+    setBackupBusy(true);
+    setBackupStatus(
+      "バックアップファイルを確認しています…"
     );
+
+    try {
+      const backup =
+        parseFullBackup(
+          await file.text()
+        );
+
+      const summary =
+        getBackupSummary(
+          backup
+        );
+
+      const exportedDate =
+        new Date(
+          backup.exportedAt
+        ).toLocaleString(
+          "ja-JP"
+        );
+
+      const confirmed =
+        window.confirm(
+          `完全バックアップを復元しますか？\n\n作成日時：${exportedDate}\nイベント：${summary.events}件\nチケット：${summary.tickets}件\n部員：${summary.members}件\n受付履歴：${summary.activityLogs}件\n\n現在のFirestoreデータと端末設定は、この内容に置き換わります。復元中は画面を閉じないでください。`
+        );
+
+      if (
+        !confirmed
+      ) {
+        setBackupStatus("");
+
+        return;
+      }
+
+      setBackupStatus(
+        "復元前の現在データを自動保存しています…"
+      );
+
+      const currentBackup =
+        await createFullBackup(
+          APP_VERSION
+        );
+
+      downloadBackup(
+        currentBackup,
+        "QR管理システム復元前自動バックアップ"
+      );
+
+      await restoreFullBackup(
+        backup,
+        currentBackup,
+        setBackupStatus
+      );
+
+      setBackupStatus(
+        "復元が完了しました。"
+      );
+
+      alert(
+        "完全バックアップを復元しました。\n画面を再読み込みします。"
+      );
+
+      window.location.reload();
+    } catch (error) {
+      console.error(
+        "完全バックアップの復元に失敗しました。",
+        error
+      );
+
+      setBackupStatus("");
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "バックアップファイルを復元できませんでした。"
+      );
+    } finally {
+      setBackupBusy(false);
+    }
   };
 
   const openResetModal =
@@ -845,19 +831,39 @@ function SettingsPage({
             <button
               type="button"
               className="settings-export-button"
-              onClick={
-                exportData
+              disabled={
+                backupBusy
               }
+              aria-busy={
+                backupBusy
+              }
+              onClick={() => {
+                void exportData();
+              }}
             >
-              データを書き出す
+              {backupBusy
+                ? "処理中…"
+                : "完全バックアップを作成"}
             </button>
 
-            <label className="settings-import-button">
-              データを読み込む
+            <label
+              className={`settings-import-button${
+                backupBusy
+                  ? " settings-import-button-disabled"
+                  : ""
+              }`}
+              aria-disabled={
+                backupBusy
+              }
+            >
+              完全バックアップを復元
 
               <input
                 type="file"
                 accept=".json,application/json"
+                disabled={
+                  backupBusy
+                }
                 onChange={
                   importData
                 }
@@ -868,7 +874,8 @@ function SettingsPage({
               type="button"
               className="settings-status-reset-button"
               disabled={
-                resettingMemberStatuses
+                resettingMemberStatuses ||
+                backupBusy
               }
               aria-busy={
                 resettingMemberStatuses
@@ -884,8 +891,22 @@ function SettingsPage({
           </div>
 
           <p className="settings-help">
-            書き出したJSONファイルは、別端末への移行やバックアップに使用できます。
+            イベント、チケット、部員、受付履歴、デザイン、端末設定を1つのJSONファイルに保存します。復元すると、Firestore上の共有データもバックアップ作成時点へ戻ります。
           </p>
+
+          <p className="settings-backup-warning">
+            バックアップファイルにはQR認証情報が含まれます。部外者へ渡さず、安全な場所に保管してください。未送信のオフライン受付と稼働中端末情報は保存されません。
+          </p>
+
+          {backupStatus !== "" && (
+            <p
+              className="settings-backup-status"
+              role="status"
+              aria-live="polite"
+            >
+              {backupStatus}
+            </p>
+          )}
         </section>
 
         <section className="settings-section settings-auth-section">
