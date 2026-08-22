@@ -1248,6 +1248,16 @@
   display: none;
 }
 
+.settings-data-buttons
+  button:disabled,
+.settings-import-button-disabled {
+  opacity: 0.58;
+
+  cursor: wait;
+
+  filter: saturate(0.55);
+}
+
 .settings-status-reset-button {
   grid-column:
     1 / -1;
@@ -1263,17 +1273,82 @@
 }
 
 .settings-data-buttons
-  button:hover,
-.settings-import-button:hover {
+  button:hover:not(:disabled),
+.settings-import-button:hover:not(
+    .settings-import-button-disabled
+  ) {
   transform:
     translateY(-2px);
 }
 
 .settings-data-buttons
-  button:active,
-.settings-import-button:active {
+  button:active:not(:disabled),
+.settings-import-button:active:not(
+    .settings-import-button-disabled
+  ) {
   transform:
     scale(0.98);
+}
+
+.settings-backup-warning,
+.settings-backup-status {
+  margin:
+    clamp(
+      9px,
+      1.3vh,
+      14px
+    )
+    0
+    0;
+
+  padding:
+    clamp(
+      10px,
+      1.2vw,
+      14px
+    );
+
+  border-radius: 13px;
+
+  font-size:
+    clamp(
+      11px,
+      1.1vw,
+      15px
+    );
+
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.settings-backup-warning {
+  border:
+    1px solid
+    rgba(
+      190,
+      129,
+      17,
+      0.24
+    );
+
+  background: #fff8e5;
+
+  color: #805a12;
+}
+
+.settings-backup-status {
+  border:
+    1px solid
+    rgba(
+      53,
+      101,
+      158,
+      0.2
+    );
+
+  background: #edf6ff;
+
+  color: #315f93;
 }
 
 /*
