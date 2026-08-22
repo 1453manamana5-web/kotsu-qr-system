@@ -16,6 +16,14 @@ import {
 } from "./firebase";
 
 import {
+  ACTIVITY_COLLECTION,
+  EVENT_DATA_COLLECTION,
+  TICKETS_COLLECTION,
+  createSafeEventId,
+  createSafeRandomId,
+} from "./firestorePaths";
+
+import {
   acceptTicketReceptionOffline,
   cacheTicketsForOffline,
   updateCachedTicketStatus,
@@ -72,52 +80,6 @@ export type TicketReceptionResult =
         | "not-entered"
         | "already-exited";
     };
-
-const EVENT_DATA_COLLECTION =
-  "event-data";
-
-const TICKETS_COLLECTION =
-  "tickets";
-
-const ACTIVITY_COLLECTION =
-  "activity";
-
-function createSafeEventId(
-  eventName: string
-) {
-  const normalizedName =
-    eventName.trim();
-
-  return normalizedName === ""
-    ? "event-not-set"
-    : encodeURIComponent(
-        normalizedName
-      );
-}
-
-function createSafeRandomId() {
-  try {
-    if (
-      typeof globalThis.crypto !==
-        "undefined" &&
-      typeof globalThis.crypto.randomUUID ===
-        "function"
-    ) {
-      return globalThis.crypto.randomUUID();
-    }
-  } catch (error) {
-    console.warn(
-      "IDの生成にrandomUUIDを使用できませんでした。",
-      error
-    );
-  }
-
-  return `${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2)}-${Math.random()
-    .toString(36)
-    .slice(2)}`;
-}
 
 function isTicketStatus(
   value: unknown

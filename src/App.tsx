@@ -1,6 +1,7 @@
 import {
   lazy,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -83,6 +84,11 @@ import {
   subscribeToEventMembers,
   subscribeToMemberCards,
 } from "./memberFirestore";
+
+import {
+  createSafeEventId,
+  createSafeRandomId,
+} from "./firestorePaths";
 
 type NewEventData = {
   name: string;
@@ -241,44 +247,10 @@ function loadStoredEventStore(): EventStore {
   }
 }
 
-function createSafeRandomId() {
-  try {
-    if (
-      typeof globalThis.crypto !==
-        "undefined" &&
-      typeof globalThis.crypto.randomUUID ===
-        "function"
-    ) {
-      return globalThis.crypto.randomUUID();
-    }
-  } catch (error) {
-    console.warn(
-      "IDの生成にrandomUUIDを使用できませんでした。",
-      error
-    );
-  }
-
-  return `${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2)}-${Math.random()
-    .toString(36)
-    .slice(2)}`;
-}
-
-function createSafeEventName(
-  eventName: string
-) {
-  return eventName.trim() === ""
-    ? "event-not-set"
-    : encodeURIComponent(
-        eventName.trim()
-      );
-}
-
 function createTicketStorageKey(
   eventName: string
 ) {
-  return `qr-management-event-tickets-${createSafeEventName(
+  return `qr-management-event-tickets-${createSafeEventId(
     eventName
   )}`;
 }
@@ -286,7 +258,7 @@ function createTicketStorageKey(
 function createMemberStorageKey(
   eventName: string
 ) {
-  return `qr-management-event-members-${createSafeEventName(
+  return `qr-management-event-members-${createSafeEventId(
     eventName
   )}`;
 }
@@ -294,7 +266,7 @@ function createMemberStorageKey(
 function createActivityStorageKey(
   eventName: string
 ) {
-  return `qr-management-event-activity-${createSafeEventName(
+  return `qr-management-event-activity-${createSafeEventId(
     eventName
   )}`;
 }
@@ -1046,6 +1018,28 @@ function App() {
     };
   }, []);
 
+  const eventsById =
+    useMemo(
+      () =>
+        new Map(
+          eventStore.events.map(
+            (event) => [
+              event.id,
+              event,
+            ]
+          )
+        ),
+      [eventStore.events]
+    );
+
+  const currentEvent =
+    eventStore.currentEventId ===
+    null
+      ? null
+      : eventsById.get(
+          eventStore.currentEventId
+        ) ?? null;
+
   /*
     現在のイベントが未設定・削除済み・終了済みの場合は、
     今日に最も近い未終了イベントを自動設定します。
@@ -1063,16 +1057,9 @@ function App() {
       return;
     }
 
-    const currentEvent =
-      eventStore.events.find(
-        (event) =>
-          event.id ===
-          eventStore.currentEventId
-      );
-
     if (
       currentEvent !==
-        undefined &&
+        null &&
       getRuntimeStatus(
         currentEvent
       ) !== "ended"
@@ -1126,6 +1113,7 @@ function App() {
 
     void selectClosestEvent();
   }, [
+    currentEvent,
     currentEventSyncReady,
     eventStore.currentEventId,
     eventStore.events,
@@ -1139,17 +1127,10 @@ function App() {
     正式な共有元はFirestoreです。
   */
   useEffect(() => {
-    const currentEvent =
-      eventStore.events.find(
-        (event) =>
-          event.id ===
-          eventStore.currentEventId
-      );
-
     try {
       if (
         currentEvent ===
-        undefined
+        null
       ) {
         localStorage.removeItem(
           LEGACY_CURRENT_EVENT_KEY
@@ -1171,16 +1152,8 @@ function App() {
       );
     }
   }, [
-    eventStore.events,
-    eventStore.currentEventId,
+    currentEvent,
   ]);
-
-  const currentEvent =
-    eventStore.events.find(
-      (event) =>
-        event.id ===
-        eventStore.currentEventId
-    ) ?? null;
 
   useEffect(() => {
     const eventName =
@@ -1468,10 +1441,8 @@ function App() {
       const runSelectEvent =
         async () => {
           const selectedEvent =
-            eventStore.events.find(
-              (event) =>
-                event.id ===
-                eventId
+            eventsById.get(
+              eventId
             );
 
           if (
@@ -1522,10 +1493,8 @@ function App() {
     const runForceEndEvent =
       async () => {
         const targetEvent =
-          eventStore.events.find(
-            (event) =>
-              event.id ===
-              eventId
+          eventsById.get(
+            eventId
           );
 
         if (

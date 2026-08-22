@@ -526,47 +526,63 @@ function AnalysisPage({
   }, []);
 
   useEffect(() => {
-    setTickets([]);
-    setMembers([]);
-    setActivityLogs([]);
-    setLoadingError("");
+    let cancelled = false;
+
+    let unsubscribeTickets =
+      () => {};
+
+    let unsubscribeMembers =
+      () => {};
+
+    let unsubscribeActivity =
+      () => {};
 
     const eventName =
       eventData?.name ??
       "";
 
-    if (
-      eventName.trim() ===
-      ""
-    ) {
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
+
+      setTickets([]);
+      setMembers([]);
+      setActivityLogs([]);
+      setLoadingError("");
+
+      if (
+        eventName.trim() ===
+        ""
+      ) {
+        setTicketsLoading(
+          false
+        );
+
+        setMembersLoading(
+          false
+        );
+
+        setActivityLoading(
+          false
+        );
+
+        return;
+      }
+
       setTicketsLoading(
-        false
+        true
       );
 
       setMembersLoading(
-        false
+        true
       );
 
       setActivityLoading(
-        false
+        true
       );
 
-      return;
-    }
-
-    setTicketsLoading(
-      true
-    );
-
-    setMembersLoading(
-      true
-    );
-
-    setActivityLoading(
-      true
-    );
-
-    const unsubscribeTickets =
+      unsubscribeTickets =
       subscribeToTickets(
         eventName,
 
@@ -598,7 +614,7 @@ function AnalysisPage({
         }
       );
 
-    const unsubscribeMembers =
+      unsubscribeMembers =
       subscribeToEventMembers(
         eventName,
 
@@ -630,7 +646,7 @@ function AnalysisPage({
         }
       );
 
-    const unsubscribeActivity =
+      unsubscribeActivity =
       subscribeToActivityLogs(
         eventName,
 
@@ -661,8 +677,11 @@ function AnalysisPage({
           );
         }
       );
+    });
 
     return () => {
+      cancelled = true;
+
       unsubscribeTickets();
       unsubscribeMembers();
       unsubscribeActivity();

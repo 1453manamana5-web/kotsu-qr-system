@@ -10,6 +10,12 @@ import {
   db,
 } from "./firebase";
 
+import {
+  ACTIVITY_COLLECTION,
+  EVENT_DATA_COLLECTION,
+  createSafeEventId,
+} from "./firestorePaths";
+
 export type ActivityType =
   | "ticket-entry"
   | "ticket-exit"
@@ -28,25 +34,6 @@ export type ActivityLog = {
   isReEntry?: boolean;
   source?: ActivitySource;
 };
-
-const EVENT_DATA_COLLECTION =
-  "event-data";
-
-const ACTIVITY_COLLECTION =
-  "activity";
-
-function createSafeEventId(
-  eventName: string
-) {
-  const normalizedName =
-    eventName.trim();
-
-  return normalizedName === ""
-    ? "event-not-set"
-    : encodeURIComponent(
-        normalizedName
-      );
-}
 
 function isActivityType(
   value: unknown

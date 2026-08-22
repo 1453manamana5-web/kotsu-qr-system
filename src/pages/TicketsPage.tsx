@@ -20,6 +20,10 @@ import {
   type TicketStatus,
 } from "../ticketFirestore";
 
+import {
+  createSafeRandomId,
+} from "../firestorePaths";
+
 import "./TicketsPage.css";
 
 type TicketsPageProps = {
@@ -32,32 +36,6 @@ type TicketsPageProps = {
 
 const MAX_CREATE_COUNT =
   1000;
-
-function createSafeRandomId() {
-  try {
-    if (
-      typeof globalThis.crypto !==
-        "undefined" &&
-      typeof globalThis.crypto
-        .randomUUID ===
-        "function"
-    ) {
-      return globalThis.crypto
-        .randomUUID();
-    }
-  } catch (error) {
-    console.warn(
-      "randomUUIDを使用できませんでした。",
-      error
-    );
-  }
-
-  return `${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2)}-${Math.random()
-    .toString(36)
-    .slice(2)}`;
-}
 
 function createRandomToken() {
   return createSafeRandomId();
@@ -465,53 +443,66 @@ function TicketsPage({
   ] = useState(false);
 
   useEffect(() => {
-    setTicketsLoading(true);
-    setTicketsError("");
-    setTickets([]);
-    setSelectedTicketId(
-      null
-    );
+    let cancelled = false;
 
-    if (
-      eventName.trim() === ""
-    ) {
-      setTicketsLoading(false);
+    let unsubscribe =
+      () => {};
 
-      return;
-    }
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
 
-    const unsubscribe =
-      subscribeToTickets(
-        eventName,
-
-        (
-          receivedTickets
-        ) => {
-          setTickets(
-            receivedTickets
-          );
-
-          setTicketsLoading(
-            false
-          );
-
-          setTicketsError(
-            ""
-          );
-        },
-
-        (error) => {
-          setTicketsLoading(
-            false
-          );
-
-          setTicketsError(
-            error.message
-          );
-        }
+      setTicketsLoading(true);
+      setTicketsError("");
+      setTickets([]);
+      setSelectedTicketId(
+        null
       );
 
+      if (
+        eventName.trim() === ""
+      ) {
+        setTicketsLoading(false);
+
+        return;
+      }
+
+      unsubscribe =
+        subscribeToTickets(
+          eventName,
+
+          (
+            receivedTickets
+          ) => {
+            setTickets(
+              receivedTickets
+            );
+
+            setTicketsLoading(
+              false
+            );
+
+            setTicketsError(
+              ""
+            );
+          },
+
+          (error) => {
+            setTicketsLoading(
+              false
+            );
+
+            setTicketsError(
+              error.message
+            );
+          }
+        );
+    });
+
     return () => {
+      cancelled = true;
+
       unsubscribe();
     };
   }, [eventName]);
@@ -525,22 +516,6 @@ function TicketsPage({
             ticket.id ===
             selectedTicketId
         ) ?? null;
-
-  useEffect(() => {
-    if (
-      selectedTicketId !==
-        null &&
-      selectedTicket ===
-        null
-    ) {
-      setSelectedTicketId(
-        null
-      );
-    }
-  }, [
-    selectedTicket,
-    selectedTicketId,
-  ]);
 
   const getNextTicketNumber =
     () => {

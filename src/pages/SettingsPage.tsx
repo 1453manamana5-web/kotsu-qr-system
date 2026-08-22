@@ -7,12 +7,8 @@ import {
   resetEventMemberStatusesInFirestore,
 } from "../memberStatusReset";
 
-import {
-  createFullBackup,
-  getBackupSummary,
-  parseFullBackup,
-  restoreFullBackup,
-  type FullBackupFile,
+import type {
+  FullBackupFile,
 } from "../backupRestore";
 
 import OnlineStatus from "./OnlineStatus";
@@ -36,7 +32,7 @@ type AppSettings = {
 };
 
 const APP_VERSION =
-  "2.6.0";
+  "2.6.1";
 
 const SETTINGS_STORAGE_KEY =
   "qr-management-app-settings";
@@ -415,6 +411,13 @@ function SettingsPage({
       );
 
       try {
+        const {
+          createFullBackup,
+          getBackupSummary,
+        } = await import(
+          "../backupRestore"
+        );
+
         const backup =
           await createFullBackup(
             APP_VERSION
@@ -504,6 +507,15 @@ function SettingsPage({
     );
 
     try {
+      const {
+        createFullBackup,
+        getBackupSummary,
+        parseFullBackup,
+        restoreFullBackup,
+      } = await import(
+        "../backupRestore"
+      );
+
       const backup =
         parseFullBackup(
           await file.text()
@@ -999,7 +1011,7 @@ function SettingsPage({
               </h2>
 
               <p>
-                受付をより安定して、分かりやすく使えるように改善しました。
+                内部処理を整理し、受付と管理画面をより軽く安定して使えるようにしました。
               </p>
             </div>
 
@@ -1011,11 +1023,11 @@ function SettingsPage({
 
                 <div>
                   <strong>
-                    オフライン受付に対応
+                    受付処理を共通化
                   </strong>
 
                   <span>
-                    通信が切れても受付を端末へ保存し、復旧後に自動で同期します。
+                    入場・退場画面の重複コードをまとめ、同じ品質で動くようにしました。
                   </span>
                 </div>
               </li>
@@ -1027,11 +1039,11 @@ function SettingsPage({
 
                 <div>
                   <strong>
-                    受付音のタイミングを改善
+                    Firestore処理を整理
                   </strong>
 
                   <span>
-                    QR認識時に「ピッ」、結果画面の表示時に成功チャイムが鳴ります。
+                    データ保存先とID生成を共通化し、修正漏れが起きにくくなりました。
                   </span>
                 </div>
               </li>
@@ -1043,11 +1055,11 @@ function SettingsPage({
 
                 <div>
                   <strong>
-                    アプリアイコンを刷新
+                    通常画面の読み込みを軽量化
                   </strong>
 
                   <span>
-                    スキャンゲートを使った新しいアイコンへ統一しました。
+                    バックアップ機能を使う時だけ読み込み、普段の設定画面を軽くしました。
                   </span>
                 </div>
               </li>
@@ -1059,11 +1071,11 @@ function SettingsPage({
 
                 <div>
                   <strong>
-                    iPad向け画面表示を調整
+                    コードの不具合候補を修正
                   </strong>
 
                   <span>
-                    受付画面の不要なスクロールを止め、分析グラフなども見やすくしました。
+                    警告と不要な再処理を取り除き、全画面の検査をエラー0件にしました。
                   </span>
                 </div>
               </li>

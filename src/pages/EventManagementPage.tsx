@@ -6,6 +6,11 @@ import {
 
 import OnlineStatus from "./OnlineStatus";
 
+import {
+  createSafeEventId,
+  createSafeRandomId,
+} from "../firestorePaths";
+
 import "./EventManagementPage.css";
 
 type EventStatus =
@@ -92,20 +97,10 @@ type EventManagementPageProps = {
   ) => void;
 };
 
-function createSafeEventName(
-  eventName: string
-) {
-  return eventName.trim() === ""
-    ? "event-not-set"
-    : encodeURIComponent(
-        eventName.trim()
-      );
-}
-
 function createTicketStorageKey(
   eventName: string
 ) {
-  return `qr-management-event-tickets-${createSafeEventName(
+  return `qr-management-event-tickets-${createSafeEventId(
     eventName
   )}`;
 }
@@ -113,7 +108,7 @@ function createTicketStorageKey(
 function createMemberStorageKey(
   eventName: string
 ) {
-  return `qr-management-event-members-${createSafeEventName(
+  return `qr-management-event-members-${createSafeEventId(
     eventName
   )}`;
 }
@@ -121,33 +116,13 @@ function createMemberStorageKey(
 function createActivityStorageKey(
   eventName: string
 ) {
-  return `qr-management-event-activity-${createSafeEventName(
+  return `qr-management-event-activity-${createSafeEventId(
     eventName
   )}`;
 }
 
 function createActivityId() {
-  try {
-    if (
-      typeof globalThis.crypto !==
-        "undefined" &&
-      typeof globalThis.crypto.randomUUID ===
-        "function"
-    ) {
-      return globalThis.crypto.randomUUID();
-    }
-  } catch (error) {
-    console.warn(
-      "履歴IDを生成できませんでした。",
-      error
-    );
-  }
-
-  return `${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2)}-${Math.random()
-    .toString(36)
-    .slice(2)}`;
+  return createSafeRandomId();
 }
 
 function loadTickets(
