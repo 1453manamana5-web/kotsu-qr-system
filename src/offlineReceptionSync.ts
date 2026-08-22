@@ -12,7 +12,7 @@ import {
   EVENT_MEMBERS_COLLECTION,
   MEMBER_CARDS_COLLECTION,
   TICKETS_COLLECTION,
-  createSafeEventId,
+  getEventDataId,
 } from "./firestorePaths";
 
 import {
@@ -35,9 +35,10 @@ function getActivityDocument(
   return doc(
     db,
     EVENT_DATA_COLLECTION,
-    createSafeEventId(
-      operation.eventName
-    ),
+    operation.eventDataId ??
+      getEventDataId(
+        operation.eventName
+      ),
     ACTIVITY_COLLECTION,
     operation.id
   );
@@ -68,9 +69,11 @@ async function syncTicketOperation(
     { kind: "ticket" }
   >
 ) {
-  const eventId = createSafeEventId(
-    operation.eventName
-  );
+  const eventId =
+    operation.eventDataId ??
+    getEventDataId(
+      operation.eventName
+    );
 
   const ticketDocument = doc(
     db,
@@ -177,9 +180,11 @@ async function syncMemberOperation(
     { kind: "member" }
   >
 ) {
-  const eventId = createSafeEventId(
-    operation.eventName
-  );
+  const eventId =
+    operation.eventDataId ??
+    getEventDataId(
+      operation.eventName
+    );
 
   const cardDocument = doc(
     db,

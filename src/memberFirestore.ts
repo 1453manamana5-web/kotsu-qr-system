@@ -20,7 +20,7 @@ import {
   EVENT_DATA_COLLECTION,
   EVENT_MEMBERS_COLLECTION,
   MEMBER_CARDS_COLLECTION,
-  createSafeEventId,
+  getEventDataId,
   createSafeRandomId,
 } from "./firestorePaths";
 
@@ -156,7 +156,7 @@ function getEventMembersCollection(
   return collection(
     db,
     EVENT_DATA_COLLECTION,
-    createSafeEventId(
+    getEventDataId(
       eventName
     ),
     EVENT_MEMBERS_COLLECTION
@@ -170,7 +170,7 @@ function getEventMemberDocument(
   return doc(
     db,
     EVENT_DATA_COLLECTION,
-    createSafeEventId(
+    getEventDataId(
       eventName
     ),
     EVENT_MEMBERS_COLLECTION,
@@ -185,7 +185,7 @@ function getActivityDocument(
   return doc(
     db,
     EVENT_DATA_COLLECTION,
-    createSafeEventId(
+    getEventDataId(
       eventName
     ),
     ACTIVITY_COLLECTION,

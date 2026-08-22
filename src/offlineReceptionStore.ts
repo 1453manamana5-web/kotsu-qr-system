@@ -1,3 +1,7 @@
+import {
+  getEventDataId,
+} from "./firestorePaths";
+
 export type CachedTicketStatus =
   | "未使用"
   | "入場中"
@@ -34,6 +38,7 @@ export type PendingTicketReception = {
   id: string;
   kind: "ticket";
   eventName: string;
+  eventDataId?: string;
   qrNumber: string;
   authToken: string;
   action: "entry" | "exit";
@@ -47,6 +52,7 @@ export type PendingMemberReception = {
   id: string;
   kind: "member";
   eventName: string;
+  eventDataId?: string;
   qrNumber: string;
   authToken: string;
   action: "entry" | "exit";
@@ -122,12 +128,8 @@ const emptyCache = (): ReceptionCache => ({
 });
 
 function getEventKey(eventName: string) {
-  const normalized = eventName.trim();
-
-  return encodeURIComponent(
-    normalized === ""
-      ? "event-not-set"
-      : normalized
+  return getEventDataId(
+    eventName
   );
 }
 
@@ -223,6 +225,10 @@ function isPendingOperation(
     typeof operation.id === "string" &&
     typeof operation.eventName ===
       "string" &&
+    (operation.eventDataId ===
+      undefined ||
+      typeof operation.eventDataId ===
+        "string") &&
     typeof operation.qrNumber ===
       "string" &&
     typeof operation.authToken ===
@@ -404,8 +410,16 @@ function applyPendingOperations(
   getPendingReceptionOperations()
     .filter(
       (operation) =>
-        operation.eventName ===
-        eventName
+        operation.eventDataId ===
+          getEventKey(
+            eventName
+          ) ||
+        (
+          operation.eventDataId ===
+            undefined &&
+          operation.eventName ===
+            eventName
+        )
     )
     .forEach((operation) => {
       if (operation.kind === "ticket") {
@@ -537,9 +551,18 @@ function isRecentDuplicate(
 
   return getPendingReceptionOperations()
     .some((operation) => {
+      const sameEvent =
+        operation.eventDataId ===
+          undefined
+          ? operation.eventName ===
+            eventName
+          : operation.eventDataId ===
+            getEventKey(
+              eventName
+            );
+
       if (
-        operation.eventName !==
-          eventName ||
+        !sameEvent ||
         operation.kind !== kind ||
         operation.qrNumber !==
           qrNumber ||
@@ -638,6 +661,10 @@ export function acceptTicketReceptionOffline(
       createOperationId(),
     kind: "ticket",
     eventName,
+    eventDataId:
+      getEventKey(
+        eventName
+      ),
     qrNumber,
     authToken,
     action,
@@ -748,6 +775,10 @@ export function acceptMemberReceptionOffline(
       createOperationId(),
     kind: "member",
     eventName,
+    eventDataId:
+      getEventKey(
+        eventName
+      ),
     qrNumber,
     authToken,
     action,
@@ -851,4 +882,88 @@ export function isTransientReceptionError(
     "unknown",
     "failed-precondition",
   ].includes(code);
+}
+
+export function migrateOfflineReceptionEvent(
+  eventName: string,
+  eventDataId: string
+) {
+  const legacyEventKey =
+    encodeURIComponent(
+      eventName.trim() === ""
+        ? "event-not-set"
+        : eventName.trim()
+    );
+
+  try {
+    const cache =
+      readCache();
+
+    const legacyCache =
+      cache.events[
+        legacyEventKey
+      ];
+
+    const currentCache =
+      cache.events[
+        eventDataId
+      ];
+
+    if (
+      legacyCache !==
+      undefined &&
+      legacyEventKey !==
+        eventDataId
+    ) {
+      cache.events[
+        eventDataId
+      ] = {
+        tickets: {
+          ...legacyCache.tickets,
+          ...currentCache?.tickets,
+        },
+        members: {
+          ...legacyCache.members,
+          ...currentCache?.members,
+        },
+        updatedAt:
+          currentCache?.updatedAt ??
+          legacyCache.updatedAt,
+      };
+
+      writeCache(cache);
+    }
+
+    const operations =
+      getPendingReceptionOperations();
+
+    const migratedOperations =
+      operations.map(
+        (operation) =>
+          operation.eventName ===
+          eventName
+            ? {
+                ...operation,
+                eventDataId,
+              }
+            : operation
+      );
+
+    if (
+      migratedOperations.some(
+        (operation, index) =>
+          operation !==
+          operations[index]
+      )
+    ) {
+      writeQueue(
+        migratedOperations
+      );
+    }
+  } catch (error) {
+    console.warn(
+      "オフライン受付データをイベントID形式へ移行できませんでした。",
+      error
+    );
+  }
 }

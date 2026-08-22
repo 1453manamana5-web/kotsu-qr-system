@@ -67,6 +67,7 @@ type StoredDocument = {
 };
 
 type EventDataSnapshot = {
+  eventId?: string;
   eventName: string;
   eventDocumentId: string;
   tickets: StoredDocument[];
@@ -461,6 +462,42 @@ function getEventName(
     : "";
 }
 
+function getEventDataSnapshotLocation(
+  eventDocument:
+    StoredDocument
+) {
+  const eventName =
+    getEventName(
+      eventDocument
+    );
+
+  if (
+    eventName === ""
+  ) {
+    return null;
+  }
+
+  const savedDataDocumentId =
+    eventDocument.data
+      .dataDocumentId;
+
+  return {
+    eventId:
+      eventDocument.id,
+    eventName,
+    eventDocumentId:
+      typeof savedDataDocumentId ===
+        "string" &&
+      isValidDocumentId(
+        savedDataDocumentId
+      )
+        ? savedDataDocumentId
+        : createSafeEventId(
+            eventName
+          ),
+  };
+}
+
 export async function createFullBackup(
   appVersion: string
 ): Promise<FullBackupFile> {
@@ -480,29 +517,26 @@ export async function createFullBackup(
     ]),
   ]);
 
-  const eventNames =
-    Array.from(
-      new Set(
-        events
-          .map(getEventName)
-          .filter(
-            (eventName) =>
-              eventName !== ""
-          )
+  const eventLocations =
+    events
+      .map(
+        getEventDataSnapshotLocation
       )
-    );
+      .filter(
+        (
+          eventLocation
+        ): eventLocation is NonNullable<
+          typeof eventLocation
+        > =>
+          eventLocation !== null
+      );
 
   const eventData =
     await Promise.all(
-      eventNames.map(
+      eventLocations.map(
         async (
-          eventName
+          eventLocation
         ) => {
-          const eventDocumentId =
-            createSafeEventId(
-              eventName
-            );
-
           const [
             tickets,
             members,
@@ -512,15 +546,14 @@ export async function createFullBackup(
               (collectionName) =>
                 readCollection([
                   EVENT_DATA_COLLECTION,
-                  eventDocumentId,
+                  eventLocation.eventDocumentId,
                   collectionName,
                 ])
             )
           );
 
           return {
-            eventName,
-            eventDocumentId,
+            ...eventLocation,
             tickets,
             members,
             activity,
@@ -733,6 +766,17 @@ export function parseFullBackup(
   const eventNames =
     new Set<string>();
 
+  const eventDocumentIds =
+    new Set<string>();
+
+  const storedEventIds =
+    new Set(
+      parsed.firestore.events.map(
+        (eventDocument) =>
+          eventDocument.id
+      )
+    );
+
   const eventDataIsValid =
     parsed.firestore.eventData.every(
       (eventValue) => {
@@ -742,6 +786,12 @@ export function parseFullBackup(
             "string" ||
           eventNames.has(
             eventValue.eventName
+          ) ||
+          !isValidDocumentId(
+            eventValue.eventDocumentId
+          ) ||
+          eventDocumentIds.has(
+            eventValue.eventDocumentId
           )
         ) {
           return false;
@@ -751,19 +801,38 @@ export function parseFullBackup(
           eventValue.eventName
         );
 
+        eventDocumentIds.add(
+          eventValue.eventDocumentId
+        );
+
         return (
         isRecord(eventValue) &&
         typeof eventValue.eventName ===
           "string" &&
         eventValue.eventName.trim() !==
           "" &&
-        isValidDocumentId(
-          eventValue.eventDocumentId
+        (
+          eventValue.eventId ===
+            undefined
+            ? eventValue.eventDocumentId ===
+              createSafeEventId(
+                eventValue.eventName
+              )
+            : isValidDocumentId(
+                eventValue.eventId
+              ) &&
+              storedEventIds.has(
+                eventValue.eventId
+              ) &&
+              (
+                eventValue.eventDocumentId ===
+                  eventValue.eventId ||
+                eventValue.eventDocumentId ===
+                  createSafeEventId(
+                    eventValue.eventName
+                  )
+              )
         ) &&
-        eventValue.eventDocumentId ===
-          createSafeEventId(
-            eventValue.eventName
-          ) &&
         validateDocuments(
           eventValue.tickets
         ) &&
@@ -972,29 +1041,29 @@ async function commitOperations(
 
 async function replaceFirestoreData(
   backup: FullBackupFile,
-  additionalEventNames:
+  additionalEventDocumentIds:
     string[],
   onProgress?: (
     completed: number,
     total: number
   ) => void
 ) {
-  const eventNames =
+  const eventDocumentIds =
     Array.from(
       new Set([
-        ...additionalEventNames,
+        ...additionalEventDocumentIds,
         ...backup.firestore.eventData.map(
           (eventData) =>
-            eventData.eventName
+            eventData.eventDocumentId
         ),
       ])
     );
 
-  const eventDataByName =
+  const eventDataByDocumentId =
     new Map(
       backup.firestore.eventData.map(
         (eventData) => [
-          eventData.eventName,
+          eventData.eventDocumentId,
           eventData,
         ])
     );
@@ -1013,16 +1082,11 @@ async function replaceFirestoreData(
         [MEMBER_CARDS_COLLECTION],
         backup.firestore.memberCards
       ),
-      ...eventNames.flatMap(
-        (eventName) => {
-          const eventDocumentId =
-            createSafeEventId(
-              eventName
-            );
-
+      ...eventDocumentIds.flatMap(
+        (eventDocumentId) => {
           const restoredEventData =
-            eventDataByName.get(
-              eventName
+            eventDataByDocumentId.get(
+              eventDocumentId
             );
 
           return [
@@ -1071,16 +1135,16 @@ export async function restoreFullBackup(
     message: string
   ) => void
 ) {
-  const affectedEventNames =
+  const affectedEventDocumentIds =
     Array.from(
       new Set([
         ...backup.firestore.eventData.map(
           (eventData) =>
-            eventData.eventName
+            eventData.eventDocumentId
         ),
         ...currentBackup.firestore.eventData.map(
           (eventData) =>
-            eventData.eventName
+            eventData.eventDocumentId
         ),
       ])
     );
@@ -1092,7 +1156,7 @@ export async function restoreFullBackup(
 
     await replaceFirestoreData(
       backup,
-      affectedEventNames
+      affectedEventDocumentIds
     );
 
     onProgress?.(
@@ -1115,7 +1179,7 @@ export async function restoreFullBackup(
     try {
       await replaceFirestoreData(
         currentBackup,
-        affectedEventNames
+        affectedEventDocumentIds
       );
 
       replaceSafeLocalStorage(

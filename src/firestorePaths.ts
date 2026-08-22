@@ -22,6 +22,9 @@ export const ACTIVITY_COLLECTION =
 export const RECEPTION_DEVICES_COLLECTION =
   "reception-devices";
 
+const eventDataIdsByName =
+  new Map<string, string>();
+
 export function createSafeEventId(
   eventName: string
 ) {
@@ -33,6 +36,50 @@ export function createSafeEventId(
     : encodeURIComponent(
         normalizedName
       );
+}
+
+export function registerEventDataId(
+  eventName: string,
+  eventDataId: string
+) {
+  const normalizedName =
+    eventName.trim();
+
+  const normalizedDataId =
+    eventDataId.trim();
+
+  if (
+    normalizedName === "" ||
+    normalizedDataId === "" ||
+    normalizedDataId.length >
+      1_500 ||
+    normalizedDataId.includes(
+      "/"
+    )
+  ) {
+    return;
+  }
+
+  eventDataIdsByName.set(
+    normalizedName,
+    normalizedDataId
+  );
+}
+
+export function getEventDataId(
+  eventName: string
+) {
+  const normalizedName =
+    eventName.trim();
+
+  return (
+    eventDataIdsByName.get(
+      normalizedName
+    ) ??
+    createSafeEventId(
+      normalizedName
+    )
+  );
 }
 
 export function createSafeRandomId() {

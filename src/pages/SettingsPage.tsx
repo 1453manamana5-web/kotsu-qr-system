@@ -1055,11 +1055,11 @@ function SettingsPage({
 
                 <div>
                   <strong>
-                    設定画面を約28%軽量化
+                    設定画面を約27%軽量化
                   </strong>
 
                   <span>
-                    初回に読むJavaScriptを、圧縮時6.65KBから4.82KBへ削減しました。
+                    初回に読むJavaScriptを、圧縮時6.65KBから4.85KBへ削減しました。
                   </span>
                 </div>
               </li>

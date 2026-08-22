@@ -17,6 +17,7 @@ import {
 import {
   EVENTS_COLLECTION,
   SYSTEM_COLLECTION,
+  registerEventDataId,
 } from "./firestorePaths";
 
 export type EventStatus =
@@ -32,6 +33,7 @@ export type EventData = {
   endTime: string;
   status?: EventStatus;
   endedAt?: string;
+  dataDocumentId?: string;
 };
 
 export type EventStore = {
@@ -110,6 +112,26 @@ function convertEventDocument(
       data.endedAt;
   }
 
+  if (
+    typeof data.dataDocumentId ===
+      "string" &&
+    data.dataDocumentId.trim() !==
+      "" &&
+    data.dataDocumentId.length <=
+      1_500 &&
+    !data.dataDocumentId.includes(
+      "/"
+    )
+  ) {
+    eventData.dataDocumentId =
+      data.dataDocumentId;
+
+    registerEventDataId(
+      eventData.name,
+      data.dataDocumentId
+    );
+  }
+
   return eventData;
 }
 
@@ -153,6 +175,11 @@ export function subscribeToEvents(
 
   return onSnapshot(
     eventsCollection,
+
+    {
+      includeMetadataChanges:
+        true,
+    },
 
     (
       snapshot
@@ -284,6 +311,14 @@ export async function saveEventToFirestore(
       endedAt:
         eventData.endedAt ??
         null,
+
+      ...(eventData.dataDocumentId ===
+        undefined
+        ? {}
+        : {
+            dataDocumentId:
+              eventData.dataDocumentId,
+          }),
 
       updatedAt:
         serverTimestamp(),

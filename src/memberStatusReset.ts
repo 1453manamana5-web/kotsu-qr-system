@@ -12,7 +12,7 @@ import {
 import {
   EVENT_DATA_COLLECTION,
   EVENT_MEMBERS_COLLECTION,
-  createSafeEventId,
+  getEventDataId,
 } from "./firestorePaths";
 
 import {
@@ -66,7 +66,7 @@ export async function resetEventMemberStatusesInFirestore(
     collection(
       db,
       EVENT_DATA_COLLECTION,
-      createSafeEventId(
+      getEventDataId(
         normalizedEventName
       ),
       EVENT_MEMBERS_COLLECTION
