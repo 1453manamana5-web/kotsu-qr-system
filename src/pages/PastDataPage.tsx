@@ -629,37 +629,6 @@ function PastDataPage({
     string | null
   >(null);
 
-  useEffect(() => {
-    if (
-      endedEvents.length ===
-      0
-    ) {
-      setSelectedEventId(
-        null
-      );
-
-      return;
-    }
-
-    const selectedEventStillExists =
-      endedEvents.some(
-        (event) =>
-          event.id ===
-          selectedEventId
-      );
-
-    if (
-      !selectedEventStillExists
-    ) {
-      setSelectedEventId(
-        endedEvents[0].id
-      );
-    }
-  }, [
-    endedEvents,
-    selectedEventId,
-  ]);
-
   const selectedEvent =
     endedEvents.find(
       (event) =>
@@ -670,34 +639,47 @@ function PastDataPage({
     null;
 
   useEffect(() => {
-    setTickets([]);
-    setActivityLogs([]);
-    setLoadingError("");
+    let cancelled = false;
 
-    if (
-      selectedEvent ===
-      null
-    ) {
+    let unsubscribeTickets =
+      () => {};
+
+    let unsubscribeActivity =
+      () => {};
+
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
+
+      setTickets([]);
+      setActivityLogs([]);
+      setLoadingError("");
+
+      if (
+        selectedEvent ===
+        null
+      ) {
+        setTicketsLoading(
+          false
+        );
+
+        setActivityLoading(
+          false
+        );
+
+        return;
+      }
+
       setTicketsLoading(
-        false
+        true
       );
 
       setActivityLoading(
-        false
+        true
       );
 
-      return;
-    }
-
-    setTicketsLoading(
-      true
-    );
-
-    setActivityLoading(
-      true
-    );
-
-    const unsubscribeTickets =
+      unsubscribeTickets =
       subscribeToTickets(
         selectedEvent.name,
 
@@ -729,7 +711,7 @@ function PastDataPage({
         }
       );
 
-    const unsubscribeActivity =
+      unsubscribeActivity =
       subscribeToActivityLogs(
         selectedEvent.name,
 
@@ -760,14 +742,16 @@ function PastDataPage({
           );
         }
       );
+    });
 
     return () => {
+      cancelled = true;
+
       unsubscribeTickets();
       unsubscribeActivity();
     };
   }, [
-    selectedEvent?.id,
-    selectedEvent?.name,
+    selectedEvent,
   ]);
 
   const analysis =

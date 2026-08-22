@@ -333,12 +333,6 @@ function CameraQrScanner({
     scanLockedRef.current =
       false;
 
-    setCameraState(
-      "starting"
-    );
-
-    setErrorMessage("");
-
     const startCamera =
       async () => {
         try {
@@ -349,6 +343,12 @@ function CameraQrScanner({
           ) {
             return;
           }
+
+          setCameraState(
+            "starting"
+          );
+
+          setErrorMessage("");
 
           const readerElement =
             document.getElementById(

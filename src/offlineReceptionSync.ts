@@ -7,6 +7,15 @@ import {
 import { db } from "./firebase";
 
 import {
+  ACTIVITY_COLLECTION,
+  EVENT_DATA_COLLECTION,
+  EVENT_MEMBERS_COLLECTION,
+  MEMBER_CARDS_COLLECTION,
+  TICKETS_COLLECTION,
+  createSafeEventId,
+} from "./firestorePaths";
+
+import {
   getPendingReceptionOperations,
   isTransientReceptionError,
   removePendingReceptionOperation,
@@ -14,36 +23,11 @@ import {
   type PendingReceptionOperation,
 } from "./offlineReceptionStore";
 
-const EVENT_DATA_COLLECTION =
-  "event-data";
-
-const TICKETS_COLLECTION =
-  "tickets";
-
-const MEMBER_CARDS_COLLECTION =
-  "member-cards";
-
-const EVENT_MEMBERS_COLLECTION =
-  "members";
-
-const ACTIVITY_COLLECTION =
-  "activity";
-
 const RETRY_INTERVAL_MILLISECONDS =
   15 * 1000;
 
 let syncInProgress = false;
 let syncStarted = false;
-
-function createSafeEventId(
-  eventName: string
-) {
-  const normalized = eventName.trim();
-
-  return normalized === ""
-    ? "event-not-set"
-    : encodeURIComponent(normalized);
-}
 
 function getActivityDocument(
   operation: PendingReceptionOperation

@@ -808,56 +808,75 @@ function AdminPage({
   ] = useState("");
 
   useEffect(() => {
-    setTickets([]);
-    setMembers([]);
-    setActivityLogs([]);
+    let cancelled = false;
 
-    setReceptionPresence(
-      EMPTY_RECEPTION_SUMMARY
-    );
+    let unsubscribeTickets =
+      () => {};
 
-    setLoadingError("");
+    let unsubscribeMembers =
+      () => {};
 
-    if (
-      !eventConfigured ||
-      eventName.trim() === ""
-    ) {
+    let unsubscribeActivity =
+      () => {};
+
+    let unsubscribePresence =
+      () => {};
+
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
+
+      setTickets([]);
+      setMembers([]);
+      setActivityLogs([]);
+
+      setReceptionPresence(
+        EMPTY_RECEPTION_SUMMARY
+      );
+
+      setLoadingError("");
+
+      if (
+        !eventConfigured ||
+        eventName.trim() === ""
+      ) {
+        setTicketsLoading(
+          false
+        );
+
+        setMembersLoading(
+          false
+        );
+
+        setActivityLoading(
+          false
+        );
+
+        setPresenceLoading(
+          false
+        );
+
+        return;
+      }
+
       setTicketsLoading(
-        false
+        true
       );
 
       setMembersLoading(
-        false
+        true
       );
 
       setActivityLoading(
-        false
+        true
       );
 
       setPresenceLoading(
-        false
+        true
       );
 
-      return;
-    }
-
-    setTicketsLoading(
-      true
-    );
-
-    setMembersLoading(
-      true
-    );
-
-    setActivityLoading(
-      true
-    );
-
-    setPresenceLoading(
-      true
-    );
-
-    const unsubscribeTickets =
+      unsubscribeTickets =
       subscribeToTickets(
         eventName,
 
@@ -889,7 +908,7 @@ function AdminPage({
         }
       );
 
-    const unsubscribeMembers =
+      unsubscribeMembers =
       subscribeToEventMembers(
         eventName,
 
@@ -921,7 +940,7 @@ function AdminPage({
         }
       );
 
-    const unsubscribeActivity =
+      unsubscribeActivity =
       subscribeToActivityLogs(
         eventName,
 
@@ -953,7 +972,7 @@ function AdminPage({
         }
       );
 
-    const unsubscribePresence =
+      unsubscribePresence =
       subscribeToReceptionPresence(
         eventName,
 
@@ -984,8 +1003,11 @@ function AdminPage({
           );
         }
       );
+    });
 
     return () => {
+      cancelled = true;
+
       unsubscribeTickets();
       unsubscribeMembers();
       unsubscribeActivity();

@@ -14,6 +14,11 @@ import {
   db,
 } from "./firebase";
 
+import {
+  EVENTS_COLLECTION,
+  SYSTEM_COLLECTION,
+} from "./firestorePaths";
+
 export type EventStatus =
   | "scheduled"
   | "active"
@@ -36,12 +41,6 @@ export type EventStore = {
     | string
     | null;
 };
-
-const EVENTS_COLLECTION_NAME =
-  "events";
-
-const SYSTEM_COLLECTION_NAME =
-  "system";
 
 const CURRENT_EVENT_DOCUMENT_ID =
   "current-event";
@@ -149,7 +148,7 @@ export function subscribeToEvents(
   const eventsCollection =
     collection(
       db,
-      EVENTS_COLLECTION_NAME
+      EVENTS_COLLECTION
     );
 
   return onSnapshot(
@@ -199,7 +198,7 @@ export function subscribeToCurrentEventId(
   const currentEventDocument =
     doc(
       db,
-      SYSTEM_COLLECTION_NAME,
+      SYSTEM_COLLECTION,
       CURRENT_EVENT_DOCUMENT_ID
     );
 
@@ -256,7 +255,7 @@ export async function saveEventToFirestore(
   const eventDocument =
     doc(
       db,
-      EVENTS_COLLECTION_NAME,
+      EVENTS_COLLECTION,
       eventData.id
     );
 
@@ -304,7 +303,7 @@ export async function setCurrentEventIdInFirestore(
   const currentEventDocument =
     doc(
       db,
-      SYSTEM_COLLECTION_NAME,
+      SYSTEM_COLLECTION,
       CURRENT_EVENT_DOCUMENT_ID
     );
 
@@ -360,7 +359,7 @@ export async function endEventInFirestore(
   const currentEventDocument =
     doc(
       db,
-      SYSTEM_COLLECTION_NAME,
+      SYSTEM_COLLECTION,
       CURRENT_EVENT_DOCUMENT_ID
     );
 
@@ -387,7 +386,7 @@ export async function deleteEventFromFirestore(
   const eventDocument =
     doc(
       db,
-      EVENTS_COLLECTION_NAME,
+      EVENTS_COLLECTION,
       eventId
     );
 

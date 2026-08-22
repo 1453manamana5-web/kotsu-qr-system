@@ -10,6 +10,12 @@ import {
 } from "./firebase";
 
 import {
+  EVENT_DATA_COLLECTION,
+  EVENT_MEMBERS_COLLECTION,
+  createSafeEventId,
+} from "./firestorePaths";
+
+import {
   cacheEventMembersForOffline,
   getPendingReceptionOperations,
 } from "./offlineReceptionStore";
@@ -17,25 +23,6 @@ import {
 import type {
   EventMember,
 } from "./memberFirestore";
-
-const EVENT_DATA_COLLECTION =
-  "event-data";
-
-const EVENT_MEMBERS_COLLECTION =
-  "members";
-
-function createSafeEventId(
-  eventName: string
-) {
-  const normalizedName =
-    eventName.trim();
-
-  return normalizedName === ""
-    ? "event-not-set"
-    : encodeURIComponent(
-        normalizedName
-      );
-}
 
 export async function resetEventMemberStatusesInFirestore(
   eventName: string

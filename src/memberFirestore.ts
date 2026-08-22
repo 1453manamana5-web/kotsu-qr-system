@@ -16,6 +16,15 @@ import {
 } from "./firebase";
 
 import {
+  ACTIVITY_COLLECTION,
+  EVENT_DATA_COLLECTION,
+  EVENT_MEMBERS_COLLECTION,
+  MEMBER_CARDS_COLLECTION,
+  createSafeEventId,
+  createSafeRandomId,
+} from "./firestorePaths";
+
+import {
   acceptMemberReceptionOffline,
   cacheEventMembersForOffline,
   cacheMemberCardsForOffline,
@@ -63,55 +72,6 @@ export type MemberReceptionResult =
         | "invalid-token"
         | "duplicate";
     };
-
-const MEMBER_CARDS_COLLECTION =
-  "member-cards";
-
-const EVENT_DATA_COLLECTION =
-  "event-data";
-
-const EVENT_MEMBERS_COLLECTION =
-  "members";
-
-const ACTIVITY_COLLECTION =
-  "activity";
-
-function createSafeEventId(
-  eventName: string
-) {
-  const normalizedName =
-    eventName.trim();
-
-  return normalizedName === ""
-    ? "event-not-set"
-    : encodeURIComponent(
-        normalizedName
-      );
-}
-
-function createSafeRandomId() {
-  try {
-    if (
-      typeof globalThis.crypto !==
-        "undefined" &&
-      typeof globalThis.crypto.randomUUID ===
-        "function"
-    ) {
-      return globalThis.crypto.randomUUID();
-    }
-  } catch (error) {
-    console.warn(
-      "IDを生成できませんでした。",
-      error
-    );
-  }
-
-  return `${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2)}-${Math.random()
-    .toString(36)
-    .slice(2)}`;
-}
 
 function isMemberStatus(
   value: unknown

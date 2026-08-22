@@ -26,6 +26,10 @@ import {
   type MemberStatus,
 } from "../memberFirestore";
 
+import {
+  createSafeRandomId,
+} from "../firestorePaths";
+
 import "./MembersPage.css";
 
 type MembersPageProps = {
@@ -35,81 +39,6 @@ type MembersPageProps = {
 
   eventName: string;
 };
-
-function createSafeRandomId() {
-  try {
-    if (
-      typeof globalThis.crypto !==
-        "undefined" &&
-      typeof globalThis.crypto.randomUUID ===
-        "function"
-    ) {
-      return globalThis.crypto.randomUUID();
-    }
-
-    if (
-      typeof globalThis.crypto !==
-        "undefined" &&
-      typeof globalThis.crypto.getRandomValues ===
-        "function"
-    ) {
-      const randomValues =
-        new Uint32Array(4);
-
-      globalThis.crypto.getRandomValues(
-        randomValues
-      );
-
-      const randomText =
-        Array.from(
-          randomValues
-        )
-          .map((value) =>
-            value
-              .toString(16)
-              .padStart(
-                8,
-                "0"
-              )
-          )
-          .join("");
-
-      return [
-        randomText.slice(
-          0,
-          8
-        ),
-        randomText.slice(
-          8,
-          12
-        ),
-        randomText.slice(
-          12,
-          16
-        ),
-        randomText.slice(
-          16,
-          20
-        ),
-        randomText.slice(
-          20,
-          32
-        ),
-      ].join("-");
-    }
-  } catch (error) {
-    console.warn(
-      "安全な乱数を生成できませんでした。",
-      error
-    );
-  }
-
-  return `${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2)}-${Math.random()
-    .toString(36)
-    .slice(2)}`;
-}
 
 function createRandomToken() {
   return createSafeRandomId();
@@ -266,10 +195,6 @@ function MembersPage({
   ] = useState(false);
 
   useEffect(() => {
-    setCardsLoading(
-      true
-    );
-
     const unsubscribe =
       subscribeToMemberCards(
         (cards) => {
@@ -303,58 +228,85 @@ function MembersPage({
   }, []);
 
   useEffect(() => {
-    setMembersLoading(
-      true
-    );
+    let cancelled = false;
 
-    setEventMembers(
-      []
-    );
+    let unsubscribe =
+      () => {};
 
-    if (
-      eventName.trim() ===
-      ""
-    ) {
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
+
       setMembersLoading(
-        false
+        true
       );
 
-      return;
-    }
-
-    const unsubscribe =
-      subscribeToEventMembers(
-        eventName,
-
-        (members) => {
-          setEventMembers(
-            members
-          );
-
-          setMembersLoading(
-            false
-          );
-
-          setLoadingError(
-            ""
-          );
-        },
-
-        (error) => {
-          setMembersLoading(
-            false
-          );
-
-          setLoadingError(
-            error.message
-          );
-        }
+      setEventMembers(
+        []
       );
+
+      if (
+        eventName.trim() ===
+        ""
+      ) {
+        setMembersLoading(
+          false
+        );
+
+        return;
+      }
+
+      unsubscribe =
+        subscribeToEventMembers(
+          eventName,
+
+          (members) => {
+            setEventMembers(
+              members
+            );
+
+            setMembersLoading(
+              false
+            );
+
+            setLoadingError(
+              ""
+            );
+          },
+
+          (error) => {
+            setMembersLoading(
+              false
+            );
+
+            setLoadingError(
+              error.message
+            );
+          }
+        );
+    });
 
     return () => {
+      cancelled = true;
+
       unsubscribe();
     };
   }, [eventName]);
+
+  const eventMembersByQr =
+    useMemo(
+      () =>
+        new Map(
+          eventMembers.map(
+            (member) => [
+              member.qrNumber,
+              member,
+            ]
+          )
+        ),
+      [eventMembers]
+    );
 
   const members =
     useMemo<Member[]>(
@@ -362,10 +314,8 @@ function MembersPage({
         memberCards.map(
           (card) => {
             const eventMember =
-              eventMembers.find(
-                (member) =>
-                  member.qrNumber ===
-                  card.qrNumber
+              eventMembersByQr.get(
+                card.qrNumber
               );
 
             return {
@@ -383,7 +333,7 @@ function MembersPage({
         ),
       [
         memberCards,
-        eventMembers,
+        eventMembersByQr,
       ]
     );
 
@@ -396,22 +346,6 @@ function MembersPage({
             member.qrNumber ===
             selectedMemberQrNumber
         ) ?? null;
-
-  useEffect(() => {
-    if (
-      selectedMemberQrNumber !==
-        null &&
-      selectedMember ===
-        null
-    ) {
-      setSelectedMemberQrNumber(
-        null
-      );
-    }
-  }, [
-    selectedMember,
-    selectedMemberQrNumber,
-  ]);
 
   const createNextQrNumber =
     () => {
@@ -1097,7 +1031,8 @@ function MembersPage({
             <OnlineStatus />
 
             <div className="members-event-name">
-              イベント名　
+              イベント名
+              {" "}
               {eventName ||
                 "未設定"}
             </div>
@@ -1233,7 +1168,8 @@ function MembersPage({
         <section className="members-list-area">
           <div className="members-list-tools">
             <div className="members-list-count">
-              表示件数　
+              表示件数
+              {" "}
               {
                 filteredMembers.length
               }

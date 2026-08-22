@@ -13,6 +13,13 @@ import {
   db,
 } from "./firebase";
 
+import {
+  EVENT_DATA_COLLECTION,
+  RECEPTION_DEVICES_COLLECTION,
+  createSafeEventId,
+  createSafeRandomId,
+} from "./firestorePaths";
+
 export type ReceptionMode =
   | "entry"
   | "exit";
@@ -29,55 +36,12 @@ export type ReceptionPresenceSummary = {
   devices: ReceptionDevice[];
 };
 
-const EVENT_DATA_COLLECTION =
-  "event-data";
-
-const RECEPTION_DEVICES_COLLECTION =
-  "reception-devices";
-
 /*
   直近15秒以内に生存通知が届いた端末を
   稼働中として数えます。
 */
 const ONLINE_LIMIT_MILLISECONDS =
   15 * 1000;
-
-function createSafeEventId(
-  eventName: string
-) {
-  const normalizedName =
-    eventName.trim();
-
-  return normalizedName === ""
-    ? "event-not-set"
-    : encodeURIComponent(
-        normalizedName
-      );
-}
-
-function createSafeRandomId() {
-  try {
-    if (
-      typeof globalThis.crypto !==
-        "undefined" &&
-      typeof globalThis.crypto.randomUUID ===
-        "function"
-    ) {
-      return globalThis.crypto.randomUUID();
-    }
-  } catch (error) {
-    console.warn(
-      "受付端末IDを生成できませんでした。",
-      error
-    );
-  }
-
-  return `${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2)}-${Math.random()
-    .toString(36)
-    .slice(2)}`;
-}
 
 function isReceptionMode(
   value: unknown

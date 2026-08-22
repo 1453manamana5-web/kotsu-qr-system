@@ -12,6 +12,17 @@ import {
   db,
 } from "./firebase";
 
+import {
+  ACTIVITY_COLLECTION,
+  EVENT_DATA_COLLECTION,
+  EVENT_MEMBERS_COLLECTION,
+  EVENTS_COLLECTION,
+  MEMBER_CARDS_COLLECTION,
+  SYSTEM_COLLECTION,
+  TICKETS_COLLECTION,
+  createSafeEventId,
+} from "./firestorePaths";
+
 const BACKUP_FORMAT =
   "kotsu-qr-system-full-backup";
 
@@ -24,13 +35,10 @@ const MAX_BACKUP_DOCUMENTS =
 const BATCH_OPERATION_LIMIT =
   400;
 
-const EVENT_DATA_COLLECTION =
-  "event-data";
-
 const BACKED_UP_EVENT_COLLECTIONS = [
-  "tickets",
-  "members",
-  "activity",
+  TICKETS_COLLECTION,
+  EVENT_MEMBERS_COLLECTION,
+  ACTIVITY_COLLECTION,
 ] as const;
 
 const VOLATILE_LOCAL_STORAGE_KEYS =
@@ -109,19 +117,6 @@ type WriteOperation =
         DocumentReference;
       data: DocumentData;
     };
-
-function createSafeEventId(
-  eventName: string
-) {
-  const normalizedName =
-    eventName.trim();
-
-  return normalizedName === ""
-    ? "event-not-set"
-    : encodeURIComponent(
-        normalizedName
-      );
-}
 
 function isRecord(
   value: unknown
@@ -475,13 +470,13 @@ export async function createFullBackup(
     memberCards,
   ] = await Promise.all([
     readCollection([
-      "events",
+      EVENTS_COLLECTION,
     ]),
     readCollection([
-      "system",
+      SYSTEM_COLLECTION,
     ]),
     readCollection([
-      "member-cards",
+      MEMBER_CARDS_COLLECTION,
     ]),
   ]);
 
@@ -1007,15 +1002,15 @@ async function replaceFirestoreData(
   const operationGroups =
     await Promise.all([
       createReplaceOperations(
-        ["events"],
+        [EVENTS_COLLECTION],
         backup.firestore.events
       ),
       createReplaceOperations(
-        ["system"],
+        [SYSTEM_COLLECTION],
         backup.firestore.system
       ),
       createReplaceOperations(
-        ["member-cards"],
+        [MEMBER_CARDS_COLLECTION],
         backup.firestore.memberCards
       ),
       ...eventNames.flatMap(
@@ -1035,7 +1030,7 @@ async function replaceFirestoreData(
               [
                 EVENT_DATA_COLLECTION,
                 eventDocumentId,
-                "tickets",
+                TICKETS_COLLECTION,
               ],
               restoredEventData?.tickets ??
                 []
@@ -1044,7 +1039,7 @@ async function replaceFirestoreData(
               [
                 EVENT_DATA_COLLECTION,
                 eventDocumentId,
-                "members",
+                EVENT_MEMBERS_COLLECTION,
               ],
               restoredEventData?.members ??
                 []
@@ -1053,7 +1048,7 @@ async function replaceFirestoreData(
               [
                 EVENT_DATA_COLLECTION,
                 eventDocumentId,
-                "activity",
+                ACTIVITY_COLLECTION,
               ],
               restoredEventData?.activity ??
                 []
