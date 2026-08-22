@@ -1023,11 +1023,11 @@ function SettingsPage({
 
                 <div>
                   <strong>
-                    受付処理を共通化
+                    受付画面の通信量を約42%削減
                   </strong>
 
                   <span>
-                    入場・退場画面の重複コードをまとめ、同じ品質で動くようにしました。
+                    入場・退場画面の関連JavaScriptを、圧縮時7.76KBから4.51KBへ軽量化しました。
                   </span>
                 </div>
               </li>
@@ -1055,11 +1055,11 @@ function SettingsPage({
 
                 <div>
                   <strong>
-                    通常画面の読み込みを軽量化
+                    設定画面を約28%軽量化
                   </strong>
 
                   <span>
-                    バックアップ機能を使う時だけ読み込み、普段の設定画面を軽くしました。
+                    初回に読むJavaScriptを、圧縮時6.65KBから4.82KBへ削減しました。
                   </span>
                 </div>
               </li>
