@@ -504,7 +504,8 @@ function DeviceManagementPage({
         )}
 
         <div className="device-management-columns">
-          <section className="device-management-panel device-management-requests-panel">
+          <div className="device-management-left-column">
+            <section className="device-management-panel device-management-requests-panel">
             <div className="device-management-panel-heading">
               <div>
                 <span>REQUESTS</span>
@@ -604,9 +605,55 @@ function DeviceManagementPage({
                 })
               )}
             </div>
-          </section>
+            </section>
 
-          <section className="device-management-panel">
+            <section className="device-management-panel device-management-audit-panel">
+              <div className="device-management-panel-heading">
+                <div>
+                  <span>HISTORY</span>
+                  <h2>操作履歴</h2>
+                </div>
+              </div>
+
+              <div className="device-management-audit-list">
+                {audit.length === 0 ? (
+                  <p className="device-management-empty">
+                    操作履歴はまだありません
+                  </p>
+                ) : (
+                  audit.map((entry) => (
+                    <article key={entry.id}>
+                      <span />
+
+                      <div>
+                        <strong>
+                          {getAuditLabel(
+                            entry
+                          )}
+                        </strong>
+
+                        <p>
+                          {entry.actorName ||
+                            "端末"}
+                          {" → "}
+                          {entry.targetName ||
+                            "端末"}
+                        </p>
+                      </div>
+
+                      <time>
+                        {formatDateTime(
+                          entry.createdAt
+                        )}
+                      </time>
+                    </article>
+                  ))
+                )}
+              </div>
+            </section>
+          </div>
+
+          <section className="device-management-panel device-management-devices-panel">
             <div className="device-management-panel-heading">
               <div>
                 <span>DEVICES</span>
@@ -756,50 +803,6 @@ function DeviceManagementPage({
             </div>
           </section>
 
-          <section className="device-management-panel device-management-audit-panel">
-            <div className="device-management-panel-heading">
-              <div>
-                <span>HISTORY</span>
-                <h2>操作履歴</h2>
-              </div>
-            </div>
-
-            <div className="device-management-audit-list">
-              {audit.length === 0 ? (
-                <p className="device-management-empty">
-                  操作履歴はまだありません
-                </p>
-              ) : (
-                audit.map((entry) => (
-                  <article key={entry.id}>
-                    <span />
-
-                    <div>
-                      <strong>
-                        {getAuditLabel(
-                          entry
-                        )}
-                      </strong>
-
-                      <p>
-                        {entry.actorName ||
-                          "端末"}
-                        {" → "}
-                        {entry.targetName ||
-                          "端末"}
-                      </p>
-                    </div>
-
-                    <time>
-                      {formatDateTime(
-                        entry.createdAt
-                      )}
-                    </time>
-                  </article>
-                ))
-              )}
-            </div>
-          </section>
         </div>
       </main>
 
