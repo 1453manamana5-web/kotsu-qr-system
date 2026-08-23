@@ -13,7 +13,9 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 
-import { db } from "./firebase";
+import {
+  db,
+} from "./firebase";
 
 import {
   ACTIVITY_COLLECTION,
@@ -30,8 +32,15 @@ import type {
   ActivityType,
 } from "./activityFirestore";
 
-const ANALYTICS_SCHEMA_VERSION = 1;
-const REBUILD_RETRY_LIMIT = 4;
+/*
+  v2ではイベント終了による強制退出を
+  平均滞在時間の計算対象から除外します。
+*/
+const ANALYTICS_SCHEMA_VERSION =
+  2;
+
+const REBUILD_RETRY_LIMIT =
+  4;
 
 export type AnalyticsHourData = {
   label: string;
@@ -49,8 +58,11 @@ export type EventAnalyticsSummary = {
   activityCount: number;
   totalStayMilliseconds: number;
   completedStayCount: number;
-  averageStayMinutes: number | null;
-  hourlyEntryCounts: Record<string, number>;
+  averageStayMinutes:
+    | number
+    | null;
+  hourlyEntryCounts:
+    Record<string, number>;
   needsRebuild: false;
 };
 
@@ -59,6 +71,7 @@ type AnalyticsActivity = {
   timestamp: string;
   isReEntry?: boolean;
   previousEntryAt?: string;
+  forcedExit?: boolean;
 };
 
 type AnalyticsSnapshot =
@@ -66,17 +79,21 @@ type AnalyticsSnapshot =
 
 class AnalyticsRevisionChangedError extends Error {}
 
-const rebuildPromises = new Map<
-  string,
-  Promise<EventAnalyticsSummary>
->();
+const rebuildPromises =
+  new Map<
+    string,
+    Promise<EventAnalyticsSummary>
+  >();
 
 function isFiniteNonNegativeNumber(
   value: unknown
 ): value is number {
   return (
-    typeof value === "number" &&
-    Number.isFinite(value) &&
+    typeof value ===
+      "number" &&
+    Number.isFinite(
+      value
+    ) &&
     value >= 0
   );
 }
@@ -85,24 +102,41 @@ function readHourlyEntryCounts(
   value: unknown
 ) {
   if (
-    typeof value !== "object" ||
+    typeof value !==
+      "object" ||
     value === null ||
-    Array.isArray(value)
+    Array.isArray(
+      value
+    )
   ) {
     return null;
   }
 
-  const counts: Record<string, number> = {};
+  const counts:
+    Record<string, number> =
+    {};
 
-  for (const [key, count] of Object.entries(value)) {
+  for (
+    const [key, count] of
+    Object.entries(
+      value
+    )
+  ) {
     if (
-      !/^\d{4}-\d{2}-\d{2}T\d{2}$/.test(key) ||
-      !isFiniteNonNegativeNumber(count)
+      !/^\d{4}-\d{2}-\d{2}T\d{2}$/.test(
+        key
+      ) ||
+      !isFiniteNonNegativeNumber(
+        count
+      )
     ) {
       return null;
     }
 
-    counts[key] = Math.floor(count);
+    counts[key] =
+      Math.floor(
+        count
+      );
   }
 
   return counts;
@@ -112,27 +146,51 @@ function convertAnalyticsSummary(
   data: DocumentData
 ): EventAnalyticsSummary | null {
   const hourlyEntryCounts =
-    readHourlyEntryCounts(data.hourlyEntryCounts);
+    readHourlyEntryCounts(
+      data.hourlyEntryCounts
+    );
 
   if (
-    data.schemaVersion !== ANALYTICS_SCHEMA_VERSION ||
-    data.needsRebuild === true ||
-    !isFiniteNonNegativeNumber(data.revision) ||
-    !isFiniteNonNegativeNumber(data.totalVisitors) ||
-    !isFiniteNonNegativeNumber(data.currentInside) ||
-    !isFiniteNonNegativeNumber(data.currentMembersInside) ||
-    !isFiniteNonNegativeNumber(data.reEntryCount) ||
-    !isFiniteNonNegativeNumber(data.ticketCount) ||
-    !isFiniteNonNegativeNumber(data.activityCount) ||
-    !isFiniteNonNegativeNumber(data.totalStayMilliseconds) ||
-    !isFiniteNonNegativeNumber(data.completedStayCount) ||
-    hourlyEntryCounts === null
+    data.schemaVersion !==
+      ANALYTICS_SCHEMA_VERSION ||
+    data.needsRebuild ===
+      true ||
+    !isFiniteNonNegativeNumber(
+      data.revision
+    ) ||
+    !isFiniteNonNegativeNumber(
+      data.totalVisitors
+    ) ||
+    !isFiniteNonNegativeNumber(
+      data.currentInside
+    ) ||
+    !isFiniteNonNegativeNumber(
+      data.currentMembersInside
+    ) ||
+    !isFiniteNonNegativeNumber(
+      data.reEntryCount
+    ) ||
+    !isFiniteNonNegativeNumber(
+      data.ticketCount
+    ) ||
+    !isFiniteNonNegativeNumber(
+      data.activityCount
+    ) ||
+    !isFiniteNonNegativeNumber(
+      data.totalStayMilliseconds
+    ) ||
+    !isFiniteNonNegativeNumber(
+      data.completedStayCount
+    ) ||
+    hourlyEntryCounts ===
+      null
   ) {
     return null;
   }
 
   const averageStayMinutes =
-    data.completedStayCount === 0
+    data.completedStayCount ===
+      0
       ? null
       : Math.round(
           data.totalStayMilliseconds /
@@ -142,19 +200,46 @@ function convertAnalyticsSummary(
         );
 
   return {
-    schemaVersion: ANALYTICS_SCHEMA_VERSION,
-    revision: Math.floor(data.revision),
-    totalVisitors: Math.floor(data.totalVisitors),
-    currentInside: Math.floor(data.currentInside),
-    currentMembersInside: Math.floor(data.currentMembersInside),
-    reEntryCount: Math.floor(data.reEntryCount),
-    ticketCount: Math.floor(data.ticketCount),
-    activityCount: Math.floor(data.activityCount),
-    totalStayMilliseconds: data.totalStayMilliseconds,
-    completedStayCount: Math.floor(data.completedStayCount),
+    schemaVersion:
+      ANALYTICS_SCHEMA_VERSION,
+    revision:
+      Math.floor(
+        data.revision
+      ),
+    totalVisitors:
+      Math.floor(
+        data.totalVisitors
+      ),
+    currentInside:
+      Math.floor(
+        data.currentInside
+      ),
+    currentMembersInside:
+      Math.floor(
+        data.currentMembersInside
+      ),
+    reEntryCount:
+      Math.floor(
+        data.reEntryCount
+      ),
+    ticketCount:
+      Math.floor(
+        data.ticketCount
+      ),
+    activityCount:
+      Math.floor(
+        data.activityCount
+      ),
+    totalStayMilliseconds:
+      data.totalStayMilliseconds,
+    completedStayCount:
+      Math.floor(
+        data.completedStayCount
+      ),
     averageStayMinutes,
     hourlyEntryCounts,
-    needsRebuild: false,
+    needsRebuild:
+      false,
   };
 }
 
@@ -174,43 +259,84 @@ export function getEventAnalyticsDocument(
   eventName: string
 ) {
   return getEventAnalyticsDocumentByDataId(
-    getEventDataId(eventName)
+    getEventDataId(
+      eventName
+    )
   );
 }
 
-function getRevision(snapshot: AnalyticsSnapshot) {
-  if (!snapshot.exists()) {
+function getRevision(
+  snapshot: AnalyticsSnapshot
+) {
+  if (
+    !snapshot.exists()
+  ) {
     return 0;
   }
 
-  const revision = snapshot.data().revision;
+  const revision =
+    snapshot.data().revision;
 
-  return isFiniteNonNegativeNumber(revision)
-    ? Math.floor(revision)
+  return isFiniteNonNegativeNumber(
+    revision
+  )
+    ? Math.floor(
+        revision
+      )
     : 0;
 }
 
-function createHourBucket(timestamp: string) {
-  const date = new Date(timestamp);
+function createHourBucket(
+  timestamp: string
+) {
+  const date =
+    new Date(
+      timestamp
+    );
 
-  if (!Number.isFinite(date.getTime())) {
+  if (
+    !Number.isFinite(
+      date.getTime()
+    )
+  ) {
     return null;
   }
 
-  return `${String(date.getFullYear()).padStart(4, "0")}-${String(
+  return `${String(
+    date.getFullYear()
+  ).padStart(
+    4,
+    "0"
+  )}-${String(
     date.getMonth() + 1
-  ).padStart(2, "0")}-${String(date.getDate()).padStart(
+  ).padStart(
     2,
     "0"
-  )}T${String(date.getHours()).padStart(2, "0")}`;
+  )}-${String(
+    date.getDate()
+  ).padStart(
+    2,
+    "0"
+  )}T${String(
+    date.getHours()
+  ).padStart(
+    2,
+    "0"
+  )}`;
 }
 
-function isActivityType(value: unknown): value is ActivityType {
+function isActivityType(
+  value: unknown
+): value is ActivityType {
   return (
-    value === "ticket-entry" ||
-    value === "ticket-exit" ||
-    value === "member-entry" ||
-    value === "member-exit"
+    value ===
+      "ticket-entry" ||
+    value ===
+      "ticket-exit" ||
+    value ===
+      "member-entry" ||
+    value ===
+      "member-exit"
   );
 }
 
@@ -219,127 +345,277 @@ function convertActivity(
   data: DocumentData
 ): ActivityLog | null {
   if (
-    !isActivityType(data.type) ||
-    typeof data.qrNumber !== "string" ||
-    typeof data.timestamp !== "string"
+    !isActivityType(
+      data.type
+    ) ||
+    typeof data.qrNumber !==
+      "string" ||
+    typeof data.timestamp !==
+      "string"
   ) {
     return null;
   }
 
   return {
-    id: typeof data.id === "string" ? data.id : documentId,
-    type: data.type,
-    qrNumber: data.qrNumber,
-    timestamp: data.timestamp,
-    ...(typeof data.isReEntry === "boolean"
-      ? { isReEntry: data.isReEntry }
+    id:
+      typeof data.id ===
+        "string"
+        ? data.id
+        : documentId,
+    type:
+      data.type,
+    qrNumber:
+      data.qrNumber,
+    timestamp:
+      data.timestamp,
+    ...(typeof data.isReEntry ===
+      "boolean"
+      ? {
+          isReEntry:
+            data.isReEntry,
+        }
       : {}),
-    ...(data.source === "scanner" || data.source === "manual"
-      ? { source: data.source }
+    ...(data.source ===
+      "scanner" ||
+    data.source ===
+      "manual"
+      ? {
+          source:
+            data.source,
+        }
+      : {}),
+    ...(typeof data.forcedExit ===
+      "boolean"
+      ? {
+          forcedExit:
+            data.forcedExit,
+        }
       : {}),
   };
 }
 
 function calculateSummary(
   revision: number,
-  ticketDocuments: QueryDocumentSnapshot<DocumentData>[],
-  memberDocuments: QueryDocumentSnapshot<DocumentData>[],
-  activityDocuments: QueryDocumentSnapshot<DocumentData>[]
+  ticketDocuments:
+    QueryDocumentSnapshot<DocumentData>[],
+  memberDocuments:
+    QueryDocumentSnapshot<DocumentData>[],
+  activityDocuments:
+    QueryDocumentSnapshot<DocumentData>[]
 ): EventAnalyticsSummary {
-  const logs = activityDocuments
-    .map((snapshot) =>
-      convertActivity(snapshot.id, snapshot.data())
-    )
-    .filter((log): log is ActivityLog => log !== null)
-    .sort(
-      (first, second) =>
-        Date.parse(first.timestamp) - Date.parse(second.timestamp)
+  const logs =
+    activityDocuments
+      .map(
+        (snapshot) =>
+          convertActivity(
+            snapshot.id,
+            snapshot.data()
+          )
+      )
+      .filter(
+        (
+          log
+        ): log is ActivityLog =>
+          log !== null
+      )
+      .sort(
+        (
+          first,
+          second
+        ) =>
+          Date.parse(
+            first.timestamp
+          ) -
+          Date.parse(
+            second.timestamp
+          )
+      );
+
+  const firstEntryQrNumbers =
+    new Set(
+      logs
+        .filter(
+          (log) =>
+            log.type ===
+              "ticket-entry" &&
+            log.isReEntry !==
+              true
+        )
+        .map(
+          (log) =>
+            log.qrNumber
+        )
     );
 
-  const firstEntryQrNumbers = new Set(
-    logs
-      .filter(
-        (log) =>
-          log.type === "ticket-entry" &&
-          log.isReEntry !== true
-      )
-      .map((log) => log.qrNumber)
-  );
+  const visitorCountFromStatus =
+    ticketDocuments.filter(
+      (snapshot) => {
+        const status =
+          snapshot.data().status;
 
-  const visitorCountFromStatus = ticketDocuments.filter(
-    (snapshot) => {
-      const status = snapshot.data().status;
-      return status === "入場中" || status === "使用済み";
-    }
-  ).length;
+        return (
+          status ===
+            "入場中" ||
+          status ===
+            "使用済み"
+        );
+      }
+    ).length;
 
-  const currentInside = ticketDocuments.filter(
-    (snapshot) => snapshot.data().status === "入場中"
-  ).length;
+  const currentInside =
+    ticketDocuments.filter(
+      (snapshot) =>
+        snapshot.data().status ===
+        "入場中"
+    ).length;
 
-  const currentMembersInside = memberDocuments.filter(
-    (snapshot) => snapshot.data().status === "入室中"
-  ).length;
+  const currentMembersInside =
+    memberDocuments.filter(
+      (snapshot) =>
+        snapshot.data().status ===
+        "入室中"
+    ).length;
 
-  const entryTimes = new Map<string, number>();
-  const hourlyEntryCounts: Record<string, number> = {};
-  let totalStayMilliseconds = 0;
-  let completedStayCount = 0;
+  const entryTimes =
+    new Map<
+      string,
+      number
+    >();
 
-  logs.forEach((log) => {
-    const timestamp = Date.parse(log.timestamp);
+  const hourlyEntryCounts:
+    Record<string, number> =
+    {};
 
-    if (!Number.isFinite(timestamp)) {
-      return;
-    }
+  let totalStayMilliseconds =
+    0;
 
-    if (log.type === "ticket-entry") {
-      entryTimes.set(log.qrNumber, timestamp);
+  let completedStayCount =
+    0;
 
-      const bucket = createHourBucket(log.timestamp);
+  logs.forEach(
+    (log) => {
+      const timestamp =
+        Date.parse(
+          log.timestamp
+        );
 
-      if (bucket !== null) {
-        hourlyEntryCounts[bucket] =
-          (hourlyEntryCounts[bucket] ?? 0) + 1;
+      if (
+        !Number.isFinite(
+          timestamp
+        )
+      ) {
+        return;
       }
 
-      return;
+      if (
+        log.type ===
+        "ticket-entry"
+      ) {
+        entryTimes.set(
+          log.qrNumber,
+          timestamp
+        );
+
+        const bucket =
+          createHourBucket(
+            log.timestamp
+          );
+
+        if (
+          bucket !== null
+        ) {
+          hourlyEntryCounts[
+            bucket
+          ] =
+            (
+              hourlyEntryCounts[
+                bucket
+              ] ??
+              0
+            ) + 1;
+        }
+
+        return;
+      }
+
+      if (
+        log.type !==
+        "ticket-exit"
+      ) {
+        return;
+      }
+
+      const entryTime =
+        entryTimes.get(
+          log.qrNumber
+        );
+
+      if (
+        entryTime ===
+          undefined ||
+        timestamp <
+          entryTime
+      ) {
+        return;
+      }
+
+      /*
+        イベント終了時に自動生成した強制退出は、
+        実際に出口を通った時刻ではないため
+        平均滞在時間の母数・合計時間に含めません。
+      */
+      if (
+        log.forcedExit ===
+        true
+      ) {
+        entryTimes.delete(
+          log.qrNumber
+        );
+
+        return;
+      }
+
+      totalStayMilliseconds +=
+        timestamp -
+        entryTime;
+
+      completedStayCount +=
+        1;
+
+      entryTimes.delete(
+        log.qrNumber
+      );
     }
-
-    if (log.type !== "ticket-exit") {
-      return;
-    }
-
-    const entryTime = entryTimes.get(log.qrNumber);
-
-    if (entryTime === undefined || timestamp < entryTime) {
-      return;
-    }
-
-    totalStayMilliseconds += timestamp - entryTime;
-    completedStayCount += 1;
-    entryTimes.delete(log.qrNumber);
-  });
+  );
 
   return {
-    schemaVersion: ANALYTICS_SCHEMA_VERSION,
+    schemaVersion:
+      ANALYTICS_SCHEMA_VERSION,
     revision,
-    totalVisitors: Math.max(
-      firstEntryQrNumbers.size,
-      visitorCountFromStatus
-    ),
+    totalVisitors:
+      Math.max(
+        firstEntryQrNumbers.size,
+        visitorCountFromStatus
+      ),
     currentInside,
     currentMembersInside,
-    reEntryCount: logs.filter(
-      (log) =>
-        log.type === "ticket-entry" && log.isReEntry === true
-    ).length,
-    ticketCount: ticketDocuments.length,
-    activityCount: logs.length,
+    reEntryCount:
+      logs.filter(
+        (log) =>
+          log.type ===
+            "ticket-entry" &&
+          log.isReEntry ===
+            true
+      ).length,
+    ticketCount:
+      ticketDocuments.length,
+    activityCount:
+      logs.length,
     totalStayMilliseconds,
     completedStayCount,
     averageStayMinutes:
-      completedStayCount === 0
+      completedStayCount ===
+        0
         ? null
         : Math.round(
             totalStayMilliseconds /
@@ -348,74 +624,115 @@ function calculateSummary(
               60
           ),
     hourlyEntryCounts,
-    needsRebuild: false,
+    needsRebuild:
+      false,
   };
 }
 
 async function rebuildByDataId(
   eventDataId: string
 ): Promise<EventAnalyticsSummary> {
-  const summaryDocument = getEventAnalyticsDocumentByDataId(eventDataId);
-
-  for (let attempt = 0; attempt < REBUILD_RETRY_LIMIT; attempt += 1) {
-    const beforeSnapshot = await getDocFromServer(summaryDocument);
-    const revision = getRevision(beforeSnapshot);
-
-    const [ticketsSnapshot, membersSnapshot, activitySnapshot] =
-      await Promise.all([
-        getDocsFromServer(
-          collection(
-            db,
-            EVENT_DATA_COLLECTION,
-            eventDataId,
-            TICKETS_COLLECTION
-          )
-        ),
-        getDocsFromServer(
-          collection(
-            db,
-            EVENT_DATA_COLLECTION,
-            eventDataId,
-            EVENT_MEMBERS_COLLECTION
-          )
-        ),
-        getDocsFromServer(
-          collection(
-            db,
-            EVENT_DATA_COLLECTION,
-            eventDataId,
-            ACTIVITY_COLLECTION
-          )
-        ),
-      ]);
-
-    const summary = calculateSummary(
-      revision,
-      ticketsSnapshot.docs,
-      membersSnapshot.docs,
-      activitySnapshot.docs
+  const summaryDocument =
+    getEventAnalyticsDocumentByDataId(
+      eventDataId
     );
 
+  for (
+    let attempt = 0;
+    attempt <
+      REBUILD_RETRY_LIMIT;
+    attempt += 1
+  ) {
+    const beforeSnapshot =
+      await getDocFromServer(
+        summaryDocument
+      );
+
+    const revision =
+      getRevision(
+        beforeSnapshot
+      );
+
+    const [
+      ticketsSnapshot,
+      membersSnapshot,
+      activitySnapshot,
+    ] = await Promise.all([
+      getDocsFromServer(
+        collection(
+          db,
+          EVENT_DATA_COLLECTION,
+          eventDataId,
+          TICKETS_COLLECTION
+        )
+      ),
+      getDocsFromServer(
+        collection(
+          db,
+          EVENT_DATA_COLLECTION,
+          eventDataId,
+          EVENT_MEMBERS_COLLECTION
+        )
+      ),
+      getDocsFromServer(
+        collection(
+          db,
+          EVENT_DATA_COLLECTION,
+          eventDataId,
+          ACTIVITY_COLLECTION
+        )
+      ),
+    ]);
+
+    const summary =
+      calculateSummary(
+        revision,
+        ticketsSnapshot.docs,
+        membersSnapshot.docs,
+        activitySnapshot.docs
+      );
+
     try {
-      await runTransaction(db, async (transaction) => {
-        const currentSnapshot = await transaction.get(summaryDocument);
+      await runTransaction(
+        db,
+        async (
+          transaction
+        ) => {
+          const currentSnapshot =
+            await transaction.get(
+              summaryDocument
+            );
 
-        if (getRevision(currentSnapshot) !== revision) {
-          throw new AnalyticsRevisionChangedError();
+          if (
+            getRevision(
+              currentSnapshot
+            ) !==
+            revision
+          ) {
+            throw new AnalyticsRevisionChangedError();
+          }
+
+          transaction.set(
+            summaryDocument,
+            {
+              ...summary,
+              rebuiltAt:
+                serverTimestamp(),
+              updatedAt:
+                serverTimestamp(),
+            }
+          );
         }
-
-        transaction.set(summaryDocument, {
-          ...summary,
-          rebuiltAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-      });
+      );
 
       return summary;
     } catch (error) {
       if (
-        error instanceof AnalyticsRevisionChangedError &&
-        attempt < REBUILD_RETRY_LIMIT - 1
+        error instanceof
+          AnalyticsRevisionChangedError &&
+        attempt <
+          REBUILD_RETRY_LIMIT -
+            1
       ) {
         continue;
       }
@@ -424,99 +741,183 @@ async function rebuildByDataId(
     }
   }
 
-  throw new Error("集計データの更新が続いているため再計算できませんでした。");
+  throw new Error(
+    "集計データの更新が続いているため再計算できませんでした。"
+  );
 }
 
 export function rebuildEventAnalyticsByDataId(
   eventDataId: string
 ) {
-  const currentPromise = rebuildPromises.get(eventDataId);
+  const currentPromise =
+    rebuildPromises.get(
+      eventDataId
+    );
 
-  if (currentPromise !== undefined) {
+  if (
+    currentPromise !==
+    undefined
+  ) {
     return currentPromise;
   }
 
-  const promise = rebuildByDataId(eventDataId).finally(() => {
-    rebuildPromises.delete(eventDataId);
-  });
+  const promise =
+    rebuildByDataId(
+      eventDataId
+    ).finally(
+      () => {
+        rebuildPromises.delete(
+          eventDataId
+        );
+      }
+    );
 
-  rebuildPromises.set(eventDataId, promise);
+  rebuildPromises.set(
+    eventDataId,
+    promise
+  );
+
   return promise;
 }
 
-export function rebuildEventAnalytics(eventName: string) {
-  return rebuildEventAnalyticsByDataId(getEventDataId(eventName));
+export function rebuildEventAnalytics(
+  eventName: string
+) {
+  return rebuildEventAnalyticsByDataId(
+    getEventDataId(
+      eventName
+    )
+  );
 }
 
-export async function ensureEventAnalytics(eventName: string) {
-  const normalizedEventName = eventName.trim();
+export async function ensureEventAnalytics(
+  eventName: string
+) {
+  const normalizedEventName =
+    eventName.trim();
 
-  if (normalizedEventName === "") {
+  if (
+    normalizedEventName ===
+    ""
+  ) {
     return null;
   }
 
-  const snapshot = await getDocFromServer(
-    getEventAnalyticsDocument(normalizedEventName)
-  );
+  const snapshot =
+    await getDocFromServer(
+      getEventAnalyticsDocument(
+        normalizedEventName
+      )
+    );
 
-  if (snapshot.exists()) {
-    const summary = convertAnalyticsSummary(snapshot.data());
+  if (
+    snapshot.exists()
+  ) {
+    const summary =
+      convertAnalyticsSummary(
+        snapshot.data()
+      );
 
-    if (summary !== null) {
+    if (
+      summary !== null
+    ) {
       return summary;
     }
   }
 
-  return rebuildEventAnalytics(normalizedEventName);
+  return rebuildEventAnalytics(
+    normalizedEventName
+  );
 }
 
 export function subscribeToEventAnalytics(
   eventName: string,
-  onSummaryChanged: (summary: EventAnalyticsSummary) => void,
-  onError?: (error: Error) => void
+  onSummaryChanged: (
+    summary: EventAnalyticsSummary
+  ) => void,
+  onError?: (
+    error: Error
+  ) => void
 ): Unsubscribe {
-  if (eventName.trim() === "") {
+  if (
+    eventName.trim() ===
+    ""
+  ) {
     return () => {
       // イベント未設定時は解除処理なし
     };
   }
 
-  let rebuilding = false;
+  let rebuilding =
+    false;
 
   return onSnapshot(
-    getEventAnalyticsDocument(eventName),
+    getEventAnalyticsDocument(
+      eventName
+    ),
     (snapshot) => {
-      const summary = snapshot.exists()
-        ? convertAnalyticsSummary(snapshot.data())
-        : null;
+      const summary =
+        snapshot.exists()
+          ? convertAnalyticsSummary(
+              snapshot.data()
+            )
+          : null;
 
-      if (summary !== null) {
-        onSummaryChanged(summary);
+      if (
+        summary !== null
+      ) {
+        onSummaryChanged(
+          summary
+        );
+
         return;
       }
 
-      if (rebuilding || snapshot.metadata.fromCache) {
+      if (
+        rebuilding ||
+        snapshot.metadata.fromCache
+      ) {
         return;
       }
 
-      rebuilding = true;
+      rebuilding =
+        true;
 
-      void rebuildEventAnalytics(eventName)
-        .catch((error: unknown) => {
-          console.error("イベント集計を再計算できませんでした。", error);
-          onError?.(
-            error instanceof Error
-              ? error
-              : new Error("イベント集計を再計算できませんでした。")
-          );
-        })
-        .finally(() => {
-          rebuilding = false;
-        });
+      void rebuildEventAnalytics(
+        eventName
+      )
+        .catch(
+          (error: unknown) => {
+            console.error(
+              "イベント集計を再計算できませんでした。",
+              error
+            );
+
+            onError?.(
+              error instanceof Error
+                ? error
+                : new Error(
+                    "イベント集計を再計算できませんでした。"
+                  )
+            );
+          }
+        )
+        .finally(
+          () => {
+            rebuilding =
+              false;
+          }
+        );
     },
     (error) => {
-      console.error("イベント集計を取得できませんでした。", error);
-      onError?.(error);
+      console.error(
+        "イベント集計を取得できませんでした。",
+        error
+      );
+
+      onError?.(
+        error
+      );
     }
   );
 }
@@ -525,7 +926,11 @@ export function getAnalyticsSnapshotForTransaction(
   transaction: Transaction,
   eventName: string
 ) {
-  return transaction.get(getEventAnalyticsDocument(eventName));
+  return transaction.get(
+    getEventAnalyticsDocument(
+      eventName
+    )
+  );
 }
 
 export function markEventAnalyticsStaleInTransaction(
@@ -535,22 +940,48 @@ export function markEventAnalyticsStaleInTransaction(
   transaction.set(
     analyticsSnapshot.ref,
     {
-      schemaVersion: ANALYTICS_SCHEMA_VERSION,
-      revision: getRevision(analyticsSnapshot) + 1,
-      needsRebuild: true,
-      updatedAt: serverTimestamp(),
+      schemaVersion:
+        ANALYTICS_SCHEMA_VERSION,
+      revision:
+        getRevision(
+          analyticsSnapshot
+        ) + 1,
+      needsRebuild:
+        true,
+      updatedAt:
+        serverTimestamp(),
     },
-    { merge: true }
+    {
+      merge:
+        true,
+    }
   );
 }
 
-export async function markEventAnalyticsStale(eventName: string) {
-  const summaryDocument = getEventAnalyticsDocument(eventName);
+export async function markEventAnalyticsStale(
+  eventName: string
+) {
+  const summaryDocument =
+    getEventAnalyticsDocument(
+      eventName
+    );
 
-  await runTransaction(db, async (transaction) => {
-    const snapshot = await transaction.get(summaryDocument);
-    markEventAnalyticsStaleInTransaction(transaction, snapshot);
-  });
+  await runTransaction(
+    db,
+    async (
+      transaction
+    ) => {
+      const snapshot =
+        await transaction.get(
+          summaryDocument
+        );
+
+      markEventAnalyticsStaleInTransaction(
+        transaction,
+        snapshot
+      );
+    }
+  );
 }
 
 export function applyActivityToAnalyticsTransaction(
@@ -558,87 +989,178 @@ export function applyActivityToAnalyticsTransaction(
   analyticsSnapshot: AnalyticsSnapshot,
   activity: AnalyticsActivity
 ) {
-  const summary = analyticsSnapshot.exists()
-    ? convertAnalyticsSummary(analyticsSnapshot.data())
-    : null;
+  const summary =
+    analyticsSnapshot.exists()
+      ? convertAnalyticsSummary(
+          analyticsSnapshot.data()
+        )
+      : null;
 
-  if (summary === null) {
+  if (
+    summary === null
+  ) {
     markEventAnalyticsStaleInTransaction(
       transaction,
       analyticsSnapshot
     );
+
     return;
   }
 
-  let totalVisitors = summary.totalVisitors;
-  let currentInside = summary.currentInside;
-  let currentMembersInside = summary.currentMembersInside;
-  let reEntryCount = summary.reEntryCount;
-  let totalStayMilliseconds = summary.totalStayMilliseconds;
-  let completedStayCount = summary.completedStayCount;
-  const hourlyEntryCounts = { ...summary.hourlyEntryCounts };
+  let totalVisitors =
+    summary.totalVisitors;
 
-  if (activity.type === "ticket-entry") {
-    currentInside += 1;
+  let currentInside =
+    summary.currentInside;
 
-    if (activity.isReEntry === true) {
-      reEntryCount += 1;
-    } else {
-      totalVisitors += 1;
-    }
+  let currentMembersInside =
+    summary.currentMembersInside;
 
-    const bucket = createHourBucket(activity.timestamp);
+  let reEntryCount =
+    summary.reEntryCount;
 
-    if (bucket !== null) {
-      hourlyEntryCounts[bucket] =
-        (hourlyEntryCounts[bucket] ?? 0) + 1;
-    }
-  } else if (activity.type === "ticket-exit") {
-    currentInside = Math.max(0, currentInside - 1);
+  let totalStayMilliseconds =
+    summary.totalStayMilliseconds;
 
-    const entryTime =
-      typeof activity.previousEntryAt === "string"
-        ? Date.parse(activity.previousEntryAt)
-        : Number.NaN;
-    const exitTime = Date.parse(activity.timestamp);
+  let completedStayCount =
+    summary.completedStayCount;
+
+  const hourlyEntryCounts = {
+    ...summary.hourlyEntryCounts,
+  };
+
+  if (
+    activity.type ===
+    "ticket-entry"
+  ) {
+    currentInside +=
+      1;
 
     if (
-      Number.isFinite(entryTime) &&
-      Number.isFinite(exitTime) &&
-      exitTime >= entryTime
+      activity.isReEntry ===
+      true
     ) {
-      totalStayMilliseconds += exitTime - entryTime;
-      completedStayCount += 1;
+      reEntryCount +=
+        1;
+    } else {
+      totalVisitors +=
+        1;
     }
-  } else if (activity.type === "member-entry") {
-    currentMembersInside += 1;
+
+    const bucket =
+      createHourBucket(
+        activity.timestamp
+      );
+
+    if (
+      bucket !== null
+    ) {
+      hourlyEntryCounts[
+        bucket
+      ] =
+        (
+          hourlyEntryCounts[
+            bucket
+          ] ??
+          0
+        ) + 1;
+    }
+  } else if (
+    activity.type ===
+    "ticket-exit"
+  ) {
+    currentInside =
+      Math.max(
+        0,
+        currentInside -
+          1
+      );
+
+    if (
+      activity.forcedExit !==
+      true
+    ) {
+      const entryTime =
+        typeof activity.previousEntryAt ===
+          "string"
+          ? Date.parse(
+              activity.previousEntryAt
+            )
+          : Number.NaN;
+
+      const exitTime =
+        Date.parse(
+          activity.timestamp
+        );
+
+      if (
+        Number.isFinite(
+          entryTime
+        ) &&
+        Number.isFinite(
+          exitTime
+        ) &&
+        exitTime >=
+          entryTime
+      ) {
+        totalStayMilliseconds +=
+          exitTime -
+          entryTime;
+
+        completedStayCount +=
+          1;
+      }
+    }
+  } else if (
+    activity.type ===
+    "member-entry"
+  ) {
+    currentMembersInside +=
+      1;
   } else {
-    currentMembersInside = Math.max(0, currentMembersInside - 1);
+    currentMembersInside =
+      Math.max(
+        0,
+        currentMembersInside -
+          1
+      );
   }
 
-  transaction.set(analyticsSnapshot.ref, {
-    ...summary,
-    revision: summary.revision + 1,
-    totalVisitors,
-    currentInside,
-    currentMembersInside,
-    reEntryCount,
-    activityCount: summary.activityCount + 1,
-    totalStayMilliseconds,
-    completedStayCount,
-    averageStayMinutes:
-      completedStayCount === 0
-        ? null
-        : Math.round(
-            totalStayMilliseconds /
-              completedStayCount /
-              1000 /
-              60
-          ),
-    hourlyEntryCounts,
-    needsRebuild: false,
-    updatedAt: serverTimestamp(),
-  });
+  transaction.set(
+    analyticsSnapshot.ref,
+    {
+      ...summary,
+      schemaVersion:
+        ANALYTICS_SCHEMA_VERSION,
+      revision:
+        summary.revision +
+        1,
+      totalVisitors,
+      currentInside,
+      currentMembersInside,
+      reEntryCount,
+      activityCount:
+        summary.activityCount +
+        1,
+      totalStayMilliseconds,
+      completedStayCount,
+      averageStayMinutes:
+        completedStayCount ===
+          0
+          ? null
+          : Math.round(
+              totalStayMilliseconds /
+                completedStayCount /
+                1000 /
+                60
+            ),
+      hourlyEntryCounts,
+      needsRebuild:
+        false,
+      updatedAt:
+        serverTimestamp(),
+    }
+  );
 }
 
 export function createHourDataFromAnalytics(
@@ -647,48 +1169,119 @@ export function createHourDataFromAnalytics(
   startTime: string,
   endTime: string
 ): AnalyticsHourData[] {
-  const startDate = new Date(`${eventDate}T${startTime}`);
-  const endDate = new Date(`${eventDate}T${endTime}`);
+  const startDate =
+    new Date(
+      `${eventDate}T${startTime}`
+    );
+
+  const endDate =
+    new Date(
+      `${eventDate}T${endTime}`
+    );
 
   if (
-    Number.isFinite(startDate.getTime()) &&
-    Number.isFinite(endDate.getTime()) &&
-    endDate.getTime() > startDate.getTime()
+    Number.isFinite(
+      startDate.getTime()
+    ) &&
+    Number.isFinite(
+      endDate.getTime()
+    ) &&
+    endDate.getTime() >
+      startDate.getTime()
   ) {
-    const currentHour = new Date(startDate);
-    currentHour.setMinutes(0, 0, 0);
+    const currentHour =
+      new Date(
+        startDate
+      );
 
-    const finalHour = new Date(endDate);
-    finalHour.setMinutes(0, 0, 0);
+    currentHour.setMinutes(
+      0,
+      0,
+      0
+    );
 
-    const hours: AnalyticsHourData[] = [];
+    const finalHour =
+      new Date(
+        endDate
+      );
 
-    while (currentHour.getTime() <= finalHour.getTime()) {
-      const key = `${String(currentHour.getFullYear()).padStart(
-        4,
-        "0"
-      )}-${String(currentHour.getMonth() + 1).padStart(2, "0")}-${String(
-        currentHour.getDate()
-      ).padStart(2, "0")}T${String(currentHour.getHours()).padStart(
-        2,
-        "0"
-      )}`;
+    finalHour.setMinutes(
+      0,
+      0,
+      0
+    );
+
+    const hours:
+      AnalyticsHourData[] =
+      [];
+
+    while (
+      currentHour.getTime() <=
+      finalHour.getTime()
+    ) {
+      const key =
+        `${String(
+          currentHour.getFullYear()
+        ).padStart(
+          4,
+          "0"
+        )}-${String(
+          currentHour.getMonth() + 1
+        ).padStart(
+          2,
+          "0"
+        )}-${String(
+          currentHour.getDate()
+        ).padStart(
+          2,
+          "0"
+        )}T${String(
+          currentHour.getHours()
+        ).padStart(
+          2,
+          "0"
+        )}`;
 
       hours.push({
-        label: `${String(currentHour.getHours()).padStart(2, "0")}:00`,
-        count: summary.hourlyEntryCounts[key] ?? 0,
+        label:
+          `${String(
+            currentHour.getHours()
+          ).padStart(
+            2,
+            "0"
+          )}:00`,
+        count:
+          summary.hourlyEntryCounts[
+            key
+          ] ??
+          0,
       });
 
-      currentHour.setHours(currentHour.getHours() + 1);
+      currentHour.setHours(
+        currentHour.getHours() +
+          1
+      );
     }
 
     return hours;
   }
 
-  return Object.entries(summary.hourlyEntryCounts)
-    .sort(([first], [second]) => first.localeCompare(second))
-    .map(([key, count]) => ({
-      label: `${key.slice(-2)}:00`,
-      count,
-    }));
+  return Object.entries(
+    summary.hourlyEntryCounts
+  )
+    .sort(
+      ([first], [second]) =>
+        first.localeCompare(
+          second
+        )
+    )
+    .map(
+      ([key, count]) => ({
+        label:
+          `${key.slice(
+            -2
+          )}:00`,
+        count,
+      })
+    );
 }
