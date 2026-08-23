@@ -131,6 +131,17 @@ export default defineConfig({
           "**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg,wav,mp3,ogg}",
         ],
 
+        /*
+          PDF生成は過去データ画面で操作したときだけ使います。
+          受付に不要な大容量チャンクを初回のPWA保存から外し、
+          必要になった時点で通常の通信から読み込みます。
+        */
+        globIgnores: [
+          "**/html2canvas-*.js",
+          "**/jspdf.es.min-*.js",
+          "**/purify.es-*.js",
+        ],
+
         cleanupOutdatedCaches:
           true,
 
