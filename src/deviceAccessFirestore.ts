@@ -1005,6 +1005,13 @@ export async function renameAuthorizedDevice(
 ) {
   const actorUid =
     getAuthenticatedUid();
+
+  if (actorUid !== targetUid) {
+    throw new Error(
+      "端末名は、その端末自身からのみ変更できます。"
+    );
+  }
+
   const cleanDeviceName =
     cleanRequiredText(
       deviceName,
