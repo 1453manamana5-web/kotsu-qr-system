@@ -11,19 +11,9 @@ import type {
 import OnlineStatus from "./OnlineStatus";
 
 import {
-  subscribeToTickets,
-  type Ticket,
-} from "../ticketFirestore";
-
-import {
-  subscribeToEventMembers,
-  type EventMember,
-} from "../memberFirestore";
-
-import {
-  subscribeToActivityLogs,
-  type ActivityLog,
-} from "../activityFirestore";
+  subscribeToEventAnalytics,
+  type EventAnalyticsSummary,
+} from "../eventAnalyticsFirestore";
 
 import {
   subscribeToReceptionPresence,
@@ -754,24 +744,10 @@ function AdminPage({
   onReturn,
 }: AdminPageProps) {
   const [
-    tickets,
-    setTickets,
-  ] = useState<Ticket[]>(
-    []
-  );
-
-  const [
-    members,
-    setMembers,
-  ] = useState<EventMember[]>(
-    []
-  );
-
-  const [
-    activityLogs,
-    setActivityLogs,
-  ] = useState<ActivityLog[]>(
-    []
+    analytics,
+    setAnalytics,
+  ] = useState<EventAnalyticsSummary | null>(
+    null
   );
 
   const [
@@ -783,18 +759,8 @@ function AdminPage({
     );
 
   const [
-    ticketsLoading,
-    setTicketsLoading,
-  ] = useState(false);
-
-  const [
-    membersLoading,
-    setMembersLoading,
-  ] = useState(false);
-
-  const [
-    activityLoading,
-    setActivityLoading,
+    analyticsLoading,
+    setAnalyticsLoading,
   ] = useState(false);
 
   const [
@@ -810,13 +776,7 @@ function AdminPage({
   useEffect(() => {
     let cancelled = false;
 
-    let unsubscribeTickets =
-      () => {};
-
-    let unsubscribeMembers =
-      () => {};
-
-    let unsubscribeActivity =
+    let unsubscribeAnalytics =
       () => {};
 
     let unsubscribePresence =
@@ -827,9 +787,7 @@ function AdminPage({
         return;
       }
 
-      setTickets([]);
-      setMembers([]);
-      setActivityLogs([]);
+      setAnalytics(null);
 
       setReceptionPresence(
         EMPTY_RECEPTION_SUMMARY
@@ -841,15 +799,7 @@ function AdminPage({
         !eventConfigured ||
         eventName.trim() === ""
       ) {
-        setTicketsLoading(
-          false
-        );
-
-        setMembersLoading(
-          false
-        );
-
-        setActivityLoading(
+        setAnalyticsLoading(
           false
         );
 
@@ -860,15 +810,7 @@ function AdminPage({
         return;
       }
 
-      setTicketsLoading(
-        true
-      );
-
-      setMembersLoading(
-        true
-      );
-
-      setActivityLoading(
+      setAnalyticsLoading(
         true
       );
 
@@ -876,98 +818,34 @@ function AdminPage({
         true
       );
 
-      unsubscribeTickets =
-      subscribeToTickets(
+      unsubscribeAnalytics =
+      subscribeToEventAnalytics(
         eventName,
 
         (
-          updatedTickets
+          updatedAnalytics
         ) => {
-          setTickets(
-            updatedTickets
+          setAnalytics(
+            updatedAnalytics
           );
 
-          setTicketsLoading(
+          setAnalyticsLoading(
             false
           );
         },
 
         (error) => {
           console.error(
-            "管理画面でチケット情報を取得できませんでした。",
+            "管理画面で集計情報を取得できませんでした。",
             error
           );
 
-          setTicketsLoading(
+          setAnalyticsLoading(
             false
           );
 
           setLoadingError(
-            "チケット情報を読み込めませんでした。"
-          );
-        }
-      );
-
-      unsubscribeMembers =
-      subscribeToEventMembers(
-        eventName,
-
-        (
-          updatedMembers
-        ) => {
-          setMembers(
-            updatedMembers
-          );
-
-          setMembersLoading(
-            false
-          );
-        },
-
-        (error) => {
-          console.error(
-            "管理画面で部員情報を取得できませんでした。",
-            error
-          );
-
-          setMembersLoading(
-            false
-          );
-
-          setLoadingError(
-            "部員情報を読み込めませんでした。"
-          );
-        }
-      );
-
-      unsubscribeActivity =
-      subscribeToActivityLogs(
-        eventName,
-
-        (
-          updatedLogs
-        ) => {
-          setActivityLogs(
-            updatedLogs
-          );
-
-          setActivityLoading(
-            false
-          );
-        },
-
-        (error) => {
-          console.error(
-            "管理画面で受付履歴を取得できませんでした。",
-            error
-          );
-
-          setActivityLoading(
-            false
-          );
-
-          setLoadingError(
-            "受付履歴を読み込めませんでした。"
+            "集計情報を読み込めませんでした。"
           );
         }
       );
@@ -1008,9 +886,7 @@ function AdminPage({
     return () => {
       cancelled = true;
 
-      unsubscribeTickets();
-      unsubscribeMembers();
-      unsubscribeActivity();
+      unsubscribeAnalytics();
       unsubscribePresence();
     };
   }, [
@@ -1045,65 +921,22 @@ function AdminPage({
         };
       }
 
-      const firstEntryQrNumbers =
-        new Set(
-          activityLogs
-            .filter(
-              (log) =>
-                log.type ===
-                  "ticket-entry" &&
-                log.isReEntry !==
-                  true
-            )
-            .map(
-              (log) =>
-                log.qrNumber
-            )
-        );
-
-      const visitorCountFromStatus =
-        tickets.filter(
-          (ticket) =>
-            ticket.status ===
-              "入場中" ||
-            ticket.status ===
-              "使用済み"
-        ).length;
-
-      const visitorCount =
-        Math.max(
-          firstEntryQrNumbers.size,
-          visitorCountFromStatus
-        );
-
-      const insideCount =
-        tickets.filter(
-          (ticket) =>
-            ticket.status ===
-            "入場中"
-        ).length;
-
-      const memberCount =
-        members.filter(
-          (member) =>
-            member.status ===
-            "入室中"
-        ).length;
-
-      const reEntryCount =
-        activityLogs.filter(
-          (log) =>
-            log.type ===
-              "ticket-entry" &&
-            log.isReEntry ===
-              true
-        ).length;
-
       return {
-        visitorCount,
-        insideCount,
-        memberCount,
-        reEntryCount,
+        visitorCount:
+          analytics?.totalVisitors ??
+          0,
+
+        insideCount:
+          analytics?.currentInside ??
+          0,
+
+        memberCount:
+          analytics?.currentMembersInside ??
+          0,
+
+        reEntryCount:
+          analytics?.reEntryCount ??
+          0,
 
         entryReceptionCount:
           receptionPresence.entryCount,
@@ -1112,18 +945,14 @@ function AdminPage({
           receptionPresence.exitCount,
       };
     }, [
-      activityLogs,
+      analytics,
       eventConfigured,
       eventName,
-      members,
       receptionPresence,
-      tickets,
     ]);
 
   const loading =
-    ticketsLoading ||
-    membersLoading ||
-    activityLoading ||
+    analyticsLoading ||
     presenceLoading;
 
   const getReturnButtonText =
