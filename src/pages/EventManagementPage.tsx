@@ -6,11 +6,6 @@ import {
 
 import OnlineStatus from "./OnlineStatus";
 
-import {
-  getEventDataId,
-  createSafeRandomId,
-} from "../firestorePaths";
-
 import "./EventManagementPage.css";
 
 type EventStatus =
@@ -33,44 +28,9 @@ type DisplayStatus =
   | "開催中"
   | "終了";
 
-type TicketStatus =
-  | "未使用"
-  | "入場中"
-  | "使用済み"
-  | "無効";
-
-type MemberStatus =
-  | "未入室"
-  | "入室中"
-  | "退出済み";
-
-type Ticket = {
-  id: string;
-  qrNumber: string;
-  authToken: string;
-  status: TicketStatus;
-  createdAt: string;
-};
-
-type EventMember = {
-  qrNumber: string;
-  name: string;
-  status: MemberStatus;
-};
-
-type ActivityType =
-  | "ticket-entry"
-  | "ticket-exit"
-  | "member-entry"
-  | "member-exit";
-
-type ActivityLog = {
-  id: string;
-  type: ActivityType;
-  qrNumber: string;
-  timestamp: string;
-  isReEntry?: boolean;
-  source?: "scanner" | "manual";
+type EventEndResult = {
+  ticketCount: number;
+  memberCount: number;
 };
 
 type EventManagementPageProps = {
@@ -94,339 +54,8 @@ type EventManagementPageProps = {
 
   onForceEndEvent: (
     eventId: string
-  ) => void;
+  ) => Promise<EventEndResult>;
 };
-
-function createTicketStorageKey(
-  eventName: string
-) {
-  return `qr-management-event-tickets-${getEventDataId(
-    eventName
-  )}`;
-}
-
-function createMemberStorageKey(
-  eventName: string
-) {
-  return `qr-management-event-members-${getEventDataId(
-    eventName
-  )}`;
-}
-
-function createActivityStorageKey(
-  eventName: string
-) {
-  return `qr-management-event-activity-${getEventDataId(
-    eventName
-  )}`;
-}
-
-function createActivityId() {
-  return createSafeRandomId();
-}
-
-function loadTickets(
-  eventName: string
-): Ticket[] {
-  try {
-    const savedData =
-      localStorage.getItem(
-        createTicketStorageKey(
-          eventName
-        )
-      );
-
-    if (
-      savedData === null
-    ) {
-      return [];
-    }
-
-    const parsedData: unknown =
-      JSON.parse(
-        savedData
-      );
-
-    if (
-      !Array.isArray(
-        parsedData
-      )
-    ) {
-      return [];
-    }
-
-    return parsedData.filter(
-      (
-        ticket
-      ): ticket is Ticket =>
-        typeof ticket?.id ===
-          "string" &&
-        typeof ticket?.qrNumber ===
-          "string" &&
-        typeof ticket?.authToken ===
-          "string" &&
-        typeof ticket?.createdAt ===
-          "string" &&
-        (
-          ticket?.status ===
-            "未使用" ||
-          ticket?.status ===
-            "入場中" ||
-          ticket?.status ===
-            "使用済み" ||
-          ticket?.status ===
-            "無効"
-        )
-    );
-  } catch (error) {
-    console.error(
-      "チケット情報の読み込みに失敗しました。",
-      error
-    );
-
-    return [];
-  }
-}
-
-function loadMembers(
-  eventName: string
-): EventMember[] {
-  try {
-    const savedData =
-      localStorage.getItem(
-        createMemberStorageKey(
-          eventName
-        )
-      );
-
-    if (
-      savedData === null
-    ) {
-      return [];
-    }
-
-    const parsedData: unknown =
-      JSON.parse(
-        savedData
-      );
-
-    if (
-      !Array.isArray(
-        parsedData
-      )
-    ) {
-      return [];
-    }
-
-    return parsedData.filter(
-      (
-        member
-      ): member is EventMember =>
-        typeof member?.qrNumber ===
-          "string" &&
-        typeof member?.name ===
-          "string" &&
-        (
-          member?.status ===
-            "未入室" ||
-          member?.status ===
-            "入室中" ||
-          member?.status ===
-            "退出済み"
-        )
-    );
-  } catch (error) {
-    console.error(
-      "部員情報の読み込みに失敗しました。",
-      error
-    );
-
-    return [];
-  }
-}
-
-function loadActivityLogs(
-  eventName: string
-): ActivityLog[] {
-  try {
-    const savedData =
-      localStorage.getItem(
-        createActivityStorageKey(
-          eventName
-        )
-      );
-
-    if (
-      savedData === null
-    ) {
-      return [];
-    }
-
-    const parsedData: unknown =
-      JSON.parse(
-        savedData
-      );
-
-    return Array.isArray(
-      parsedData
-    )
-      ? (
-          parsedData as
-            ActivityLog[]
-        )
-      : [];
-  } catch (error) {
-    console.error(
-      "受付履歴の読み込みに失敗しました。",
-      error
-    );
-
-    return [];
-  }
-}
-
-function forceEveryoneToExit(
-  eventName: string
-) {
-  const endedAt =
-    new Date().toISOString();
-
-  const tickets =
-    loadTickets(
-      eventName
-    );
-
-  const members =
-    loadMembers(
-      eventName
-    );
-
-  const currentLogs =
-    loadActivityLogs(
-      eventName
-    );
-
-  const insideTickets =
-    tickets.filter(
-      (ticket) =>
-        ticket.status ===
-        "入場中"
-    );
-
-  const insideMembers =
-    members.filter(
-      (member) =>
-        member.status ===
-        "入室中"
-    );
-
-  const updatedTickets =
-    tickets.map(
-      (ticket): Ticket =>
-        ticket.status ===
-        "入場中"
-          ? {
-              ...ticket,
-              status:
-                "使用済み",
-            }
-          : ticket
-    );
-
-  const updatedMembers =
-    members.map(
-      (
-        member
-      ): EventMember =>
-        member.status ===
-        "入室中"
-          ? {
-              ...member,
-              status:
-                "退出済み",
-            }
-          : member
-    );
-
-  const ticketExitLogs:
-    ActivityLog[] =
-    insideTickets.map(
-      (ticket) => ({
-        id:
-          createActivityId(),
-
-        type:
-          "ticket-exit",
-
-        qrNumber:
-          ticket.qrNumber,
-
-        timestamp:
-          endedAt,
-
-        source:
-          "manual",
-      })
-    );
-
-  const memberExitLogs:
-    ActivityLog[] =
-    insideMembers.map(
-      (member) => ({
-        id:
-          createActivityId(),
-
-        type:
-          "member-exit",
-
-        qrNumber:
-          member.qrNumber,
-
-        timestamp:
-          endedAt,
-
-        source:
-          "manual",
-      })
-    );
-
-  localStorage.setItem(
-    createTicketStorageKey(
-      eventName
-    ),
-    JSON.stringify(
-      updatedTickets
-    )
-  );
-
-  localStorage.setItem(
-    createMemberStorageKey(
-      eventName
-    ),
-    JSON.stringify(
-      updatedMembers
-    )
-  );
-
-  localStorage.setItem(
-    createActivityStorageKey(
-      eventName
-    ),
-    JSON.stringify([
-      ...currentLogs,
-      ...ticketExitLogs,
-      ...memberExitLogs,
-    ])
-  );
-
-  return {
-    ticketCount:
-      insideTickets.length,
-
-    memberCount:
-      insideMembers.length,
-  };
-}
 
 function createEventDateTime(
   date: string,
@@ -950,6 +579,11 @@ function EventManagementPage({
     () => Date.now()
   );
 
+  const [
+    endingEvent,
+    setEndingEvent,
+  ] = useState(false);
+
   useEffect(() => {
     const timer =
       window.setInterval(
@@ -1120,49 +754,24 @@ function EventManagementPage({
     };
 
   const handleForceEnd =
-    () => {
+    async () => {
       if (
         selectedEvent ===
           null ||
         selectedStatus ===
-          "終了"
+          "終了" ||
+        endingEvent
       ) {
         return;
       }
-
-      const tickets =
-        loadTickets(
-          selectedEvent.name
-        );
-
-      const members =
-        loadMembers(
-          selectedEvent.name
-        );
-
-      const insideTicketCount =
-        tickets.filter(
-          (ticket) =>
-            ticket.status ===
-            "入場中"
-        ).length;
-
-      const insideMemberCount =
-        members.filter(
-          (member) =>
-            member.status ===
-            "入室中"
-        ).length;
 
       const confirmed =
         window.confirm(
           [
             "このイベントを強制終了しますか？",
             "",
-            `入場中の来場者：${insideTicketCount}人`,
-            `入室中の部員：${insideMemberCount}人`,
-            "",
-            "入場中の来場者と部員は、全員退出扱いになります。",
+            "Firestore上で入場中の来場者と部員を、全員退出扱いにします。",
+            "強制退出になった来場者は平均滞在時間に含まれません。",
             "終了後もイベント一覧と分析データは残ります。",
           ].join(
             "\n"
@@ -1186,15 +795,15 @@ function EventManagementPage({
         return;
       }
 
+      setEndingEvent(
+        true
+      );
+
       try {
         const exitResult =
-          forceEveryoneToExit(
-            selectedEvent.name
+          await onForceEndEvent(
+            selectedEvent.id
           );
-
-        onForceEndEvent(
-          selectedEvent.id
-        );
 
         alert(
           [
@@ -1202,6 +811,7 @@ function EventManagementPage({
             "",
             `来場者 ${exitResult.ticketCount}人を退出扱いにしました。`,
             `部員 ${exitResult.memberCount}人を退出扱いにしました。`,
+            "強制退出した来場者は平均滞在時間から除外されています。",
           ].join(
             "\n"
           )
@@ -1213,7 +823,13 @@ function EventManagementPage({
         );
 
         alert(
-          "イベントを終了できませんでした。\nデータは変更されていない可能性があります。"
+          error instanceof Error
+            ? `イベントを終了できませんでした。\n${error.message}`
+            : "イベントを終了できませんでした。\n通信状態を確認してください。"
+        );
+      } finally {
+        setEndingEvent(
+          false
         );
       }
     };
@@ -1558,7 +1174,8 @@ function EventManagementPage({
           ) => {
             if (
               event.target ===
-              event.currentTarget
+              event.currentTarget &&
+              !endingEvent
             ) {
               setSelectedEventId(
                 null
@@ -1602,6 +1219,9 @@ function EventManagementPage({
                   type="button"
                   className="event-detail-close-icon"
                   aria-label="イベント詳細を閉じる"
+                  disabled={
+                    endingEvent
+                  }
                   onClick={() =>
                     setSelectedEventId(
                       null
@@ -1709,6 +1329,9 @@ function EventManagementPage({
               <button
                 type="button"
                 className="event-detail-close"
+                disabled={
+                  endingEvent
+                }
                 onClick={() =>
                   setSelectedEventId(
                     null
@@ -1725,7 +1348,8 @@ function EventManagementPage({
                   className="event-select-button"
                   disabled={
                     selectedEvent.id ===
-                    currentEventId
+                      currentEventId ||
+                    endingEvent
                   }
                   onClick={
                     handleSelectCurrent
@@ -1743,21 +1367,27 @@ function EventManagementPage({
                 className="event-force-end-button"
                 disabled={
                   selectedStatus ===
-                  "終了"
+                    "終了" ||
+                  endingEvent
                 }
-                onClick={
-                  handleForceEnd
-                }
+                onClick={() => {
+                  void handleForceEnd();
+                }}
               >
-                {selectedStatus ===
-                "終了"
-                  ? "イベント終了済み"
-                  : "イベントを強制終了"}
+                {endingEvent
+                  ? "終了処理中…"
+                  : selectedStatus ===
+                    "終了"
+                    ? "イベント終了済み"
+                    : "イベントを強制終了"}
               </button>
 
               <button
                 type="button"
                 className="event-delete-button"
+                disabled={
+                  endingEvent
+                }
                 onClick={
                   handleDelete
                 }
