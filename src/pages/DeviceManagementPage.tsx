@@ -772,22 +772,24 @@ function DeviceManagementPage({
                       </div>
 
                       <div className="device-management-device-actions">
-                        <button
-                          type="button"
-                          className="device-management-rename"
-                          disabled={isOperating}
-                          onClick={() => {
-                            setEditingUid(
-                              device.uid
-                            );
-                            setEditingName(
-                              device.deviceName
-                            );
-                            setOperationError("");
-                          }}
-                        >
-                          端末名を変更
-                        </button>
+                        {isCurrent && (
+                          <button
+                            type="button"
+                            className="device-management-rename"
+                            disabled={isOperating}
+                            onClick={() => {
+                              setEditingUid(
+                                device.uid
+                              );
+                              setEditingName(
+                                device.deviceName
+                              );
+                              setOperationError("");
+                            }}
+                          >
+                            端末名を変更
+                          </button>
+                        )}
 
                         {!isCurrent && (
                           <button
