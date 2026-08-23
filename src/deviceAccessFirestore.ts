@@ -171,6 +171,52 @@ function getAuthenticatedUid() {
   return uid;
 }
 
+function detectDeviceType() {
+  if (
+    typeof navigator === "undefined"
+  ) {
+    return "unknown";
+  }
+
+  const userAgent =
+    navigator.userAgent.toLowerCase();
+  const platform =
+    navigator.platform.toLowerCase();
+
+  if (
+    userAgent.includes("ipad") ||
+    (
+      platform === "macintel" &&
+      navigator.maxTouchPoints > 1
+    )
+  ) {
+    return "ipad";
+  }
+
+  if (userAgent.includes("iphone")) {
+    return "iphone";
+  }
+
+  if (userAgent.includes("android")) {
+    return "android";
+  }
+
+  if (userAgent.includes("windows")) {
+    return "windows";
+  }
+
+  if (
+    userAgent.includes("macintosh") ||
+    platform.includes("mac")
+  ) {
+    return "mac";
+  }
+
+  return userAgent === ""
+    ? "unknown"
+    : "other";
+}
+
 function isDeviceRole(
   value: unknown
 ): value is DeviceRole {
@@ -687,6 +733,8 @@ export async function submitDeviceAccessRequest(
         cleanDisplayName,
       deviceName:
         cleanDeviceName,
+      deviceType:
+        detectDeviceType(),
       status: "pending",
       requestedAt:
         serverTimestamp(),
