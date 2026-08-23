@@ -20,6 +20,11 @@ import {
   registerEventDataId,
 } from "./firestorePaths";
 
+import {
+  forceEveryoneToExitInFirestore,
+  type EventEndResult,
+} from "./eventEndFirestore";
+
 export type EventStatus =
   | "scheduled"
   | "active"
@@ -278,7 +283,10 @@ export function subscribeToCurrentEventId(
 
 export async function saveEventToFirestore(
   eventData: EventData
-) {
+): Promise<
+  EventEndResult |
+  null
+> {
   const eventDocument =
     doc(
       db,
@@ -286,38 +294,74 @@ export async function saveEventToFirestore(
       eventData.id
     );
 
+  let eventToSave =
+    eventData;
+
+  let eventEndResult:
+    EventEndResult |
+    null =
+    null;
+
+  if (
+    eventData.status ===
+    "ended"
+  ) {
+    const endedAt =
+      eventData.endedAt ??
+      new Date().toISOString();
+
+    eventToSave = {
+      ...eventData,
+      endedAt,
+    };
+
+    /*
+      イベントを「終了」に確定する前に、
+      Firestore上の入場中チケット・入室中部員を
+      すべて退出状態へ更新して履歴と集計を確定します。
+
+      この処理が失敗した場合はイベント自体も終了扱いにせず、
+      次回もう一度安全にやり直せるようにします。
+    */
+    eventEndResult =
+      await forceEveryoneToExitInFirestore(
+        eventToSave,
+        endedAt
+      );
+  }
+
   await setDoc(
     eventDocument,
     {
       id:
-        eventData.id,
+        eventToSave.id,
 
       name:
-        eventData.name,
+        eventToSave.name,
 
       date:
-        eventData.date,
+        eventToSave.date,
 
       startTime:
-        eventData.startTime,
+        eventToSave.startTime,
 
       endTime:
-        eventData.endTime,
+        eventToSave.endTime,
 
       status:
-        eventData.status ??
+        eventToSave.status ??
         "scheduled",
 
       endedAt:
-        eventData.endedAt ??
+        eventToSave.endedAt ??
         null,
 
-      ...(eventData.dataDocumentId ===
+      ...(eventToSave.dataDocumentId ===
         undefined
         ? {}
         : {
             dataDocumentId:
-              eventData.dataDocumentId,
+              eventToSave.dataDocumentId,
           }),
 
       updatedAt:
@@ -328,6 +372,8 @@ export async function saveEventToFirestore(
         true,
     }
   );
+
+  return eventEndResult;
 }
 
 export async function setCurrentEventIdInFirestore(
@@ -382,14 +428,15 @@ export async function endEventInFirestore(
   eventData: EventData,
   endedAt: string
 ) {
-  await saveEventToFirestore({
-    ...eventData,
+  const eventEndResult =
+    await saveEventToFirestore({
+      ...eventData,
 
-    status:
-      "ended",
+      status:
+        "ended",
 
-    endedAt,
-  });
+      endedAt,
+    });
 
   const currentEventDocument =
     doc(
@@ -412,6 +459,8 @@ export async function endEventInFirestore(
         true,
     }
   );
+
+  return eventEndResult;
 }
 
 export async function deleteEventFromFirestore(
