@@ -797,6 +797,18 @@ function ReceptionPage({
           ) {
             if (
               result.reason ===
+                "event-ended"
+            ) {
+              showError(
+                "このイベントの受付は終了しました",
+                parsedQr.qrNumber
+              );
+
+              return;
+            }
+
+            if (
+              result.reason ===
                 "not-cached"
             ) {
               showError(
@@ -923,6 +935,18 @@ function ReceptionPage({
           if (
             !result.success
           ) {
+            if (
+              result.reason ===
+                "event-ended"
+            ) {
+              showError(
+                "このイベントの受付は終了しました",
+                parsedQr.qrNumber
+              );
+
+              return;
+            }
+
             if (
               result.reason ===
                 "not-cached"

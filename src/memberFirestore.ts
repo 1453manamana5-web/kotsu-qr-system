@@ -18,6 +18,7 @@ import {
 import {
   ACTIVITY_COLLECTION,
   EVENT_DATA_COLLECTION,
+  EVENTS_COLLECTION,
   EVENT_MEMBERS_COLLECTION,
   MEMBER_CARDS_COLLECTION,
   getEventDataId,
@@ -76,7 +77,8 @@ export type MemberReceptionResult =
         | "not-found"
         | "not-cached"
         | "invalid-token"
-        | "duplicate";
+        | "duplicate"
+        | "event-ended";
     };
 
 function isMemberStatus(
@@ -196,6 +198,18 @@ function getActivityDocument(
     ),
     ACTIVITY_COLLECTION,
     activityId
+  );
+}
+
+function getReceptionControlDocument(
+  eventName: string
+) {
+  return doc(
+    db,
+    EVENTS_COLLECTION,
+    getEventDataId(
+      eventName
+    )
   );
 }
 
@@ -723,6 +737,7 @@ export async function processMemberReceptionInFirestore(
       const [
         memberCardSnapshot,
         analyticsSnapshot,
+        receptionControlSnapshot,
       ] = await Promise.all([
         transaction.get(
           memberCardDocument
@@ -731,7 +746,31 @@ export async function processMemberReceptionInFirestore(
           transaction,
           eventName
         ),
+        transaction.get(
+          getReceptionControlDocument(
+            eventName
+          )
+        ),
       ]);
+
+      if (
+        receptionControlSnapshot.exists() &&
+        (
+          receptionControlSnapshot.data().status ===
+            "ended" ||
+          receptionControlSnapshot.data().finalizationStatus ===
+            "processing" ||
+          receptionControlSnapshot.data().finalizationStatus ===
+            "completed"
+        )
+      ) {
+        return {
+          success:
+            false,
+          reason:
+            "event-ended",
+        };
+      }
 
       if (
         !memberCardSnapshot.exists()

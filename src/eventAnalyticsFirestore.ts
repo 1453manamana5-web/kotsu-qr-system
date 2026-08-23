@@ -30,7 +30,7 @@ import type {
   ActivityType,
 } from "./activityFirestore";
 
-const ANALYTICS_SCHEMA_VERSION = 1;
+export const ANALYTICS_SCHEMA_VERSION = 1;
 const REBUILD_RETRY_LIMIT = 4;
 
 export type AnalyticsHourData = {
@@ -234,6 +234,9 @@ function convertActivity(
     ...(typeof data.isReEntry === "boolean"
       ? { isReEntry: data.isReEntry }
       : {}),
+    ...(typeof data.forcedExit === "boolean"
+      ? { forcedExit: data.forcedExit }
+      : {}),
     ...(data.source === "scanner" || data.source === "manual"
       ? { source: data.source }
       : {}),
@@ -306,7 +309,10 @@ function calculateSummary(
       return;
     }
 
-    if (log.type !== "ticket-exit") {
+    if (
+      log.type !== "ticket-exit" ||
+      log.forcedExit === true
+    ) {
       return;
     }
 

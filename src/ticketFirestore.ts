@@ -18,6 +18,7 @@ import {
 import {
   ACTIVITY_COLLECTION,
   EVENT_DATA_COLLECTION,
+  EVENTS_COLLECTION,
   TICKETS_COLLECTION,
   getEventDataId,
   createSafeRandomId,
@@ -85,7 +86,8 @@ export type TicketReceptionResult =
         | "invalid"
         | "already-inside"
         | "not-entered"
-        | "already-exited";
+        | "already-exited"
+        | "event-ended";
     };
 
 function isTicketStatus(
@@ -178,6 +180,18 @@ function getActivityDocument(
     ),
     ACTIVITY_COLLECTION,
     activityId
+  );
+}
+
+function getReceptionControlDocument(
+  eventName: string
+) {
+  return doc(
+    db,
+    EVENTS_COLLECTION,
+    getEventDataId(
+      eventName
+    )
   );
 }
 
@@ -743,6 +757,7 @@ export async function processTicketEntryInFirestore(
       const [
         ticketSnapshot,
         analyticsSnapshot,
+        receptionControlSnapshot,
       ] = await Promise.all([
         transaction.get(
           ticketDocument
@@ -751,7 +766,31 @@ export async function processTicketEntryInFirestore(
           transaction,
           eventName
         ),
+        transaction.get(
+          getReceptionControlDocument(
+            eventName
+          )
+        ),
       ]);
+
+      if (
+        receptionControlSnapshot.exists() &&
+        (
+          receptionControlSnapshot.data().status ===
+            "ended" ||
+          receptionControlSnapshot.data().finalizationStatus ===
+            "processing" ||
+          receptionControlSnapshot.data().finalizationStatus ===
+            "completed"
+        )
+      ) {
+        return {
+          success:
+            false,
+          reason:
+            "event-ended",
+        };
+      }
 
       if (
         !ticketSnapshot.exists()
@@ -978,6 +1017,7 @@ export async function processTicketExitInFirestore(
       const [
         ticketSnapshot,
         analyticsSnapshot,
+        receptionControlSnapshot,
       ] = await Promise.all([
         transaction.get(
           ticketDocument
@@ -986,7 +1026,31 @@ export async function processTicketExitInFirestore(
           transaction,
           eventName
         ),
+        transaction.get(
+          getReceptionControlDocument(
+            eventName
+          )
+        ),
       ]);
+
+      if (
+        receptionControlSnapshot.exists() &&
+        (
+          receptionControlSnapshot.data().status ===
+            "ended" ||
+          receptionControlSnapshot.data().finalizationStatus ===
+            "processing" ||
+          receptionControlSnapshot.data().finalizationStatus ===
+            "completed"
+        )
+      ) {
+        return {
+          success:
+            false,
+          reason:
+            "event-ended",
+        };
+      }
 
       if (
         !ticketSnapshot.exists()

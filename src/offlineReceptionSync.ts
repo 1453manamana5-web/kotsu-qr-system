@@ -10,6 +10,7 @@ import {
   ACTIVITY_COLLECTION,
   EVENT_DATA_COLLECTION,
   EVENT_MEMBERS_COLLECTION,
+  EVENTS_COLLECTION,
   MEMBER_CARDS_COLLECTION,
   TICKETS_COLLECTION,
   getEventDataId,
@@ -69,6 +70,18 @@ function shouldApplyStatus(
   );
 }
 
+function createFinalizationInProgressError() {
+  return Object.assign(
+    new Error(
+      "イベント終了処理が完了するまで同期を待機します。"
+    ),
+    {
+      code:
+        "unavailable",
+    }
+  );
+}
+
 async function syncTicketOperation(
   operation: Extract<
     PendingReceptionOperation,
@@ -92,6 +105,12 @@ async function syncTicketOperation(
   const activityDocument =
     getActivityDocument(operation);
 
+  const eventDocument = doc(
+    db,
+    EVENTS_COLLECTION,
+    eventId
+  );
+
   await runTransaction(
     db,
     async (transaction) => {
@@ -99,6 +118,7 @@ async function syncTicketOperation(
         activitySnapshot,
         ticketSnapshot,
         analyticsSnapshot,
+        eventSnapshot,
       ] = await Promise.all([
         transaction.get(
           activityDocument
@@ -110,6 +130,9 @@ async function syncTicketOperation(
           getEventAnalyticsDocumentByDataId(
             eventId
           )
+        ),
+        transaction.get(
+          eventDocument
         ),
       ]);
 
@@ -126,6 +149,33 @@ async function syncTicketOperation(
       const ticketData =
         ticketSnapshot.data();
 
+      const eventData =
+        eventSnapshot.exists()
+          ? eventSnapshot.data()
+          : {};
+
+      if (
+        eventData.finalizationStatus ===
+          "processing"
+      ) {
+        throw createFinalizationInProgressError();
+      }
+
+      const eventEnded =
+        eventData.status ===
+          "ended" ||
+        eventData.finalizationStatus ===
+          "completed";
+
+      const finalizationEndedAt =
+        typeof eventData.finalizationEndedAt ===
+          "string"
+          ? eventData.finalizationEndedAt
+          : typeof eventData.endedAt ===
+              "string"
+            ? eventData.endedAt
+            : operation.capturedAt;
+
       if (
         ticketData.authToken !==
         operation.authToken
@@ -136,6 +186,22 @@ async function syncTicketOperation(
       }
 
       if (
+        eventEnded
+      ) {
+        transaction.update(
+          ticketDocument,
+          {
+            status:
+              "使用済み",
+            lastReceptionAt:
+              finalizationEndedAt,
+            lastReceptionOperationId:
+              operation.id,
+            updatedAt:
+              serverTimestamp(),
+          }
+        );
+      } else if (
         shouldApplyStatus(
           ticketData.lastReceptionAt,
           operation.capturedAt
@@ -220,6 +286,12 @@ async function syncMemberOperation(
   const activityDocument =
     getActivityDocument(operation);
 
+  const eventDocument = doc(
+    db,
+    EVENTS_COLLECTION,
+    eventId
+  );
+
   await runTransaction(
     db,
     async (transaction) => {
@@ -228,6 +300,7 @@ async function syncMemberOperation(
         cardSnapshot,
         memberSnapshot,
         analyticsSnapshot,
+        eventSnapshot,
       ] = await Promise.all([
         transaction.get(
           activityDocument
@@ -242,6 +315,9 @@ async function syncMemberOperation(
           getEventAnalyticsDocumentByDataId(
             eventId
           )
+        ),
+        transaction.get(
+          eventDocument
         ),
       ]);
 
@@ -272,7 +348,58 @@ async function syncMemberOperation(
           ? memberSnapshot.data()
           : {};
 
+      const eventData =
+        eventSnapshot.exists()
+          ? eventSnapshot.data()
+          : {};
+
       if (
+        eventData.finalizationStatus ===
+          "processing"
+      ) {
+        throw createFinalizationInProgressError();
+      }
+
+      const eventEnded =
+        eventData.status ===
+          "ended" ||
+        eventData.finalizationStatus ===
+          "completed";
+
+      const finalizationEndedAt =
+        typeof eventData.finalizationEndedAt ===
+          "string"
+          ? eventData.finalizationEndedAt
+          : typeof eventData.endedAt ===
+              "string"
+            ? eventData.endedAt
+            : operation.capturedAt;
+
+      if (
+        eventEnded
+      ) {
+        transaction.set(
+          memberDocument,
+          {
+            qrNumber:
+              operation.qrNumber,
+            name:
+              typeof memberData.name ===
+                "string"
+                ? memberData.name
+                : operation.memberName,
+            status:
+              "退出済み",
+            lastReceptionAt:
+              finalizationEndedAt,
+            lastReceptionOperationId:
+              operation.id,
+            updatedAt:
+              serverTimestamp(),
+          },
+          { merge: true }
+        );
+      } else if (
         shouldApplyStatus(
           memberData.lastReceptionAt,
           operation.capturedAt

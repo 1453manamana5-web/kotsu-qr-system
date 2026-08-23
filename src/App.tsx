@@ -71,7 +71,6 @@ const FirebaseTestPage = lazy(() =>
 import {
   createEventInFirestore,
   deleteEventFromFirestore,
-  saveEventToFirestore,
   setCurrentEventIdInFirestore,
   subscribeToCurrentEventId,
   subscribeToEvents,
@@ -90,7 +89,6 @@ import {
 } from "./memberFirestore";
 
 import {
-  getEventDataId,
   createSafeRandomId,
   registerEventDataId,
 } from "./firestorePaths";
@@ -104,6 +102,11 @@ import {
 } from "./eventAnalyticsFirestore";
 
 import {
+  finalizeEventInFirestore,
+  type EventFinalizationResult,
+} from "./eventFinalizationFirestore";
+
+import {
   useDeviceAccess,
 } from "./deviceAccessContext";
 
@@ -112,48 +115,6 @@ type NewEventData = {
   date: string;
   startTime: string;
   endTime: string;
-};
-
-type TicketStatus =
-  | "未使用"
-  | "入場中"
-  | "使用済み"
-  | "無効";
-
-type MemberStatus =
-  | "未入室"
-  | "入室中"
-  | "退出済み";
-
-type Ticket = {
-  id: string;
-  qrNumber: string;
-  authToken: string;
-  status: TicketStatus;
-  createdAt: string;
-};
-
-type EventMember = {
-  qrNumber: string;
-  name: string;
-  status: MemberStatus;
-};
-
-type ActivityType =
-  | "ticket-entry"
-  | "ticket-exit"
-  | "member-entry"
-  | "member-exit";
-
-type ActivityLog = {
-  id: string;
-  type: ActivityType;
-  qrNumber: string;
-  timestamp: string;
-  isReEntry?: boolean;
-  source?:
-    | "scanner"
-    | "manual";
 };
 
 type Page =
@@ -298,332 +259,6 @@ function loadStoredEventStore(): EventStore {
       currentEventId: null,
     };
   }
-}
-
-function createTicketStorageKey(
-  eventName: string
-) {
-  return `qr-management-event-tickets-${getEventDataId(
-    eventName
-  )}`;
-}
-
-function createMemberStorageKey(
-  eventName: string
-) {
-  return `qr-management-event-members-${getEventDataId(
-    eventName
-  )}`;
-}
-
-function createActivityStorageKey(
-  eventName: string
-) {
-  return `qr-management-event-activity-${getEventDataId(
-    eventName
-  )}`;
-}
-
-function loadTickets(
-  eventName: string
-): Ticket[] {
-  try {
-    const savedData =
-      localStorage.getItem(
-        createTicketStorageKey(
-          eventName
-        )
-      );
-
-    if (
-      savedData === null
-    ) {
-      return [];
-    }
-
-    const parsedData: unknown =
-      JSON.parse(
-        savedData
-      );
-
-    if (
-      !Array.isArray(
-        parsedData
-      )
-    ) {
-      return [];
-    }
-
-    return parsedData.filter(
-      (
-        ticket
-      ): ticket is Ticket =>
-        typeof ticket?.id ===
-          "string" &&
-        typeof ticket?.qrNumber ===
-          "string" &&
-        typeof ticket?.authToken ===
-          "string" &&
-        typeof ticket?.createdAt ===
-          "string" &&
-        (
-          ticket?.status ===
-            "未使用" ||
-          ticket?.status ===
-            "入場中" ||
-          ticket?.status ===
-            "使用済み" ||
-          ticket?.status ===
-            "無効"
-        )
-    );
-  } catch (error) {
-    console.error(
-      "チケット情報の読み込みに失敗しました。",
-      error
-    );
-
-    return [];
-  }
-}
-
-function loadMembers(
-  eventName: string
-): EventMember[] {
-  try {
-    const savedData =
-      localStorage.getItem(
-        createMemberStorageKey(
-          eventName
-        )
-      );
-
-    if (
-      savedData === null
-    ) {
-      return [];
-    }
-
-    const parsedData: unknown =
-      JSON.parse(
-        savedData
-      );
-
-    if (
-      !Array.isArray(
-        parsedData
-      )
-    ) {
-      return [];
-    }
-
-    return parsedData.filter(
-      (
-        member
-      ): member is EventMember =>
-        typeof member?.qrNumber ===
-          "string" &&
-        typeof member?.name ===
-          "string" &&
-        (
-          member?.status ===
-            "未入室" ||
-          member?.status ===
-            "入室中" ||
-          member?.status ===
-            "退出済み"
-        )
-    );
-  } catch (error) {
-    console.error(
-      "部員情報の読み込みに失敗しました。",
-      error
-    );
-
-    return [];
-  }
-}
-
-function loadActivityLogs(
-  eventName: string
-): ActivityLog[] {
-  try {
-    const savedData =
-      localStorage.getItem(
-        createActivityStorageKey(
-          eventName
-        )
-      );
-
-    if (
-      savedData === null
-    ) {
-      return [];
-    }
-
-    const parsedData: unknown =
-      JSON.parse(
-        savedData
-      );
-
-    return Array.isArray(
-      parsedData
-    )
-      ? (
-          parsedData as
-            ActivityLog[]
-        )
-      : [];
-  } catch (error) {
-    console.error(
-      "受付履歴の読み込みに失敗しました。",
-      error
-    );
-
-    return [];
-  }
-}
-
-function forceEveryoneToExit(
-  eventName: string,
-  endedAt: string
-) {
-  const tickets =
-    loadTickets(
-      eventName
-    );
-
-  const members =
-    loadMembers(
-      eventName
-    );
-
-  const activityLogs =
-    loadActivityLogs(
-      eventName
-    );
-
-  const insideTickets =
-    tickets.filter(
-      (ticket) =>
-        ticket.status ===
-        "入場中"
-    );
-
-  const insideMembers =
-    members.filter(
-      (member) =>
-        member.status ===
-        "入室中"
-    );
-
-  if (
-    insideTickets.length ===
-      0 &&
-    insideMembers.length ===
-      0
-  ) {
-    return;
-  }
-
-  const updatedTickets =
-    tickets.map(
-      (ticket): Ticket =>
-        ticket.status ===
-        "入場中"
-          ? {
-              ...ticket,
-              status:
-                "使用済み",
-            }
-          : ticket
-    );
-
-  const updatedMembers =
-    members.map(
-      (
-        member
-      ): EventMember =>
-        member.status ===
-        "入室中"
-          ? {
-              ...member,
-              status:
-                "退出済み",
-            }
-          : member
-    );
-
-  const ticketExitLogs:
-    ActivityLog[] =
-    insideTickets.map(
-      (ticket) => ({
-        id:
-          createSafeRandomId(),
-
-        type:
-          "ticket-exit",
-
-        qrNumber:
-          ticket.qrNumber,
-
-        timestamp:
-          endedAt,
-
-        source:
-          "manual",
-      })
-    );
-
-  const memberExitLogs:
-    ActivityLog[] =
-    insideMembers.map(
-      (member) => ({
-        id:
-          createSafeRandomId(),
-
-        type:
-          "member-exit",
-
-        qrNumber:
-          member.qrNumber,
-
-        timestamp:
-          endedAt,
-
-        source:
-          "manual",
-      })
-    );
-
-  localStorage.setItem(
-    createTicketStorageKey(
-      eventName
-    ),
-    JSON.stringify(
-      updatedTickets
-    )
-  );
-
-  localStorage.setItem(
-    createMemberStorageKey(
-      eventName
-    ),
-    JSON.stringify(
-      updatedMembers
-    )
-  );
-
-  localStorage.setItem(
-    createActivityStorageKey(
-      eventName
-    ),
-    JSON.stringify([
-      ...activityLogs,
-      ...ticketExitLogs,
-      ...memberExitLogs,
-    ])
-  );
 }
 
 function createEventDateTime(
@@ -1490,32 +1125,10 @@ function App() {
             new Date().toISOString();
 
           try {
-            /*
-              チケット・部員はまだlocalStorage版なので、
-              現時点ではこの端末内の退出処理です。
-
-              次の作業でFirestore共有へ移します。
-            */
-            forceEveryoneToExit(
-              event.name,
+            await finalizeEventInFirestore(
+              event,
               endedAt
             );
-
-            await saveEventToFirestore({
-              ...event,
-              status:
-                "ended",
-              endedAt,
-            });
-
-            if (
-              eventStore.currentEventId ===
-              event.id
-            ) {
-              await setCurrentEventIdInFirestore(
-                null
-              );
-            }
           } catch (error) {
             console.error(
               `${event.name}の自動終了に失敗しました。`,
@@ -1721,75 +1334,27 @@ function App() {
       void runSelectEvent();
     };
 
-  const forceEndEvent = (
+  const forceEndEvent = async (
     eventId: string
-  ) => {
-    const runForceEndEvent =
-      async () => {
-        const targetEvent =
-          eventsById.get(
-            eventId
-          );
+  ): Promise<EventFinalizationResult> => {
+    const targetEvent =
+      eventsById.get(
+        eventId
+      );
 
-        if (
-          targetEvent ===
-          undefined
-        ) {
-          alert(
-            "終了するイベントが見つかりません。"
-          );
+    if (
+      targetEvent ===
+        undefined
+    ) {
+      throw new Error(
+        "終了するイベントが見つかりません。"
+      );
+    }
 
-          return;
-        }
-
-        if (
-          targetEvent.status ===
-            "ended" ||
-          typeof targetEvent.endedAt ===
-            "string"
-        ) {
-          return;
-        }
-
-        const endedAt =
-          new Date().toISOString();
-
-        try {
-          forceEveryoneToExit(
-            targetEvent.name,
-            endedAt
-          );
-
-          await saveEventToFirestore({
-            ...targetEvent,
-
-            status:
-              "ended",
-
-            endedAt,
-          });
-
-          if (
-            eventStore.currentEventId ===
-            eventId
-          ) {
-            await setCurrentEventIdInFirestore(
-              null
-            );
-          }
-        } catch (error) {
-          console.error(
-            "イベントの終了に失敗しました。",
-            error
-          );
-
-          alert(
-            "イベントを終了できませんでした。\n通信状態を確認してください。"
-          );
-        }
-      };
-
-    void runForceEndEvent();
+    return finalizeEventInFirestore(
+      targetEvent,
+      new Date().toISOString()
+    );
   };
 
   const deleteEvent = (

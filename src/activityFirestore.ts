@@ -32,6 +32,7 @@ export type ActivityLog = {
   qrNumber: string;
   timestamp: string;
   isReEntry?: boolean;
+  forcedExit?: boolean;
   source?: ActivitySource;
 };
 
@@ -101,6 +102,14 @@ function convertActivityDocument(
   ) {
     activity.isReEntry =
       data.isReEntry;
+  }
+
+  if (
+    typeof data.forcedExit ===
+      "boolean"
+  ) {
+    activity.forcedExit =
+      data.forcedExit;
   }
 
   if (
