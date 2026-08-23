@@ -24,6 +24,10 @@ import type {
   EventMember,
 } from "./memberFirestore";
 
+import {
+  markEventAnalyticsStale,
+} from "./eventAnalyticsFirestore";
+
 export async function resetEventMemberStatusesInFirestore(
   eventName: string
 ) {
@@ -88,6 +92,10 @@ export async function resetEventMemberStatusesInFirestore(
     cacheEventMembersForOffline(
       normalizedEventName,
       []
+    );
+
+    await markEventAnalyticsStale(
+      normalizedEventName
     );
 
     return 0;
@@ -182,6 +190,10 @@ export async function resetEventMemberStatusesInFirestore(
   cacheEventMembersForOffline(
     normalizedEventName,
     resetMembers
+  );
+
+  await markEventAnalyticsStale(
+    normalizedEventName
   );
 
   return snapshot.size;

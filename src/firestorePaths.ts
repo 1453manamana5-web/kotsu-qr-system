@@ -19,6 +19,12 @@ export const EVENT_MEMBERS_COLLECTION =
 export const ACTIVITY_COLLECTION =
   "activity";
 
+export const ANALYTICS_COLLECTION =
+  "analytics";
+
+export const ANALYTICS_SUMMARY_DOCUMENT =
+  "summary";
+
 export const RECEPTION_DEVICES_COLLECTION =
   "reception-devices";
 
