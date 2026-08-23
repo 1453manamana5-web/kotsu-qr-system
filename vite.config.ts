@@ -9,7 +9,7 @@ import {
 } from "vite-plugin-pwa";
 
 const APP_BASE =
-  "/kotsu-qr-system/";
+  "/qr-system/";
 
 export default defineConfig({
   base:
