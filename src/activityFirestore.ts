@@ -33,6 +33,7 @@ export type ActivityLog = {
   timestamp: string;
   isReEntry?: boolean;
   source?: ActivitySource;
+  forcedExit?: boolean;
 };
 
 function isActivityType(
@@ -110,6 +111,14 @@ function convertActivityDocument(
   ) {
     activity.source =
       data.source;
+  }
+
+  if (
+    typeof data.forcedExit ===
+      "boolean"
+  ) {
+    activity.forcedExit =
+      data.forcedExit;
   }
 
   return activity;
