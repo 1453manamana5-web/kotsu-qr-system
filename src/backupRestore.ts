@@ -49,6 +49,16 @@ const VOLATILE_LOCAL_STORAGE_KEYS =
     "qr-management-offline-reception-queue-v2",
   ]);
 
+/*
+  端末の承認情報はバックアップ／復元の対象外です。
+  復元によって部員端末が全滅したり、古い権限が復活したり
+  しないよう、現在の端末管理データを必ず保持します。
+*/
+const PROTECTED_SYSTEM_DOCUMENT_IDS =
+  new Set([
+    "device-access",
+  ]);
+
 type SerializedValue =
   | null
   | boolean
@@ -579,7 +589,13 @@ export async function createFullBackup(
       new Date().toISOString(),
     firestore: {
       events,
-      system,
+      system:
+        system.filter(
+          (storedDocument) =>
+            !PROTECTED_SYSTEM_DOCUMENT_IDS.has(
+              storedDocument.id
+            )
+        ),
       memberCards,
       eventData,
     },
@@ -945,7 +961,9 @@ export function getBackupSummary(
 async function createReplaceOperations(
   pathSegments: string[],
   restoredDocuments:
-    StoredDocument[]
+    StoredDocument[],
+  protectedDocumentIds =
+    new Set<string>()
 ) {
   const snapshot =
     await getDocsFromServer(
@@ -956,10 +974,13 @@ async function createReplaceOperations(
 
   const restoredIds =
     new Set(
-      restoredDocuments.map(
-        (storedDocument) =>
-          storedDocument.id
-      )
+      [
+        ...restoredDocuments.map(
+          (storedDocument) =>
+            storedDocument.id
+        ),
+        ...protectedDocumentIds,
+      ]
     );
 
   const deleteOperations =
@@ -981,23 +1002,30 @@ async function createReplaceOperations(
       );
 
   const setOperations =
-    restoredDocuments.map(
-      (storedDocument):
-        WriteOperation => ({
-        type: "set",
-        reference:
-          doc(
-            getCollectionReference(
-              pathSegments
-            ),
+    restoredDocuments
+      .filter(
+        (storedDocument) =>
+          !protectedDocumentIds.has(
             storedDocument.id
-          ),
-        data:
-          deserializeFirestoreValue(
-            storedDocument.data
-          ) as DocumentData,
+          )
+      )
+      .map(
+        (storedDocument):
+          WriteOperation => ({
+          type: "set",
+          reference:
+            doc(
+              getCollectionReference(
+                pathSegments
+              ),
+              storedDocument.id
+            ),
+          data:
+            deserializeFirestoreValue(
+              storedDocument.data
+            ) as DocumentData,
         })
-    );
+      );
 
   return [
     ...setOperations,
@@ -1098,7 +1126,8 @@ async function replaceFirestoreData(
       ),
       createReplaceOperations(
         [SYSTEM_COLLECTION],
-        backup.firestore.system
+        backup.firestore.system,
+        PROTECTED_SYSTEM_DOCUMENT_IDS
       ),
       createReplaceOperations(
         [MEMBER_CARDS_COLLECTION],

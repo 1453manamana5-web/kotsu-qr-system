@@ -1513,15 +1513,28 @@
 }
 
 .admin-settings-card {
-  grid-column:
-    1 / -1;
-
   background:
     linear-gradient(
       145deg,
       #f0f1f5,
       #e7e9ef
     );
+}
+
+.admin-devices-card {
+  background:
+    linear-gradient(
+      145deg,
+      #e5f7f7,
+      #d8eff0
+    );
+}
+
+.admin-devices-card
+  .admin-menu-card-icon {
+  background: #c7e7e8;
+
+  color: #247b80;
 }
 
 .admin-settings-card

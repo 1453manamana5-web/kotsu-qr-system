@@ -580,6 +580,43 @@ function SettingsIcon() {
   );
 }
 
+function DeviceManagementIcon() {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+    >
+      <rect
+        x="12"
+        y="7"
+        width="40"
+        height="50"
+        rx="7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+
+      <path
+        d="M25 48H39"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M23 29L29 35L42 21"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function AdminModeIcon() {
   return (
     <svg
@@ -1275,6 +1312,20 @@ function AdminPage({
               onClick={() =>
                 setPage(
                   "settings"
+                )
+              }
+            />
+
+            <MenuCard
+              className="admin-devices-card"
+              icon={
+                <DeviceManagementIcon />
+              }
+              title="端末管理"
+              description="利用申請の承認・端末の停止"
+              onClick={() =>
+                setPage(
+                  "device-access"
                 )
               }
             />

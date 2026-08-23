@@ -60,6 +60,10 @@ const SettingsPage = lazy(() =>
   import("./pages/SettingsPage")
 );
 
+const DeviceManagementPage = lazy(() =>
+  import("./pages/DeviceManagementPage")
+);
+
 const FirebaseTestPage = lazy(() =>
   import("./pages/FirebaseTestPage")
 );
@@ -98,6 +102,10 @@ import {
 import {
   ensureEventAnalytics,
 } from "./eventAnalyticsFirestore";
+
+import {
+  useDeviceAccess,
+} from "./deviceAccessContext";
 
 type NewEventData = {
   name: string;
@@ -161,7 +169,23 @@ type Page =
   | "analysis"
   | "past-data"
   | "settings"
+  | "device-access"
   | "firebase-test";
+
+const ADMIN_ONLY_PAGES =
+  new Set<Page>([
+    "admin-auth",
+    "admin",
+    "events",
+    "create-event",
+    "members",
+    "tickets",
+    "analysis",
+    "past-data",
+    "settings",
+    "device-access",
+    "firebase-test",
+  ]);
 
 type AdminOrigin =
   | "home"
@@ -788,6 +812,11 @@ function findClosestSelectableEvent(
 }
 
 function App() {
+  const {
+    isMemberDevice,
+    requestAdminAccess,
+  } = useDeviceAccess();
+
   useEffect(() => {
     const preloadTimer =
       window.setTimeout(
@@ -873,7 +902,8 @@ function App() {
       page === "entry" ||
       page === "exit" ||
       page === "admin" ||
-      page === "events";
+      page === "events" ||
+      page === "device-access";
 
     document.documentElement.classList.toggle(
       "viewport-locked",
@@ -1511,8 +1541,20 @@ function App() {
   const changePage = (
     newPage: string
   ) => {
+    const nextPage =
+      newPage as Page;
+
     if (
-      newPage === "admin" &&
+      ADMIN_ONLY_PAGES.has(
+        nextPage
+      ) &&
+      !requestAdminAccess()
+    ) {
+      return;
+    }
+
+    if (
+      nextPage === "admin" &&
       page === "home"
     ) {
       setAdminOrigin(
@@ -1521,7 +1563,7 @@ function App() {
     }
 
     setPage(
-      newPage as Page
+      nextPage
     );
   };
 
@@ -1530,6 +1572,10 @@ function App() {
       | "entry"
       | "exit"
   ) => {
+    if (!requestAdminAccess()) {
+      return;
+    }
+
     setAdminOrigin(
       origin
     );
@@ -1980,7 +2026,13 @@ function App() {
     );
   }
 
-  switch (page) {
+  const visiblePage =
+    !isMemberDevice &&
+    ADMIN_ONLY_PAGES.has(page)
+      ? "home"
+      : page;
+
+  switch (visiblePage) {
     case "entry":
       return (
         <EntryPage
@@ -2145,6 +2197,15 @@ function App() {
           }
           onResetAllData={
             resetAllData
+          }
+        />
+      );
+
+    case "device-access":
+      return (
+        <DeviceManagementPage
+          setPage={
+            changePage
           }
         />
       );

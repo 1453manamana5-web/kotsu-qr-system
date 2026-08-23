@@ -9,6 +9,8 @@ import AppSplashScreen from "./AppSplashScreen";
 
 import DeviceAuthGate from "./DeviceAuthGate";
 
+import DeviceAccessGate from "./DeviceAccessGate";
+
 type StartupState =
   | "checking"
   | "ready"
@@ -32,31 +34,50 @@ const pageLoadingFallback = (
 
 function AppRoot() {
   const [
-    startupState,
-    setStartupState,
+    authState,
+    setAuthState,
   ] = useState<StartupState>(
     "checking"
   );
 
+  const [
+    accessState,
+    setAccessState,
+  ] = useState<StartupState>(
+    "checking"
+  );
+
+  const canFinishSplash =
+    authState === "error" ||
+    (
+      authState === "ready" &&
+      accessState !== "checking"
+    );
+
   return (
     <AppSplashScreen
       canFinish={
-        startupState !==
-        "checking"
+        canFinishSplash
       }
     >
       <DeviceAuthGate
         onScreenStateChange={
-          setStartupState
+          setAuthState
         }
       >
-        <Suspense
-          fallback={
-            pageLoadingFallback
+        <DeviceAccessGate
+          onScreenStateChange={
+            setAccessState
           }
         >
-          <App />
-        </Suspense>
+          <Suspense
+            fallback={
+              pageLoadingFallback
+            }
+          >
+            <App />
+          </Suspense>
+        </DeviceAccessGate>
       </DeviceAuthGate>
     </AppSplashScreen>
   );
