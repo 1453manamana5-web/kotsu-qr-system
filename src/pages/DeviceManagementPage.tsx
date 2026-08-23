@@ -313,15 +313,90 @@ function DeviceManagementPage({
   const handleApprove = (
     request: DeviceAccessRequest
   ) => {
+    const previousDevice =
+      devices.find(
+        (device) =>
+          device.uid === request.uid
+      );
+    const optimisticDevice:
+      AuthorizedDevice = {
+        uid: request.uid,
+        role: request.requestedRole,
+        displayName:
+          request.displayName,
+        deviceName:
+          request.deviceName,
+        active: true,
+        createdAt:
+          previousDevice?.createdAt ||
+          request.requestedAt,
+        approvedAt:
+          new Date().toISOString(),
+        approvedByUid: uid,
+        approvedByName:
+          currentDevice.displayName,
+      };
+
+    // Firestoreの応答を待たず、承認結果を先に画面へ反映する。
+    setRequests((current) =>
+      current.filter(
+        (item) =>
+          item.uid !== request.uid
+      )
+    );
+    setDevices((current) => [
+      ...current.filter(
+        (device) =>
+          device.uid !== request.uid
+      ),
+      optimisticDevice,
+    ]);
+
     void runOperation(
       {
         uid: request.uid,
         action: "approve",
       },
-      () =>
-        approveDeviceAccessRequest(
-          request.uid
-        )
+      async () => {
+        try {
+          await approveDeviceAccessRequest(
+            request.uid
+          );
+        } catch (error) {
+          // 保存できなかった場合だけ、承認前の表示へ戻す。
+          setRequests((current) =>
+            current.some(
+              (item) =>
+                item.uid === request.uid
+            )
+              ? current
+              : [...current, request].sort(
+                  (first, second) =>
+                    first.requestedAt.localeCompare(
+                      second.requestedAt
+                    )
+                )
+          );
+          setDevices((current) => {
+            const withoutTarget =
+              current.filter(
+                (device) =>
+                  device.uid !==
+                  request.uid
+              );
+
+            return previousDevice ===
+              undefined
+              ? withoutTarget
+              : [
+                  ...withoutTarget,
+                  previousDevice,
+                ];
+          });
+
+          throw error;
+        }
+      }
     );
   };
 
