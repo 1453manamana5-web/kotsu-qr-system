@@ -131,7 +131,8 @@ service cloud.firestore {
         ])
         && data.action in [
           'bootstrap-member', 'request-created', 'request-approved',
-          'request-rejected', 'device-disabled'
+          'request-rejected', 'device-disabled', 'device-renamed',
+          'device-deleted'
         ]
         && data.actorUid is string
         && shortText(data.actorName)
@@ -274,30 +275,30 @@ service cloud.firestore {
 
         allow update: if memberDevice()
           && validDevice(request.resource.data)
-          && deviceId != currentUid()
           && (
             (
-              resource.data.active == true
-              && request.resource.data.active == false
-              && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-                'active', 'disabledAt', 'disabledByUid', 'disabledByName'
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                'deviceName'
               ])
-              && request.resource.data.disabledAt == request.time
-              && request.resource.data.disabledByUid == currentUid()
-              && request.resource.data.disabledByName == currentDevice().displayName
-              && (
-                resource.data.role != 'member'
-                || (
-                  getAfter(configPath()).data.memberDeviceCount
-                    == get(configPath()).data.memberDeviceCount - 1
-                  && getAfter(configPath()).data.memberDeviceCount >= 1
-                )
-              )
+              && shortText(request.resource.data.deviceName)
             )
-            || request.resource.data.active == true
+            || (
+              deviceId != currentUid()
+              && request.resource.data.active == true
+            )
           );
 
-        allow delete: if false;
+        allow delete: if memberDevice()
+          && deviceId != currentUid()
+          && (
+            resource.data.role != 'member'
+            || resource.data.active != true
+            || (
+              getAfter(configPath()).data.memberDeviceCount
+                == get(configPath()).data.memberDeviceCount - 1
+              && getAfter(configPath()).data.memberDeviceCount >= 1
+            )
+          );
       }
 
       match /requests/{requestUid} {
