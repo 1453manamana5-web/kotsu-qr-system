@@ -61,7 +61,9 @@ export type DeviceAccessAudit = {
     | "request-created"
     | "request-approved"
     | "request-rejected"
-    | "device-disabled";
+    | "device-disabled"
+    | "device-renamed"
+    | "device-deleted";
   actorUid: string;
   actorName: string;
   targetUid: string;
@@ -304,7 +306,9 @@ function convertAudit(
     data.action === "request-created" ||
     data.action === "request-approved" ||
     data.action === "request-rejected" ||
-    data.action === "device-disabled";
+    data.action === "device-disabled" ||
+    data.action === "device-renamed" ||
+    data.action === "device-deleted";
 
   if (!validAction) {
     return null;
@@ -995,7 +999,88 @@ export async function rejectDeviceAccessRequest(
   );
 }
 
-export async function disableAuthorizedDevice(
+export async function renameAuthorizedDevice(
+  targetUid: string,
+  deviceName: string
+) {
+  const actorUid =
+    getAuthenticatedUid();
+  const cleanDeviceName =
+    cleanRequiredText(
+      deviceName,
+      "端末名"
+    );
+  const auditDocument =
+    doc(getAuditCollection());
+
+  await runTransaction(
+    db,
+    async (transaction) => {
+      const actor =
+        await getActorInTransaction(
+          transaction,
+          actorUid
+        );
+      const targetDocument =
+        getDeviceDocument(
+          targetUid
+        );
+      const targetSnapshot =
+        await transaction.get(
+          targetDocument
+        );
+      const target =
+        targetSnapshot.exists()
+          ? convertDevice(
+              targetSnapshot.id,
+              targetSnapshot.data()
+            )
+          : null;
+
+      if (target === null) {
+        throw new Error(
+          "変更する端末が見つかりません。"
+        );
+      }
+
+      if (
+        target.deviceName ===
+        cleanDeviceName
+      ) {
+        return;
+      }
+
+      transaction.update(
+        targetDocument,
+        {
+          deviceName:
+            cleanDeviceName,
+        }
+      );
+
+      transaction.set(
+        auditDocument,
+        {
+          action:
+            "device-renamed",
+          actorUid:
+            actor.uid,
+          actorName:
+            actor.displayName,
+          targetUid,
+          targetName:
+            cleanDeviceName,
+          role:
+            target.role,
+          createdAt:
+            serverTimestamp(),
+        }
+      );
+    }
+  );
+}
+
+export async function deleteAuthorizedDevice(
   targetUid: string
 ) {
   const actorUid =
@@ -1003,7 +1088,7 @@ export async function disableAuthorizedDevice(
 
   if (actorUid === targetUid) {
     throw new Error(
-      "現在使用中の端末は停止できません。別の部員端末から操作してください。"
+      "現在使用中の端末は削除できません。別の部員端末から操作してください。"
     );
   }
 
@@ -1035,11 +1120,10 @@ export async function disableAuthorizedDevice(
           : null;
 
       if (
-        target === null ||
-        !target.active
+        target === null
       ) {
         throw new Error(
-          "この端末はすでに停止されています。"
+          "この端末はすでに削除されています。"
         );
       }
 
@@ -1058,27 +1142,22 @@ export async function disableAuthorizedDevice(
 
       if (
         target.role === "member" &&
+        target.active &&
         config.memberDeviceCount <= 1
       ) {
         throw new Error(
-          "最後の部員端末は停止できません。先に別の部員端末を承認してください。"
+          "最後の部員端末は削除できません。先に別の部員端末を承認してください。"
         );
       }
 
-      transaction.update(
-        targetDocument,
-        {
-          active: false,
-          disabledAt:
-            serverTimestamp(),
-          disabledByUid:
-            actor.uid,
-          disabledByName:
-            actor.displayName,
-        }
+      transaction.delete(
+        targetDocument
       );
 
-      if (target.role === "member") {
+      if (
+        target.role === "member" &&
+        target.active
+      ) {
         transaction.update(
           configDocument,
           {
@@ -1098,7 +1177,7 @@ export async function disableAuthorizedDevice(
         auditDocument,
         {
           action:
-            "device-disabled",
+            "device-deleted",
           actorUid:
             actor.uid,
           actorName:
