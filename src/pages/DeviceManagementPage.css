@@ -489,6 +489,17 @@
   overflow: hidden;
 }
 
+.device-management-device-card.is-current {
+  position: sticky;
+  z-index: 3;
+  top: 0;
+
+  border-color: rgba(32, 170, 207, 0.34);
+
+  box-shadow:
+    0 8px 20px rgba(24, 132, 166, 0.15);
+}
+
 .device-management-card-topline,
 .device-management-device-badges {
   display: flex;
