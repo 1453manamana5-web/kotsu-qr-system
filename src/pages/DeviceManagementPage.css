@@ -1,5 +1,6 @@
 .device-management-page {
-  --device-purple: #7b43d3;
+  --device-blue: #159fc5;
+  --device-blue-dark: #087da5;
   --device-text: #172033;
 
   display: flex;
@@ -19,8 +20,9 @@
 
   color: var(--device-text);
   background:
-    radial-gradient(circle at 92% 8%, rgba(205, 188, 249, 0.52), transparent 28%),
-    linear-gradient(145deg, #fafbfd, #f1f1f8);
+    radial-gradient(circle at 92% 8%, rgba(160, 228, 244, 0.58), transparent 30%),
+    radial-gradient(circle at 5% 92%, rgba(195, 238, 248, 0.42), transparent 28%),
+    linear-gradient(145deg, #f9fcfd, #edf7fa);
 
   font-family:
     -apple-system,
@@ -48,48 +50,161 @@
   gap: 24px;
 }
 
-.device-management-eyebrow {
-  color: #8651d7;
+.device-management-header-main {
+  min-width: 0;
+  flex: 1;
+}
 
-  font-size: clamp(11px, 1vw, 14px);
-  font-weight: 850;
-  letter-spacing: 0.13em;
+.device-management-header-status {
+  display: flex;
+  align-items: center;
+
+  min-width: 0;
+
+  gap: clamp(10px, 1.3vw, 15px);
+  margin-top: clamp(8px, 1.1vh, 13px);
+}
+
+.device-management-header-status .connection-status {
+  flex-shrink: 0;
+
+  font-size: clamp(13px, 1.3vw, 18px);
+}
+
+.device-management-header-divider {
+  width: 1px;
+  height: 24px;
+
+  flex-shrink: 0;
+
+  background: rgba(70, 102, 119, 0.2);
+}
+
+.device-management-header-status p {
+  min-width: 0;
+  margin: 0;
+
+  overflow: hidden;
+
+  color: #607385;
+
+  font-size: clamp(13px, 1.15vw, 16px);
+  font-weight: 700;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .device-management-header h1 {
-  margin: 3px 0 0;
+  margin: 0;
 
   color: #111827;
 
-  font-size: clamp(31px, 3.4vw, 49px);
+  font-size: clamp(29px, 3.2vw, 47px);
   font-weight: 880;
   line-height: 1;
   letter-spacing: -0.045em;
 }
 
-.device-management-header p {
-  margin: 8px 0 0;
+.device-management-mode-label {
+  display: flex;
+  align-items: center;
 
-  color: #707b8e;
+  width: clamp(235px, 26vw, 350px);
+  min-height: clamp(72px, 9vh, 94px);
 
-  font-size: clamp(13px, 1.2vw, 17px);
-  font-weight: 680;
+  flex-shrink: 0;
+
+  gap: clamp(10px, 1.3vw, 16px);
+  padding: 12px clamp(17px, 2vw, 24px);
+
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: clamp(20px, 2.2vw, 28px);
+
+  color: #fff;
+  background:
+    linear-gradient(
+      135deg,
+      #69d8ed 0%,
+      #28acd1 52%,
+      #1085b0 100%
+    );
+
+  box-shadow:
+    0 15px 32px rgba(15, 139, 178, 0.27),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38);
+
+  white-space: nowrap;
+}
+
+.device-management-mode-icon {
+  display: grid;
+  place-items: center;
+
+  width: clamp(42px, 4.2vw, 56px);
+  height: clamp(42px, 4.2vw, 56px);
+
+  flex-shrink: 0;
+
+  border: 1px solid rgba(255, 255, 255, 0.27);
+  border-radius: clamp(13px, 1.5vw, 18px);
+
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.device-management-mode-icon svg {
+  width: 72%;
+  height: 72%;
+}
+
+.device-management-mode-copy {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  line-height: 1;
+}
+
+.device-management-mode-copy small {
+  margin-bottom: 5px;
+
+  font-size: clamp(9px, 0.82vw, 12px);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+
+  opacity: 0.82;
+}
+
+.device-management-mode-copy strong {
+  font-size: clamp(21px, 2.25vw, 32px);
+  font-weight: 850;
+  letter-spacing: -0.04em;
+}
+
+.device-management-footer {
+  display: flex;
+  align-items: center;
+
+  flex-shrink: 0;
+
+  margin-top: clamp(10px, 1.5vh, 16px);
 }
 
 .device-management-back {
   display: inline-flex;
   align-items: center;
 
-  min-height: 51px;
+  min-height: 48px;
 
   gap: 9px;
-  padding: 10px 17px;
+  padding: 9px 17px;
 
-  border: 1px solid rgba(101, 112, 134, 0.17);
+  border: 1px solid rgba(44, 139, 170, 0.18);
   border-radius: 15px;
 
-  color: #465166;
-  background: rgba(255, 255, 255, 0.84);
+  color: #236780;
+  background: rgba(255, 255, 255, 0.88);
 
   font: inherit;
   font-size: 15px;
@@ -97,7 +212,7 @@
 
   cursor: pointer;
 
-  box-shadow: 0 8px 20px rgba(43, 51, 73, 0.08);
+  box-shadow: 0 8px 20px rgba(27, 105, 131, 0.09);
 }
 
 .device-management-back svg {
@@ -172,7 +287,12 @@
 }
 
 .device-management-summary .device-management-current {
-  background: linear-gradient(135deg, #8e59df, #6e38c4);
+  background:
+    linear-gradient(
+      135deg,
+      #51cce6,
+      #138db8
+    );
 }
 
 .device-management-current small,
@@ -266,8 +386,8 @@
 
   border-radius: 999px;
 
-  color: #7240c1;
-  background: #efe7fc;
+  color: #087da5;
+  background: #dff5fa;
 
   font-size: 16px;
   font-weight: 880;
@@ -330,19 +450,19 @@
 }
 
 .device-management-role-member {
-  color: #6d39bd;
-  background: #efe7fb;
+  color: #087da5;
+  background: #dff5fa;
 }
 
 .device-management-role-reception {
-  color: #247980;
-  background: #e0f2f2;
+  color: #14777e;
+  background: #def4f1;
 }
 
 .device-management-upgrade,
 .device-management-self {
-  color: #2769aa;
-  background: #e6f1fc;
+  color: #156c91;
+  background: #e2f2fa;
 }
 
 .device-management-stopped {
@@ -414,7 +534,12 @@
 
 .device-management-approve {
   color: #fff;
-  background: linear-gradient(135deg, #8a56dd, #6b39bd);
+  background:
+    linear-gradient(
+      135deg,
+      #32bddb,
+      #0d84ae
+    );
 }
 
 .device-management-request-actions button:disabled,
@@ -464,9 +589,9 @@
 
   border-radius: 50%;
 
-  background: #8150cf;
+  background: #1ba8ce;
 
-  box-shadow: 0 0 0 4px rgba(129, 80, 207, 0.1);
+  box-shadow: 0 0 0 4px rgba(27, 168, 206, 0.12);
 }
 
 .device-management-audit-list strong {
@@ -512,20 +637,29 @@
     align-items: flex-start;
   }
 
-  .device-management-header p {
+  .device-management-header-status p,
+  .device-management-header-divider {
     display: none;
   }
 
-  .device-management-back {
-    min-height: 44px;
-    padding: 8px 12px;
+  .device-management-mode-label {
+    width: auto;
+    min-height: 58px;
 
-    font-size: 0;
+    padding: 9px 12px;
   }
 
-  .device-management-back svg {
-    width: 25px;
-    height: 25px;
+  .device-management-mode-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .device-management-mode-copy small {
+    display: none;
+  }
+
+  .device-management-mode-copy strong {
+    font-size: 18px;
   }
 
   .device-management-summary {

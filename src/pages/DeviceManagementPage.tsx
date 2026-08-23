@@ -20,6 +20,8 @@ import {
   useDeviceAccess,
 } from "../deviceAccessContext";
 
+import OnlineStatus from "./OnlineStatus";
+
 import "./DeviceManagementPage.css";
 
 type DeviceManagementPageProps = {
@@ -126,6 +128,43 @@ function BackIcon() {
         fill="none"
         stroke="currentColor"
         strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function DeviceModeIcon() {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+    >
+      <rect
+        x="13"
+        y="7"
+        width="38"
+        height="50"
+        rx="7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+
+      <path
+        d="M25 48H39"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M22 29L29 36L43 21"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -323,30 +362,40 @@ function DeviceManagementPage({
   return (
     <div className="device-management-page">
       <header className="device-management-header">
-        <div>
-          <span className="device-management-eyebrow">
-            管理メニュー
-          </span>
-
+        <div className="device-management-header-main">
           <h1>
-            端末管理
+            交通研究部QRコード管理システム
           </h1>
 
-          <p>
-            部員端末はすべて対等に申請を承認できます
-          </p>
+          <div className="device-management-header-status">
+            <OnlineStatus />
+
+            <span
+              className="device-management-header-divider"
+              aria-hidden="true"
+            />
+
+            <p>
+              部員端末はすべて対等に申請を承認できます
+            </p>
+          </div>
         </div>
 
-        <button
-          type="button"
-          className="device-management-back"
-          onClick={() =>
-            setPage("admin")
-          }
-        >
-          <BackIcon />
-          管理画面へ戻る
-        </button>
+        <div className="device-management-mode-label">
+          <span className="device-management-mode-icon">
+            <DeviceModeIcon />
+          </span>
+
+          <span className="device-management-mode-copy">
+            <small>
+              DEVICE MANAGEMENT
+            </small>
+
+            <strong>
+              端末管理
+            </strong>
+          </span>
+        </div>
       </header>
 
       <main className="device-management-main">
@@ -648,6 +697,19 @@ function DeviceManagementPage({
           </section>
         </div>
       </main>
+
+      <footer className="device-management-footer">
+        <button
+          type="button"
+          className="device-management-back"
+          onClick={() =>
+            setPage("admin")
+          }
+        >
+          <BackIcon />
+          管理画面へ戻る
+        </button>
+      </footer>
     </div>
   );
 }
