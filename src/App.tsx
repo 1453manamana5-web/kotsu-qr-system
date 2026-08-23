@@ -856,7 +856,8 @@ function App() {
 
   const allowEventDataMigrationRef =
     useRef(
-      navigator.onLine
+      navigator.onLine &&
+      isMemberDevice
     );
 
   const needsInitialEventDataMigrationRef =
@@ -968,6 +969,10 @@ function App() {
     リアルタイム受信します。
   */
   useEffect(() => {
+    allowEventDataMigrationRef.current =
+      navigator.onLine &&
+      isMemberDevice;
+
     let active =
       true;
 
@@ -1185,7 +1190,7 @@ function App() {
       unsubscribeEvents();
       unsubscribeCurrentEvent();
     };
-  }, []);
+  }, [isMemberDevice]);
 
   const eventsById =
     useMemo(
@@ -1249,6 +1254,7 @@ function App() {
   */
   useEffect(() => {
     if (
+      !isMemberDevice ||
       !eventSyncReady ||
       !currentEventSyncReady ||
       eventStore.events.length ===
@@ -1318,6 +1324,7 @@ function App() {
     eventStore.currentEventId,
     eventStore.events,
     eventSyncReady,
+    isMemberDevice,
   ]);
 
   /*
@@ -1426,6 +1433,10 @@ function App() {
     Firestore上で自動終了します。
   */
   useEffect(() => {
+    if (!isMemberDevice) {
+      return;
+    }
+
     const checkEndedEvents =
       async () => {
         const now =
@@ -1536,6 +1547,7 @@ function App() {
   }, [
     eventStore.events,
     eventStore.currentEventId,
+    isMemberDevice,
   ]);
 
   const changePage = (

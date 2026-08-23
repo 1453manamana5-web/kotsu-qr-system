@@ -2,33 +2,393 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isSignedIn() {
+    function signedIn() {
       return request.auth != null;
     }
 
-    // 以前の許可ユーザー一覧はアプリから読み書きさせません。
-    match /authorized-users/{userId} {
+    function currentUid() {
+      return request.auth.uid;
+    }
+
+    function devicePath(uid) {
+      return /databases/$(database)/documents/system/device-access/devices/$(uid);
+    }
+
+    function configPath() {
+      return /databases/$(database)/documents/system/device-access;
+    }
+
+    function currentDeviceExists() {
+      return signedIn() && exists(devicePath(currentUid()));
+    }
+
+    function currentDevice() {
+      return get(devicePath(currentUid())).data;
+    }
+
+    function activeDevice() {
+      return currentDeviceExists() && currentDevice().active == true;
+    }
+
+    function memberDevice() {
+      return activeDevice() && currentDevice().role == 'member';
+    }
+
+    function receptionDevice() {
+      return activeDevice() && currentDevice().role == 'reception';
+    }
+
+    function shortText(value) {
+      return value is string && value.size() > 0 && value.size() <= 60;
+    }
+
+    function validRole(value) {
+      return value == 'member' || value == 'reception';
+    }
+
+    function validRequestType(value) {
+      return value == 'initial' || value == 'upgrade';
+    }
+
+    function validDevice(data) {
+      return data.keys().hasAll([
+          'role', 'displayName', 'deviceName', 'active', 'createdAt',
+          'approvedAt', 'approvedByUid', 'approvedByName'
+        ])
+        && data.keys().hasOnly([
+          'role', 'displayName', 'deviceName', 'active', 'createdAt',
+          'approvedAt', 'approvedByUid', 'approvedByName', 'disabledAt',
+          'disabledByUid', 'disabledByName'
+        ])
+        && validRole(data.role)
+        && shortText(data.displayName)
+        && shortText(data.deviceName)
+        && data.active is bool
+        && data.createdAt is timestamp
+        && data.approvedAt is timestamp
+        && data.approvedByUid is string
+        && data.approvedByName is string
+        && (!('disabledAt' in data) || data.disabledAt is timestamp)
+        && (!('disabledByUid' in data) || data.disabledByUid is string)
+        && (!('disabledByName' in data) || data.disabledByName is string);
+    }
+
+    function validPendingRequest(data, uid) {
+      return signedIn()
+        && uid == currentUid()
+        && data.keys().hasOnly([
+          'requestType', 'requestedRole', 'displayName', 'deviceName',
+          'status', 'requestedAt', 'decidedAt', 'decidedByUid',
+          'decidedByName'
+        ])
+        && data.keys().hasAll([
+          'requestType', 'requestedRole', 'displayName', 'deviceName',
+          'status', 'requestedAt', 'decidedAt', 'decidedByUid',
+          'decidedByName'
+        ])
+        && validRequestType(data.requestType)
+        && validRole(data.requestedRole)
+        && shortText(data.displayName)
+        && shortText(data.deviceName)
+        && data.status == 'pending'
+        && data.requestedAt == request.time
+        && data.decidedAt == null
+        && data.decidedByUid == ''
+        && data.decidedByName == ''
+        && (
+          (
+            data.requestType == 'initial'
+            && (!currentDeviceExists() || currentDevice().active != true)
+          )
+          ||
+          (
+            data.requestType == 'upgrade'
+            && receptionDevice()
+            && data.requestedRole == 'member'
+          )
+        );
+    }
+
+    function validDecision(data) {
+      return resource.data.status == 'pending'
+        && data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'decidedAt', 'decidedByUid', 'decidedByName'
+        ])
+        && (data.status == 'approved' || data.status == 'rejected')
+        && data.decidedAt == request.time
+        && data.decidedByUid == currentUid()
+        && data.decidedByName == currentDevice().displayName;
+    }
+
+    function validAudit(data, auditId) {
+      return data.keys().hasOnly([
+          'action', 'actorUid', 'actorName', 'targetUid', 'targetName',
+          'role', 'createdAt'
+        ])
+        && data.keys().hasAll([
+          'action', 'actorUid', 'actorName', 'targetUid', 'targetName',
+          'role', 'createdAt'
+        ])
+        && data.action in [
+          'bootstrap-member', 'request-created', 'request-approved',
+          'request-rejected', 'device-disabled'
+        ]
+        && data.actorUid is string
+        && shortText(data.actorName)
+        && data.targetUid is string
+        && shortText(data.targetName)
+        && (data.role == null || validRole(data.role))
+        && data.createdAt == request.time;
+    }
+
+    function validReceptionStatusUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'lastReceptionAt', 'lastReceptionOperationId', 'updatedAt'
+        ])
+        && request.resource.data.status is string
+        && request.resource.data.lastReceptionAt is string
+        && request.resource.data.lastReceptionOperationId is string
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function validReceptionMemberCreate(memberId) {
+      return request.resource.data.keys().hasOnly([
+          'qrNumber', 'name', 'status', 'lastReceptionAt',
+          'lastReceptionOperationId', 'updatedAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'qrNumber', 'name', 'status', 'lastReceptionAt',
+          'lastReceptionOperationId', 'updatedAt'
+        ])
+        && request.resource.data.qrNumber == memberId
+        && request.resource.data.name is string
+        && request.resource.data.status is string
+        && request.resource.data.lastReceptionAt is string
+        && request.resource.data.lastReceptionOperationId is string
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function validReceptionMemberUpdate(memberId) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'qrNumber', 'name', 'status', 'lastReceptionAt',
+          'lastReceptionOperationId', 'updatedAt'
+        ])
+        && request.resource.data.qrNumber == memberId
+        && request.resource.data.name is string
+        && request.resource.data.status is string
+        && request.resource.data.lastReceptionAt is string
+        && request.resource.data.lastReceptionOperationId is string
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function validScannerActivity(activityId) {
+      return request.resource.data.keys().hasOnly([
+          'id', 'type', 'qrNumber', 'timestamp', 'isReEntry', 'source',
+          'offline', 'createdAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'id', 'type', 'qrNumber', 'timestamp', 'source', 'createdAt'
+        ])
+        && request.resource.data.id == activityId
+        && request.resource.data.type in [
+          'ticket-entry', 'ticket-exit', 'member-entry', 'member-exit'
+        ]
+        && request.resource.data.qrNumber is string
+        && request.resource.data.timestamp is string
+        && request.resource.data.source == 'scanner'
+        && (!('isReEntry' in request.resource.data)
+          || request.resource.data.isReEntry is bool)
+        && (!('offline' in request.resource.data)
+          || request.resource.data.offline is bool)
+        && request.resource.data.createdAt == request.time;
+    }
+
+    function validAnalyticsSummary(summaryId) {
+      return summaryId == 'summary'
+        && request.resource.data.schemaVersion == 1
+        && (request.resource.data.revision is int
+          || request.resource.data.revision is float)
+        && request.resource.data.revision >= 0
+        && request.resource.data.needsRebuild is bool
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function validReceptionPresence(deviceId) {
+      return request.resource.data.keys().hasOnly([
+          'deviceId', 'mode', 'lastSeenAt', 'updatedAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'deviceId', 'mode', 'lastSeenAt', 'updatedAt'
+        ])
+        && request.resource.data.deviceId == deviceId
+        && request.resource.data.mode in ['entry', 'exit']
+        && (request.resource.data.lastSeenAt is int
+          || request.resource.data.lastSeenAt is float)
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    match /authorized-users/{document=**} {
       allow read, write: if false;
     }
 
-    // アプリが使用するデータだけを、自動認証済みの端末へ開放します。
-    match /events/{document=**} {
-      allow read, write: if isSignedIn();
+    match /system/device-access {
+      allow read: if signedIn();
+
+      // 新規環境で最初の部員端末を登録するときだけ作成できます。
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly([
+          'initialized', 'memberDeviceCount', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.initialized == true
+        && request.resource.data.memberDeviceCount == 1
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if memberDevice()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'memberDeviceCount', 'updatedAt'
+        ])
+        && request.resource.data.initialized == true
+        && request.resource.data.memberDeviceCount is int
+        && request.resource.data.memberDeviceCount >= 1
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
+
+      match /devices/{deviceId} {
+        allow read: if memberDevice() || (signedIn() && deviceId == currentUid());
+
+        allow create: if validDevice(request.resource.data)
+          && (
+            memberDevice()
+            || (
+              signedIn()
+              && deviceId == currentUid()
+              && request.resource.data.role == 'member'
+              && request.resource.data.active == true
+              && !exists(configPath())
+              && getAfter(configPath()).data.initialized == true
+              && getAfter(configPath()).data.memberDeviceCount == 1
+            )
+          );
+
+        allow update: if memberDevice()
+          && validDevice(request.resource.data)
+          && deviceId != currentUid()
+          && (
+            (
+              resource.data.active == true
+              && request.resource.data.active == false
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                'active', 'disabledAt', 'disabledByUid', 'disabledByName'
+              ])
+              && request.resource.data.disabledAt == request.time
+              && request.resource.data.disabledByUid == currentUid()
+              && request.resource.data.disabledByName == currentDevice().displayName
+              && (
+                resource.data.role != 'member'
+                || (
+                  getAfter(configPath()).data.memberDeviceCount
+                    == get(configPath()).data.memberDeviceCount - 1
+                  && getAfter(configPath()).data.memberDeviceCount >= 1
+                )
+              )
+            )
+            || request.resource.data.active == true
+          );
+
+        allow delete: if false;
+      }
+
+      match /requests/{requestUid} {
+        allow read: if memberDevice() || (signedIn() && requestUid == currentUid());
+        allow create: if validPendingRequest(request.resource.data, requestUid);
+        allow update: if validPendingRequest(request.resource.data, requestUid)
+          || (memberDevice() && requestUid != currentUid() && validDecision(request.resource.data));
+        allow delete: if false;
+      }
+
+      match /audit/{auditId} {
+        allow read: if memberDevice();
+        allow create: if validAudit(request.resource.data, auditId)
+          && (
+            memberDevice()
+            || (
+              signedIn()
+              && request.resource.data.action == 'request-created'
+              && request.resource.data.actorUid == currentUid()
+              && request.resource.data.targetUid == currentUid()
+            )
+            || (
+              signedIn()
+              && request.resource.data.action == 'bootstrap-member'
+              && request.resource.data.actorUid == currentUid()
+              && request.resource.data.targetUid == currentUid()
+              && !exists(configPath())
+              && getAfter(configPath()).data.initialized == true
+            )
+          );
+        allow update, delete: if false;
+      }
     }
 
-    match /system/{document=**} {
-      allow read, write: if isSignedIn();
+    match /system/{systemDocument} {
+      allow read: if memberDevice()
+        || (activeDevice() && systemDocument == 'current-event');
+      allow create, update, delete: if memberDevice()
+        && systemDocument != 'device-access';
     }
 
-    match /event-data/{document=**} {
-      allow read, write: if isSignedIn();
+    match /events/{eventId} {
+      allow read: if activeDevice();
+      allow create, update, delete: if memberDevice();
     }
 
-    match /member-cards/{document=**} {
-      allow read, write: if isSignedIn();
+    match /member-cards/{memberId} {
+      allow read: if activeDevice();
+      allow create, update, delete: if memberDevice();
     }
 
-    // 上記以外のコレクションは常に拒否します。
+    match /event-data/{eventId} {
+      allow read, create, update, delete: if memberDevice();
+
+      match /tickets/{ticketId} {
+        allow read: if activeDevice();
+        allow create, delete: if memberDevice();
+        allow update: if memberDevice()
+          || (receptionDevice() && validReceptionStatusUpdate());
+      }
+
+      match /members/{memberId} {
+        allow read: if activeDevice();
+        allow create: if memberDevice()
+          || (receptionDevice() && validReceptionMemberCreate(memberId));
+        allow update: if memberDevice()
+          || (receptionDevice() && validReceptionMemberUpdate(memberId));
+        allow delete: if memberDevice();
+      }
+
+      match /activity/{activityId} {
+        allow read: if activeDevice();
+        allow create: if memberDevice()
+          || (receptionDevice() && validScannerActivity(activityId));
+        allow update, delete: if memberDevice();
+      }
+
+      match /analytics/{summaryId} {
+        allow read: if activeDevice();
+        allow create, update: if memberDevice()
+          || (receptionDevice() && validAnalyticsSummary(summaryId));
+        allow delete: if memberDevice();
+      }
+
+      match /reception-devices/{deviceId} {
+        allow read: if activeDevice();
+        allow create, update: if activeDevice() && validReceptionPresence(deviceId);
+        allow delete: if activeDevice();
+      }
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
