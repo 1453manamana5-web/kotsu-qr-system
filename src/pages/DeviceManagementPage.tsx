@@ -6,8 +6,9 @@ import {
 
 import {
   approveDeviceAccessRequest,
-  disableAuthorizedDevice,
+  deleteAuthorizedDevice,
   rejectDeviceAccessRequest,
+  renameAuthorizedDevice,
   subscribeToAuthorizedDevices,
   subscribeToDeviceAccessAudit,
   subscribeToPendingDeviceRequests,
@@ -33,7 +34,8 @@ type OperationState = {
   action:
     | "approve"
     | "reject"
-    | "disable";
+    | "rename"
+    | "delete";
 } | null;
 
 function getErrorMessage(
@@ -106,6 +108,12 @@ function getAuditLabel(
 
     case "device-disabled":
       return "端末を停止";
+
+    case "device-renamed":
+      return "端末名を変更";
+
+    case "device-deleted":
+      return "端末を削除";
   }
 }
 
@@ -192,6 +200,10 @@ function DeviceManagementPage({
   const [operation, setOperation] =
     useState<OperationState>(null);
   const [operationError, setOperationError] =
+    useState("");
+  const [editingUid, setEditingUid] =
+    useState<string | null>(null);
+  const [editingName, setEditingName] =
     useState("");
 
   useEffect(() => {
@@ -336,12 +348,41 @@ function DeviceManagementPage({
     );
   };
 
-  const handleDisable = (
+  const handleRename = (
+    device: AuthorizedDevice
+  ) => {
+    const cleanName =
+      editingName.trim();
+
+    if (cleanName === "") {
+      setOperationError(
+        "端末名を入力してください。"
+      );
+      return;
+    }
+
+    void runOperation(
+      {
+        uid: device.uid,
+        action: "rename",
+      },
+      async () => {
+        await renameAuthorizedDevice(
+          device.uid,
+          cleanName
+        );
+        setEditingUid(null);
+        setEditingName("");
+      }
+    );
+  };
+
+  const handleDelete = (
     device: AuthorizedDevice
   ) => {
     if (
       !window.confirm(
-        `${device.deviceName}の利用を停止しますか？\n停止後は、この端末から再申請が必要です。`
+        `${device.deviceName}を登録済み端末から削除しますか？\n削除後は、この端末から再申請が必要です。`
       )
     ) {
       return;
@@ -350,10 +391,10 @@ function DeviceManagementPage({
     void runOperation(
       {
         uid: device.uid,
-        action: "disable",
+        action: "delete",
       },
       () =>
-        disableAuthorizedDevice(
+        deleteAuthorizedDevice(
           device.uid
         )
     );
@@ -590,61 +631,130 @@ function DeviceManagementPage({
                     key={device.uid}
                     className={`device-management-device-card ${device.active ? "" : "disabled"}`}
                   >
-                    <div>
-                      <span
-                        className={`device-management-role device-management-role-${device.role}`}
-                      >
-                        {getRoleLabel(
-                          device.role
+                    <div className="device-management-device-topline">
+                      <div className="device-management-device-badges">
+                        <span
+                          className={`device-management-role device-management-role-${device.role}`}
+                        >
+                          {getRoleLabel(
+                            device.role
+                          )}
+                        </span>
+
+                        {isCurrent && (
+                          <span className="device-management-self">
+                            この端末
+                          </span>
                         )}
-                      </span>
 
-                      {isCurrent && (
-                        <span className="device-management-self">
-                          この端末
-                        </span>
-                      )}
+                        {!device.active && (
+                          <span className="device-management-stopped">
+                            旧停止端末
+                          </span>
+                        )}
+                      </div>
 
-                      {!device.active && (
-                        <span className="device-management-stopped">
-                          停止中
-                        </span>
-                      )}
+                      <div className="device-management-device-actions">
+                        <button
+                          type="button"
+                          className="device-management-rename"
+                          disabled={isOperating}
+                          onClick={() => {
+                            setEditingUid(
+                              device.uid
+                            );
+                            setEditingName(
+                              device.deviceName
+                            );
+                            setOperationError("");
+                          }}
+                        >
+                          名前を変更
+                        </button>
+
+                        {!isCurrent && (
+                          <button
+                            type="button"
+                            className="device-management-delete"
+                            disabled={
+                              isOperating ||
+                              (
+                                device.active &&
+                                device.role ===
+                                  "member" &&
+                                memberCount <= 1
+                              )
+                            }
+                            onClick={() =>
+                              handleDelete(
+                                device
+                              )
+                            }
+                          >
+                            {operation?.uid ===
+                              device.uid &&
+                            operation.action ===
+                              "delete"
+                              ? "削除中…"
+                              : "削除"}
+                          </button>
+                        )}
+                      </div>
                     </div>
 
-                    <h3>
-                      {device.deviceName}
-                    </h3>
+                    {editingUid ===
+                    device.uid ? (
+                      <form
+                        className="device-management-rename-form"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          handleRename(device);
+                        }}
+                      >
+                        <input
+                          type="text"
+                          maxLength={60}
+                          value={editingName}
+                          autoFocus
+                          onChange={(event) =>
+                            setEditingName(
+                              event.target.value
+                            )
+                          }
+                          aria-label="新しい端末名"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingUid(null);
+                            setEditingName("");
+                          }}
+                        >
+                          キャンセル
+                        </button>
+
+                        <button
+                          type="submit"
+                          className="save"
+                          disabled={isOperating}
+                        >
+                          {isOperating
+                            ? "保存中…"
+                            : "保存"}
+                        </button>
+                      </form>
+                    ) : (
+                      <h3>
+                        {device.deviceName}
+                      </h3>
+                    )}
 
                     <p>
                       {device.displayName ||
                         "部員名未設定"}
                     </p>
 
-                    {device.active &&
-                      !isCurrent && (
-                      <button
-                        type="button"
-                        className="device-management-disable"
-                        disabled={
-                          isOperating ||
-                          (
-                            device.role ===
-                              "member" &&
-                            memberCount <= 1
-                          )
-                        }
-                        onClick={() =>
-                          handleDisable(
-                            device
-                          )
-                        }
-                      >
-                        {isOperating
-                          ? "停止中…"
-                          : "利用を停止"}
-                      </button>
-                    )}
                   </article>
                 );
               })}
