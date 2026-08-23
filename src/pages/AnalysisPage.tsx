@@ -5,19 +5,11 @@ import {
 } from "react";
 
 import {
-  subscribeToTickets,
-  type Ticket,
-} from "../ticketFirestore";
-
-import {
-  subscribeToEventMembers,
-  type EventMember,
-} from "../memberFirestore";
-
-import {
-  subscribeToActivityLogs,
-  type ActivityLog,
-} from "../activityFirestore";
+  createHourDataFromAnalytics,
+  rebuildEventAnalytics,
+  subscribeToEventAnalytics,
+  type EventAnalyticsSummary,
+} from "../eventAnalyticsFirestore";
 
 import OnlineStatus from "./OnlineStatus";
 
@@ -40,11 +32,6 @@ type AnalysisPageProps = {
       | "ended";
     endedAt?: string;
   } | null;
-};
-
-type HourData = {
-  label: string;
-  count: number;
 };
 
 function createEventStartDate(
@@ -116,297 +103,6 @@ function formatEventStartDate(
   );
 }
 
-function calculateAverageStayMinutes(
-  logs: ActivityLog[]
-) {
-  const ticketLogs =
-    logs.filter(
-      (log) =>
-        log.type ===
-          "ticket-entry" ||
-        log.type ===
-          "ticket-exit"
-    );
-
-  const currentEntries =
-    new Map<
-      string,
-      number
-    >();
-
-  const stayTimes:
-    number[] = [];
-
-  ticketLogs.forEach(
-    (log) => {
-      const logTime =
-        new Date(
-          log.timestamp
-        ).getTime();
-
-      if (
-        !Number.isFinite(
-          logTime
-        )
-      ) {
-        return;
-      }
-
-      if (
-        log.type ===
-        "ticket-entry"
-      ) {
-        currentEntries.set(
-          log.qrNumber,
-          logTime
-        );
-
-        return;
-      }
-
-      const entryTime =
-        currentEntries.get(
-          log.qrNumber
-        );
-
-      if (
-        entryTime ===
-        undefined
-      ) {
-        return;
-      }
-
-      const stayTime =
-        logTime -
-        entryTime;
-
-      if (
-        stayTime >=
-        0
-      ) {
-        stayTimes.push(
-          stayTime
-        );
-      }
-
-      currentEntries.delete(
-        log.qrNumber
-      );
-    }
-  );
-
-  if (
-    stayTimes.length ===
-    0
-  ) {
-    return null;
-  }
-
-  const totalMilliseconds =
-    stayTimes.reduce(
-      (
-        total,
-        current
-      ) =>
-        total +
-        current,
-      0
-    );
-
-  return Math.round(
-    totalMilliseconds /
-      stayTimes.length /
-      1000 /
-      60
-  );
-}
-
-function createHourData(
-  logs: ActivityLog[],
-  eventDate: string,
-  startTime: string,
-  endTime: string
-): HourData[] {
-  const entryLogs =
-    logs.filter(
-      (log) =>
-        log.type ===
-        "ticket-entry"
-    );
-
-  const startDate =
-    eventDate !== "" &&
-    startTime !== ""
-      ? new Date(
-          `${eventDate}T${startTime}`
-        )
-      : null;
-
-  const endDate =
-    eventDate !== "" &&
-    endTime !== ""
-      ? new Date(
-          `${eventDate}T${endTime}`
-        )
-      : null;
-
-  if (
-    startDate !==
-      null &&
-    endDate !==
-      null &&
-    Number.isFinite(
-      startDate.getTime()
-    ) &&
-    Number.isFinite(
-      endDate.getTime()
-    ) &&
-    endDate.getTime() >
-      startDate.getTime()
-  ) {
-    const firstHour =
-      new Date(
-        startDate
-      );
-
-    firstHour.setMinutes(
-      0,
-      0,
-      0
-    );
-
-    const finalHour =
-      new Date(
-        endDate
-      );
-
-    finalHour.setMinutes(
-      0,
-      0,
-      0
-    );
-
-    const hourData:
-      HourData[] = [];
-
-    const currentHour =
-      new Date(
-        firstHour
-      );
-
-    while (
-      currentHour.getTime() <=
-      finalHour.getTime()
-    ) {
-      const hourStart =
-        currentHour.getTime();
-
-      const hourEnd =
-        hourStart +
-        60 *
-          60 *
-          1000;
-
-      const count =
-        entryLogs.filter(
-          (log) => {
-            const logTime =
-              new Date(
-                log.timestamp
-              ).getTime();
-
-            return (
-              logTime >=
-                hourStart &&
-              logTime <
-                hourEnd
-            );
-          }
-        ).length;
-
-      hourData.push({
-        label:
-          `${String(
-            currentHour.getHours()
-          ).padStart(
-            2,
-            "0"
-          )}:00`,
-
-        count,
-      });
-
-      currentHour.setHours(
-        currentHour.getHours() +
-          1
-      );
-    }
-
-    return hourData;
-  }
-
-  const groupedData =
-    new Map<
-      string,
-      number
-    >();
-
-  entryLogs.forEach(
-    (log) => {
-      const logDate =
-        new Date(
-          log.timestamp
-        );
-
-      if (
-        !Number.isFinite(
-          logDate.getTime()
-        )
-      ) {
-        return;
-      }
-
-      const label =
-        `${String(
-          logDate.getHours()
-        ).padStart(
-          2,
-          "0"
-        )}:00`;
-
-      groupedData.set(
-        label,
-        (
-          groupedData.get(
-            label
-          ) ?? 0
-        ) + 1
-      );
-    }
-  );
-
-  return Array.from(
-    groupedData.entries()
-  )
-    .sort(
-      (
-        [firstLabel],
-        [secondLabel]
-      ) =>
-        firstLabel.localeCompare(
-          secondLabel
-        )
-    )
-    .map(
-      (
-        [label, count]
-      ) => ({
-        label,
-        count,
-      })
-    );
-}
-
 function AnalysisIcon() {
   return (
     <svg
@@ -453,43 +149,15 @@ function AnalysisPage({
   eventData,
 }: AnalysisPageProps) {
   const [
-    tickets,
-    setTickets,
-  ] = useState<Ticket[]>(
-    []
+    analytics,
+    setAnalytics,
+  ] = useState<EventAnalyticsSummary | null>(
+    null
   );
 
   const [
-    members,
-    setMembers,
-  ] = useState<EventMember[]>(
-    []
-  );
-
-  const [
-    activityLogs,
-    setActivityLogs,
-  ] = useState<ActivityLog[]>(
-    []
-  );
-
-  const [
-    ticketsLoading,
-    setTicketsLoading,
-  ] = useState(
-    false
-  );
-
-  const [
-    membersLoading,
-    setMembersLoading,
-  ] = useState(
-    false
-  );
-
-  const [
-    activityLoading,
-    setActivityLoading,
+    loading,
+    setLoading,
   ] = useState(
     false
   );
@@ -528,13 +196,7 @@ function AnalysisPage({
   useEffect(() => {
     let cancelled = false;
 
-    let unsubscribeTickets =
-      () => {};
-
-    let unsubscribeMembers =
-      () => {};
-
-    let unsubscribeActivity =
+    let unsubscribeAnalytics =
       () => {};
 
     const eventName =
@@ -546,134 +208,52 @@ function AnalysisPage({
         return;
       }
 
-      setTickets([]);
-      setMembers([]);
-      setActivityLogs([]);
+      setAnalytics(null);
       setLoadingError("");
 
       if (
         eventName.trim() ===
         ""
       ) {
-        setTicketsLoading(
-          false
-        );
-
-        setMembersLoading(
-          false
-        );
-
-        setActivityLoading(
+        setLoading(
           false
         );
 
         return;
       }
 
-      setTicketsLoading(
+      setLoading(
         true
       );
 
-      setMembersLoading(
-        true
-      );
-
-      setActivityLoading(
-        true
-      );
-
-      unsubscribeTickets =
-      subscribeToTickets(
+      unsubscribeAnalytics =
+      subscribeToEventAnalytics(
         eventName,
 
         (
-          updatedTickets
+          updatedSummary
         ) => {
-          setTickets(
-            updatedTickets
+          setAnalytics(
+            updatedSummary
           );
 
-          setTicketsLoading(
+          setLoading(
             false
           );
         },
 
         (error) => {
           console.error(
-            "分析画面でチケット情報を取得できませんでした。",
+            "分析画面で集計情報を取得できませんでした。",
             error
           );
 
-          setTicketsLoading(
+          setLoading(
             false
           );
 
           setLoadingError(
-            "チケット情報を読み込めませんでした。"
-          );
-        }
-      );
-
-      unsubscribeMembers =
-      subscribeToEventMembers(
-        eventName,
-
-        (
-          updatedMembers
-        ) => {
-          setMembers(
-            updatedMembers
-          );
-
-          setMembersLoading(
-            false
-          );
-        },
-
-        (error) => {
-          console.error(
-            "分析画面で部員情報を取得できませんでした。",
-            error
-          );
-
-          setMembersLoading(
-            false
-          );
-
-          setLoadingError(
-            "部員情報を読み込めませんでした。"
-          );
-        }
-      );
-
-      unsubscribeActivity =
-      subscribeToActivityLogs(
-        eventName,
-
-        (
-          updatedLogs
-        ) => {
-          setActivityLogs(
-            updatedLogs
-          );
-
-          setActivityLoading(
-            false
-          );
-        },
-
-        (error) => {
-          console.error(
-            "分析画面で受付履歴を取得できませんでした。",
-            error
-          );
-
-          setActivityLoading(
-            false
-          );
-
-          setLoadingError(
-            "受付履歴を読み込めませんでした。"
+            "集計情報を読み込めませんでした。"
           );
         }
       );
@@ -682,9 +262,7 @@ function AnalysisPage({
     return () => {
       cancelled = true;
 
-      unsubscribeTickets();
-      unsubscribeMembers();
-      unsubscribeActivity();
+      unsubscribeAnalytics();
     };
   }, [
     eventData?.name,
@@ -717,89 +295,52 @@ function AnalysisPage({
 
   const analysisData =
     useMemo(() => {
-      const firstEntryQrNumbers =
-        new Set(
-          activityLogs
-            .filter(
-              (log) =>
-                log.type ===
-                  "ticket-entry" &&
-                log.isReEntry !==
-                  true
-            )
-            .map(
-              (log) =>
-                log.qrNumber
-            )
-        );
-
-      const visitorCountFromStatus =
-        tickets.filter(
-          (ticket) =>
-            ticket.status ===
-              "入場中" ||
-            ticket.status ===
-              "使用済み"
-        ).length;
-
-      const totalVisitors =
-        Math.max(
-          firstEntryQrNumbers.size,
-          visitorCountFromStatus
-        );
-
-      const currentInside =
-        tickets.filter(
-          (ticket) =>
-            ticket.status ===
-            "入場中"
-        ).length;
-
-      const currentMembersInside =
-        members.filter(
-          (member) =>
-            member.status ===
-            "入室中"
-        ).length;
-
-      const reEntryCount =
-        activityLogs.filter(
-          (log) =>
-            log.type ===
-              "ticket-entry" &&
-            log.isReEntry ===
-              true
-        ).length;
-
-      const averageStayMinutes =
-        calculateAverageStayMinutes(
-          activityLogs
-        );
-
-      const hourData =
-        createHourData(
-          activityLogs,
-          eventData?.date ??
-            "",
-          eventData?.startTime ??
-            "",
-          eventData?.endTime ??
-            ""
-        );
-
       return {
-        totalVisitors,
-        currentInside,
-        currentMembersInside,
-        reEntryCount,
-        averageStayMinutes,
-        hourData,
+        totalVisitors:
+          analytics?.totalVisitors ??
+          0,
+
+        currentInside:
+          analytics?.currentInside ??
+          0,
+
+        currentMembersInside:
+          analytics?.currentMembersInside ??
+          0,
+
+        reEntryCount:
+          analytics?.reEntryCount ??
+          0,
+
+        averageStayMinutes:
+          analytics?.averageStayMinutes ??
+          null,
+
+        ticketCount:
+          analytics?.ticketCount ??
+          0,
+
+        activityCount:
+          analytics?.activityCount ??
+          0,
+
+        hourData:
+          analytics ===
+          null
+            ? []
+            : createHourDataFromAnalytics(
+                analytics,
+                eventData?.date ??
+                  "",
+                eventData?.startTime ??
+                  "",
+                eventData?.endTime ??
+                  ""
+              ),
       };
     }, [
-      activityLogs,
+      analytics,
       eventData,
-      members,
-      tickets,
     ]);
 
   const maximumHourCount =
@@ -816,11 +357,6 @@ function AnalysisPage({
       maximumHourCount /
         2
     );
-
-  const loading =
-    ticketsLoading ||
-    membersLoading ||
-    activityLoading;
 
   return (
     <div
@@ -888,15 +424,50 @@ function AnalysisPage({
                 loading
               }
               onClick={() => {
-                /*
-                  Firestoreは自動更新なので、
-                  更新ボタンは表示上残すだけです。
-                */
+                const eventName =
+                  eventData?.name ??
+                  "";
+
+                if (
+                  eventName.trim() ===
+                  ""
+                ) {
+                  return;
+                }
+
+                setLoading(
+                  true
+                );
+
+                setLoadingError("");
+
+                void rebuildEventAnalytics(
+                  eventName
+                )
+                  .catch(
+                    (error) => {
+                      console.error(
+                        "集計を再計算できませんでした。",
+                        error
+                      );
+
+                      setLoadingError(
+                        "集計を再計算できませんでした。"
+                      );
+                    }
+                  )
+                  .finally(
+                    () => {
+                      setLoading(
+                        false
+                      );
+                    }
+                  );
               }}
             >
               {loading
                 ? "更新中"
-                : "自動更新"}
+                : "再計算"}
             </button>
           </div>
 
@@ -1105,7 +676,7 @@ function AnalysisPage({
 
               <strong>
                 {
-                  tickets.length
+                  analysisData.ticketCount
                 }
                 枚
               </strong>
@@ -1116,7 +687,7 @@ function AnalysisPage({
 
               <strong>
                 {
-                  activityLogs.length
+                  analysisData.activityCount
                 }
                 件
               </strong>

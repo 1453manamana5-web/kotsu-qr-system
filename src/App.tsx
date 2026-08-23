@@ -95,6 +95,10 @@ import {
   migrateAllEventDataToIds,
 } from "./eventDataMigration";
 
+import {
+  ensureEventAnalytics,
+} from "./eventAnalyticsFirestore";
+
 type NewEventData = {
   name: string;
   date: string;
@@ -1174,6 +1178,37 @@ function App() {
       : eventsById.get(
           eventStore.currentEventId
         ) ?? null;
+
+  /*
+    現在のイベントだけは画面を開く前に集計を確認します。
+    既に集計済みなら1ドキュメントの確認だけで終わり、
+    未作成・要再計算のときだけ受付履歴から作り直します。
+  */
+  useEffect(() => {
+    if (
+      !eventSyncReady ||
+      !currentEventSyncReady ||
+      currentEvent === null ||
+      typeof navigator ===
+        "undefined" ||
+      !navigator.onLine
+    ) {
+      return;
+    }
+
+    void ensureEventAnalytics(
+      currentEvent.name
+    ).catch((error) => {
+      console.warn(
+        "イベント集計の事前準備を次回へ延期します。",
+        error
+      );
+    });
+  }, [
+    currentEvent,
+    currentEventSyncReady,
+    eventSyncReady,
+  ]);
 
   /*
     現在のイベントが未設定・削除済み・終了済みの場合は、

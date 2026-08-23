@@ -14,6 +14,7 @@ import {
 
 import {
   ACTIVITY_COLLECTION,
+  ANALYTICS_COLLECTION,
   EVENT_DATA_COLLECTION,
   EVENT_MEMBERS_COLLECTION,
   EVENTS_COLLECTION,
@@ -39,6 +40,7 @@ const BACKED_UP_EVENT_COLLECTIONS = [
   TICKETS_COLLECTION,
   EVENT_MEMBERS_COLLECTION,
   ACTIVITY_COLLECTION,
+  ANALYTICS_COLLECTION,
 ] as const;
 
 const VOLATILE_LOCAL_STORAGE_KEYS =
@@ -73,6 +75,7 @@ type EventDataSnapshot = {
   tickets: StoredDocument[];
   members: StoredDocument[];
   activity: StoredDocument[];
+  analytics?: StoredDocument[];
 };
 
 export type FullBackupFile = {
@@ -541,6 +544,7 @@ export async function createFullBackup(
             tickets,
             members,
             activity,
+            analytics,
           ] = await Promise.all(
             BACKED_UP_EVENT_COLLECTIONS.map(
               (collectionName) =>
@@ -557,6 +561,7 @@ export async function createFullBackup(
             tickets,
             members,
             activity,
+            analytics,
           };
         }
       )
@@ -841,6 +846,13 @@ export function parseFullBackup(
         ) &&
         validateDocuments(
           eventValue.activity
+        ) &&
+        (
+          eventValue.analytics ===
+            undefined ||
+          validateDocuments(
+            eventValue.analytics
+          )
         )
         );
       }
@@ -898,6 +910,15 @@ export function getBackupSummary(
       0
     );
 
+  const analyticsDocuments =
+    backup.firestore.eventData.reduce(
+      (total, eventData) =>
+        total +
+        (eventData.analytics?.length ??
+          0),
+      0
+    );
+
   return {
     events:
       backup.firestore.events.length,
@@ -916,7 +937,8 @@ export function getBackupSummary(
       backup.firestore.memberCards.length +
       tickets +
       members +
-      activityLogs,
+      activityLogs +
+      analyticsDocuments,
   };
 }
 
@@ -1115,6 +1137,15 @@ async function replaceFirestoreData(
                 ACTIVITY_COLLECTION,
               ],
               restoredEventData?.activity ??
+                []
+            ),
+            createReplaceOperations(
+              [
+                EVENT_DATA_COLLECTION,
+                eventDocumentId,
+                ANALYTICS_COLLECTION,
+              ],
+              restoredEventData?.analytics ??
                 []
             ),
           ];

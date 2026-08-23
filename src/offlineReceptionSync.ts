@@ -23,6 +23,12 @@ import {
   type PendingReceptionOperation,
 } from "./offlineReceptionStore";
 
+import {
+  getEventAnalyticsDocumentByDataId,
+  markEventAnalyticsStaleInTransaction,
+  rebuildEventAnalyticsByDataId,
+} from "./eventAnalyticsFirestore";
+
 const RETRY_INTERVAL_MILLISECONDS =
   15 * 1000;
 
@@ -92,12 +98,18 @@ async function syncTicketOperation(
       const [
         activitySnapshot,
         ticketSnapshot,
+        analyticsSnapshot,
       ] = await Promise.all([
         transaction.get(
           activityDocument
         ),
         transaction.get(
           ticketDocument
+        ),
+        transaction.get(
+          getEventAnalyticsDocumentByDataId(
+            eventId
+          )
         ),
       ]);
 
@@ -170,6 +182,11 @@ async function syncTicketOperation(
             serverTimestamp(),
         }
       );
+
+      markEventAnalyticsStaleInTransaction(
+        transaction,
+        analyticsSnapshot
+      );
     }
   );
 }
@@ -210,6 +227,7 @@ async function syncMemberOperation(
         activitySnapshot,
         cardSnapshot,
         memberSnapshot,
+        analyticsSnapshot,
       ] = await Promise.all([
         transaction.get(
           activityDocument
@@ -219,6 +237,11 @@ async function syncMemberOperation(
         ),
         transaction.get(
           memberDocument
+        ),
+        transaction.get(
+          getEventAnalyticsDocumentByDataId(
+            eventId
+          )
         ),
       ]);
 
@@ -299,6 +322,11 @@ async function syncMemberOperation(
             serverTimestamp(),
         }
       );
+
+      markEventAnalyticsStaleInTransaction(
+        transaction,
+        analyticsSnapshot
+      );
     }
   );
 }
@@ -329,6 +357,9 @@ export async function syncPendingReceptionOperations() {
     const operations =
       getPendingReceptionOperations();
 
+    const changedEventIds =
+      new Set<string>();
+
     for (const operation of operations) {
       if (!navigator.onLine) {
         break;
@@ -336,6 +367,13 @@ export async function syncPendingReceptionOperations() {
 
       try {
         await syncOperation(operation);
+
+        changedEventIds.add(
+          operation.eventDataId ??
+            getEventDataId(
+              operation.eventName
+            )
+        );
 
         removePendingReceptionOperation(
           operation.id
@@ -362,6 +400,19 @@ export async function syncPendingReceptionOperations() {
           後続の正常な受付は止めません。
         */
         continue;
+      }
+    }
+
+    for (const eventId of changedEventIds) {
+      try {
+        await rebuildEventAnalyticsByDataId(
+          eventId
+        );
+      } catch (error) {
+        console.warn(
+          `イベント ${eventId} の集計再計算を次回へ延期します。`,
+          error
+        );
       }
     }
   } finally {

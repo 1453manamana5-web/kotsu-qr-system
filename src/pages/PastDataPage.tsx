@@ -6,14 +6,10 @@ import {
 } from "react";
 
 import {
-  subscribeToTickets,
-  type Ticket,
-} from "../ticketFirestore";
-
-import {
-  subscribeToActivityLogs,
-  type ActivityLog,
-} from "../activityFirestore";
+  createHourDataFromAnalytics,
+  subscribeToEventAnalytics,
+  type EventAnalyticsSummary,
+} from "../eventAnalyticsFirestore";
 
 import OnlineStatus from "./OnlineStatus";
 
@@ -116,302 +112,6 @@ function isEndedEvent(
     Date.now() >=
     endDate.getTime()
   );
-}
-
-function calculateAverageStayMinutes(
-  logs: ActivityLog[]
-) {
-  const ticketLogs =
-    logs.filter(
-      (log) =>
-        log.type ===
-          "ticket-entry" ||
-        log.type ===
-          "ticket-exit"
-    );
-
-  const entryTimes =
-    new Map<
-      string,
-      number
-    >();
-
-  const stayTimes:
-    number[] = [];
-
-  ticketLogs.forEach(
-    (log) => {
-      const logTime =
-        new Date(
-          log.timestamp
-        ).getTime();
-
-      if (
-        !Number.isFinite(
-          logTime
-        )
-      ) {
-        return;
-      }
-
-      if (
-        log.type ===
-        "ticket-entry"
-      ) {
-        entryTimes.set(
-          log.qrNumber,
-          logTime
-        );
-
-        return;
-      }
-
-      const entryTime =
-        entryTimes.get(
-          log.qrNumber
-        );
-
-      if (
-        entryTime ===
-        undefined
-      ) {
-        return;
-      }
-
-      const stayTime =
-        logTime -
-        entryTime;
-
-      if (
-        stayTime >=
-        0
-      ) {
-        stayTimes.push(
-          stayTime
-        );
-      }
-
-      entryTimes.delete(
-        log.qrNumber
-      );
-    }
-  );
-
-  if (
-    stayTimes.length ===
-    0
-  ) {
-    return null;
-  }
-
-  const totalStayTime =
-    stayTimes.reduce(
-      (
-        total,
-        stayTime
-      ) =>
-        total +
-        stayTime,
-      0
-    );
-
-  return Math.round(
-    totalStayTime /
-      stayTimes.length /
-      1000 /
-      60
-  );
-}
-
-function createHourData(
-  logs: ActivityLog[],
-  eventData: EventData
-): HourData[] {
-  const entryLogs =
-    logs.filter(
-      (log) =>
-        log.type ===
-        "ticket-entry"
-    );
-
-  const startDate =
-    createEventDateTime(
-      eventData.date,
-      eventData.startTime
-    );
-
-  const endDate =
-    createEventDateTime(
-      eventData.date,
-      eventData.endTime
-    );
-
-  if (
-    startDate ===
-      null ||
-    endDate ===
-      null
-  ) {
-    return [];
-  }
-
-  const firstHour =
-    new Date(
-      startDate
-    );
-
-  firstHour.setMinutes(
-    0,
-    0,
-    0
-  );
-
-  const finalHour =
-    new Date(
-      endDate
-    );
-
-  finalHour.setMinutes(
-    0,
-    0,
-    0
-  );
-
-  const hourData:
-    HourData[] = [];
-
-  const currentHour =
-    new Date(
-      firstHour
-    );
-
-  while (
-    currentHour.getTime() <=
-    finalHour.getTime()
-  ) {
-    const hourStart =
-      currentHour.getTime();
-
-    const hourEnd =
-      hourStart +
-      60 *
-        60 *
-        1000;
-
-    const count =
-      entryLogs.filter(
-        (log) => {
-          const logTime =
-            new Date(
-              log.timestamp
-            ).getTime();
-
-          return (
-            logTime >=
-              hourStart &&
-            logTime <
-              hourEnd
-          );
-        }
-      ).length;
-
-    hourData.push({
-      label:
-        `${String(
-          currentHour.getHours()
-        ).padStart(
-          2,
-          "0"
-        )}:00`,
-
-      count,
-    });
-
-    currentHour.setHours(
-      currentHour.getHours() +
-        1
-    );
-  }
-
-  return hourData;
-}
-
-function createPastEventAnalysis(
-  eventData: EventData,
-  tickets: Ticket[],
-  logs: ActivityLog[]
-): PastEventAnalysis {
-  const uniqueVisitorQrNumbers =
-    new Set(
-      logs
-        .filter(
-          (log) =>
-            log.type ===
-              "ticket-entry" &&
-            log.isReEntry !==
-              true
-        )
-        .map(
-          (log) =>
-            log.qrNumber
-        )
-    );
-
-  const visitorCountFromStatus =
-    tickets.filter(
-      (ticket) =>
-        ticket.status ===
-          "入場中" ||
-        ticket.status ===
-          "使用済み"
-    ).length;
-
-  const totalVisitors =
-    Math.max(
-      uniqueVisitorQrNumbers.size,
-      visitorCountFromStatus
-    );
-
-  const remainingInside =
-    tickets.filter(
-      (ticket) =>
-        ticket.status ===
-        "入場中"
-    ).length;
-
-  const reEntryCount =
-    logs.filter(
-      (log) =>
-        log.type ===
-          "ticket-entry" &&
-        log.isReEntry ===
-          true
-    ).length;
-
-  return {
-    totalVisitors,
-
-    averageStayMinutes:
-      calculateAverageStayMinutes(
-        logs
-      ),
-
-    reEntryCount,
-
-    ticketCount:
-      tickets.length,
-
-    activityCount:
-      logs.length,
-
-    remainingInside,
-
-    hourData:
-      createHourData(
-        logs,
-        eventData
-      ),
-  };
 }
 
 function formatEventDate(
@@ -546,29 +246,15 @@ function PastDataPage({
     );
 
   const [
-    tickets,
-    setTickets,
-  ] = useState<Ticket[]>(
-    []
+    analytics,
+    setAnalytics,
+  ] = useState<EventAnalyticsSummary | null>(
+    null
   );
 
   const [
-    activityLogs,
-    setActivityLogs,
-  ] = useState<ActivityLog[]>(
-    []
-  );
-
-  const [
-    ticketsLoading,
-    setTicketsLoading,
-  ] = useState(
-    false
-  );
-
-  const [
-    activityLoading,
-    setActivityLoading,
+    loading,
+    setLoading,
   ] = useState(
     false
   );
@@ -641,10 +327,7 @@ function PastDataPage({
   useEffect(() => {
     let cancelled = false;
 
-    let unsubscribeTickets =
-      () => {};
-
-    let unsubscribeActivity =
+    let unsubscribeAnalytics =
       () => {};
 
     queueMicrotask(() => {
@@ -652,93 +335,52 @@ function PastDataPage({
         return;
       }
 
-      setTickets([]);
-      setActivityLogs([]);
+      setAnalytics(null);
       setLoadingError("");
 
       if (
         selectedEvent ===
         null
       ) {
-        setTicketsLoading(
-          false
-        );
-
-        setActivityLoading(
+        setLoading(
           false
         );
 
         return;
       }
 
-      setTicketsLoading(
+      setLoading(
         true
       );
 
-      setActivityLoading(
-        true
-      );
-
-      unsubscribeTickets =
-      subscribeToTickets(
+      unsubscribeAnalytics =
+      subscribeToEventAnalytics(
         selectedEvent.name,
 
         (
-          updatedTickets
+          updatedSummary
         ) => {
-          setTickets(
-            updatedTickets
+          setAnalytics(
+            updatedSummary
           );
 
-          setTicketsLoading(
+          setLoading(
             false
           );
         },
 
         (error) => {
           console.error(
-            "過去イベントのチケット情報を取得できませんでした。",
+            "過去イベントの集計情報を取得できませんでした。",
             error
           );
 
-          setTicketsLoading(
+          setLoading(
             false
           );
 
           setLoadingError(
-            "チケット情報を読み込めませんでした。"
-          );
-        }
-      );
-
-      unsubscribeActivity =
-      subscribeToActivityLogs(
-        selectedEvent.name,
-
-        (
-          updatedLogs
-        ) => {
-          setActivityLogs(
-            updatedLogs
-          );
-
-          setActivityLoading(
-            false
-          );
-        },
-
-        (error) => {
-          console.error(
-            "過去イベントの受付履歴を取得できませんでした。",
-            error
-          );
-
-          setActivityLoading(
-            false
-          );
-
-          setLoadingError(
-            "受付履歴を読み込めませんでした。"
+            "集計情報を読み込めませんでした。"
           );
         }
       );
@@ -747,8 +389,7 @@ function PastDataPage({
     return () => {
       cancelled = true;
 
-      unsubscribeTickets();
-      unsubscribeActivity();
+      unsubscribeAnalytics();
     };
   }, [
     selectedEvent,
@@ -758,17 +399,34 @@ function PastDataPage({
     useMemo(
       () =>
         selectedEvent ===
-        null
+          null ||
+        analytics ===
+          null
           ? null
-          : createPastEventAnalysis(
-              selectedEvent,
-              tickets,
-              activityLogs
-            ),
+          : {
+              totalVisitors:
+                analytics.totalVisitors,
+              averageStayMinutes:
+                analytics.averageStayMinutes,
+              reEntryCount:
+                analytics.reEntryCount,
+              ticketCount:
+                analytics.ticketCount,
+              activityCount:
+                analytics.activityCount,
+              remainingInside:
+                analytics.currentInside,
+              hourData:
+                createHourDataFromAnalytics(
+                  analytics,
+                  selectedEvent.date,
+                  selectedEvent.startTime,
+                  selectedEvent.endTime
+                ),
+            } satisfies PastEventAnalysis,
       [
-        activityLogs,
+        analytics,
         selectedEvent,
-        tickets,
       ]
     );
 
@@ -789,10 +447,6 @@ function PastDataPage({
       maximumHourCount /
         2
     );
-
-  const loading =
-    ticketsLoading ||
-    activityLoading;
 
   const handleCreatePdf =
     async () => {

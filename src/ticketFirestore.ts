@@ -29,6 +29,13 @@ import {
   updateCachedTicketStatus,
 } from "./offlineReceptionStore";
 
+import {
+  applyActivityToAnalyticsTransaction,
+  getAnalyticsSnapshotForTransaction,
+  markEventAnalyticsStale,
+  markEventAnalyticsStaleInTransaction,
+} from "./eventAnalyticsFirestore";
+
 export type TicketStatus =
   | "未使用"
   | "入場中"
@@ -460,6 +467,10 @@ export async function createTicketsInFirestore(
 
     await batch.commit();
   }
+
+  await markEventAnalyticsStale(
+    eventName
+  );
 }
 
 export async function deleteTicketFromFirestore(
@@ -471,6 +482,10 @@ export async function deleteTicketFromFirestore(
       eventName,
       qrNumber
     )
+  );
+
+  await markEventAnalyticsStale(
+    eventName
   );
 }
 
@@ -502,10 +517,18 @@ export async function updateTicketStatusInFirestore(
     async (
       transaction
     ) => {
-      const ticketSnapshot =
-        await transaction.get(
+      const [
+        ticketSnapshot,
+        analyticsSnapshot,
+      ] = await Promise.all([
+        transaction.get(
           ticketDocument
-        );
+        ),
+        getAnalyticsSnapshotForTransaction(
+          transaction,
+          eventName
+        ),
+      ]);
 
       if (
         !ticketSnapshot.exists()
@@ -640,6 +663,29 @@ export async function updateTicketStatusInFirestore(
               serverTimestamp(),
           }
         );
+
+        applyActivityToAnalyticsTransaction(
+          transaction,
+          analyticsSnapshot,
+          {
+            type:
+              activity.type,
+            timestamp:
+              capturedAt,
+            isReEntry:
+              activity.isReEntry,
+            previousEntryAt:
+              typeof ticketSnapshot.data().lastReceptionAt ===
+                "string"
+                ? ticketSnapshot.data().lastReceptionAt
+                : undefined,
+          }
+        );
+      } else {
+        markEventAnalyticsStaleInTransaction(
+          transaction,
+          analyticsSnapshot
+        );
       }
     }
   );
@@ -694,10 +740,18 @@ export async function processTicketEntryInFirestore(
       async (
         transaction
       ) => {
-      const ticketSnapshot =
-        await transaction.get(
+      const [
+        ticketSnapshot,
+        analyticsSnapshot,
+      ] = await Promise.all([
+        transaction.get(
           ticketDocument
-        );
+        ),
+        getAnalyticsSnapshotForTransaction(
+          transaction,
+          eventName
+        ),
+      ]);
 
       if (
         !ticketSnapshot.exists()
@@ -822,6 +876,18 @@ export async function processTicketEntryInFirestore(
         }
       );
 
+      applyActivityToAnalyticsTransaction(
+        transaction,
+        analyticsSnapshot,
+        {
+          type:
+            "ticket-entry",
+          timestamp:
+            capturedAt,
+          isReEntry,
+        }
+      );
+
       return {
         success:
           true,
@@ -909,10 +975,18 @@ export async function processTicketExitInFirestore(
       async (
         transaction
       ) => {
-      const ticketSnapshot =
-        await transaction.get(
+      const [
+        ticketSnapshot,
+        analyticsSnapshot,
+      ] = await Promise.all([
+        transaction.get(
           ticketDocument
-        );
+        ),
+        getAnalyticsSnapshotForTransaction(
+          transaction,
+          eventName
+        ),
+      ]);
 
       if (
         !ticketSnapshot.exists()
@@ -1044,6 +1118,22 @@ export async function processTicketExitInFirestore(
         }
       );
 
+      applyActivityToAnalyticsTransaction(
+        transaction,
+        analyticsSnapshot,
+        {
+          type:
+            "ticket-exit",
+          timestamp:
+            capturedAt,
+          previousEntryAt:
+            typeof ticketSnapshot.data().lastReceptionAt ===
+              "string"
+              ? ticketSnapshot.data().lastReceptionAt
+              : undefined,
+        }
+      );
+
       return {
         success:
           true,
@@ -1113,5 +1203,9 @@ export async function saveActivityLogToFirestore(
       createdAt:
         serverTimestamp(),
     }
+  );
+
+  await markEventAnalyticsStale(
+    eventName
   );
 }

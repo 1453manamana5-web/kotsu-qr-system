@@ -32,6 +32,12 @@ import {
   updateCachedMemberStatus,
 } from "./offlineReceptionStore";
 
+import {
+  applyActivityToAnalyticsTransaction,
+  getAnalyticsSnapshotForTransaction,
+  markEventAnalyticsStale,
+} from "./eventAnalyticsFirestore";
+
 export type MemberStatus =
   | "未入室"
   | "入室中"
@@ -401,6 +407,10 @@ export async function createMemberInFirestore(
   );
 
   await batch.commit();
+
+  await markEventAnalyticsStale(
+    eventName
+  );
 }
 
 export async function saveEventMemberInFirestore(
@@ -428,6 +438,10 @@ export async function saveEventMemberInFirestore(
     {
       merge: true,
     }
+  );
+
+  await markEventAnalyticsStale(
+    eventName
   );
 }
 
@@ -483,6 +497,10 @@ export async function saveEventMembersInFirestore(
 
     await batch.commit();
   }
+
+  await markEventAnalyticsStale(
+    eventName
+  );
 }
 
 export async function regenerateMemberQrInFirestore(
@@ -533,6 +551,10 @@ export async function deleteMemberFromFirestore(
   );
 
   await batch.commit();
+
+  await markEventAnalyticsStale(
+    eventName
+  );
 }
 
 export async function findMemberByQrInFirestore(
@@ -698,10 +720,18 @@ export async function processMemberReceptionInFirestore(
       async (
         transaction
       ) => {
-      const memberCardSnapshot =
-        await transaction.get(
+      const [
+        memberCardSnapshot,
+        analyticsSnapshot,
+      ] = await Promise.all([
+        transaction.get(
           memberCardDocument
-        );
+        ),
+        getAnalyticsSnapshotForTransaction(
+          transaction,
+          eventName
+        ),
+      ]);
 
       if (
         !memberCardSnapshot.exists()
@@ -844,6 +874,20 @@ export async function processMemberReceptionInFirestore(
         }
       );
 
+      applyActivityToAnalyticsTransaction(
+        transaction,
+        analyticsSnapshot,
+        {
+          type:
+            action ===
+              "entry"
+              ? "member-entry"
+              : "member-exit",
+          timestamp:
+            capturedAt,
+        }
+      );
+
       return {
         success:
           true,
@@ -934,6 +978,10 @@ export async function deleteAllEventMembersFromFirestore(
 
     await batch.commit();
   }
+
+  await markEventAnalyticsStale(
+    eventName
+  );
 }
 
 export async function deleteMemberCardOnlyFromFirestore(
