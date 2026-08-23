@@ -50,19 +50,26 @@ service cloud.firestore {
       return value == 'initial' || value == 'upgrade';
     }
 
+    function validDeviceType(value) {
+      return value in [
+        'ipad', 'iphone', 'android', 'windows', 'mac', 'other', 'unknown'
+      ];
+    }
+
     function validDevice(data) {
       return data.keys().hasAll([
           'role', 'displayName', 'deviceName', 'active', 'createdAt',
           'approvedAt', 'approvedByUid', 'approvedByName'
         ])
         && data.keys().hasOnly([
-          'role', 'displayName', 'deviceName', 'active', 'createdAt',
+          'role', 'displayName', 'deviceName', 'deviceType', 'active', 'createdAt',
           'approvedAt', 'approvedByUid', 'approvedByName', 'disabledAt',
           'disabledByUid', 'disabledByName'
         ])
         && validRole(data.role)
         && shortText(data.displayName)
         && shortText(data.deviceName)
+        && (!('deviceType' in data) || validDeviceType(data.deviceType))
         && data.active is bool
         && data.createdAt is timestamp
         && data.approvedAt is timestamp
@@ -77,12 +84,12 @@ service cloud.firestore {
       return signedIn()
         && uid == currentUid()
         && data.keys().hasOnly([
-          'requestType', 'requestedRole', 'displayName', 'deviceName',
+          'requestType', 'requestedRole', 'displayName', 'deviceName', 'deviceType',
           'status', 'requestedAt', 'decidedAt', 'decidedByUid',
           'decidedByName'
         ])
         && data.keys().hasAll([
-          'requestType', 'requestedRole', 'displayName', 'deviceName',
+          'requestType', 'requestedRole', 'displayName', 'deviceName', 'deviceType',
           'status', 'requestedAt', 'decidedAt', 'decidedByUid',
           'decidedByName'
         ])
@@ -90,6 +97,7 @@ service cloud.firestore {
         && validRole(data.requestedRole)
         && shortText(data.displayName)
         && shortText(data.deviceName)
+        && validDeviceType(data.deviceType)
         && data.status == 'pending'
         && data.requestedAt == request.time
         && data.decidedAt == null
