@@ -271,11 +271,23 @@ function DeviceManagementPage({
   const activeDevices =
     useMemo(
       () =>
-        devices.filter(
-          (device) =>
-            device.active
-        ),
-      [devices]
+        devices
+          .filter(
+            (device) =>
+              device.active
+          )
+          .sort((first, second) => {
+            if (first.uid === uid) {
+              return -1;
+            }
+
+            if (second.uid === uid) {
+              return 1;
+            }
+
+            return 0;
+          }),
+      [devices, uid]
     );
   const memberCount =
     activeDevices.filter(
@@ -751,7 +763,11 @@ function DeviceManagementPage({
                 return (
                   <article
                     key={device.uid}
-                    className="device-management-device-card"
+                    className={`device-management-device-card${
+                      isCurrent
+                        ? " is-current"
+                        : ""
+                    }`}
                   >
                     <div className="device-management-device-topline">
                       <div className="device-management-device-badges">
