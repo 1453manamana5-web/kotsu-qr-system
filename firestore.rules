@@ -120,7 +120,7 @@ service cloud.firestore {
         && data.decidedByName == currentDevice().displayName;
     }
 
-    function validAudit(data, auditId) {
+    function validAudit(data) {
       return data.keys().hasOnly([
           'action', 'actorUid', 'actorName', 'targetUid', 'targetName',
           'role', 'createdAt'
@@ -310,7 +310,7 @@ service cloud.firestore {
 
       match /audit/{auditId} {
         allow read: if memberDevice();
-        allow create: if validAudit(request.resource.data, auditId)
+        allow create: if validAudit(request.resource.data)
           && (
             memberDevice()
             || (
