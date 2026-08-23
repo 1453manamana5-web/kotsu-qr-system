@@ -619,7 +619,7 @@ function DeviceManagementPage({
             </div>
 
             <div className="device-management-list">
-              {devices.map((device) => {
+              {activeDevices.map((device) => {
                 const isCurrent =
                   device.uid === uid;
                 const isOperating =
@@ -629,7 +629,7 @@ function DeviceManagementPage({
                 return (
                   <article
                     key={device.uid}
-                    className={`device-management-device-card ${device.active ? "" : "disabled"}`}
+                    className="device-management-device-card"
                   >
                     <div className="device-management-device-topline">
                       <div className="device-management-device-badges">
@@ -647,11 +647,6 @@ function DeviceManagementPage({
                           </span>
                         )}
 
-                        {!device.active && (
-                          <span className="device-management-stopped">
-                            旧停止端末
-                          </span>
-                        )}
                       </div>
 
                       <div className="device-management-device-actions">
@@ -669,7 +664,7 @@ function DeviceManagementPage({
                             setOperationError("");
                           }}
                         >
-                          名前を変更
+                          端末名を変更
                         </button>
 
                         {!isCurrent && (
