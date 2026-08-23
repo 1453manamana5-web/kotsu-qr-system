@@ -277,6 +277,8 @@ service cloud.firestore {
           && validDevice(request.resource.data)
           && (
             (
+              deviceId == currentUid()
+              &&
               request.resource.data.diff(resource.data).affectedKeys().hasOnly([
                 'deviceName'
               ])
