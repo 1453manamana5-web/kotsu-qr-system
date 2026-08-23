@@ -480,6 +480,15 @@
   background: #fff;
 }
 
+.device-management-device-card {
+  display: flex;
+  flex-direction: column;
+
+  height: clamp(120px, 14vh, 136px);
+
+  overflow: hidden;
+}
+
 .device-management-card-topline,
 .device-management-device-badges {
   display: flex;
@@ -560,6 +569,14 @@
 
   font-size: 13px;
   font-weight: 680;
+}
+
+.device-management-device-card h3,
+.device-management-device-card p {
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .device-management-request-card > small {
@@ -765,6 +782,11 @@
 }
 
 @media (max-width: 620px) {
+  .device-management-device-card {
+    height: auto;
+    min-height: 132px;
+  }
+
   .device-management-device-topline {
     flex-direction: column;
   }
