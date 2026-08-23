@@ -39,39 +39,17 @@ type DeviceAccessGateProps = {
   ) => void;
 };
 
-function getDefaultDeviceName() {
-  const isIPad =
-    /iPad/i.test(
-      navigator.userAgent
-    ) ||
-    (
-      /Macintosh/i.test(
-        navigator.userAgent
-      ) &&
-      navigator.maxTouchPoints > 1
-    );
+function createAutomaticDeviceName(
+  displayName: string,
+  role: DeviceRole
+) {
+  const cleanDisplayName =
+    displayName.trim() ||
+    "部員";
 
-  if (isIPad) {
-    return "受付用iPad";
-  }
-
-  if (
-    /iPhone/i.test(
-      navigator.userAgent
-    )
-  ) {
-    return "iPhone";
-  }
-
-  if (
-    /Android/i.test(
-      navigator.userAgent
-    )
-  ) {
-    return "Android端末";
-  }
-
-  return "部員端末";
+  return role === "member"
+    ? `${cleanDisplayName}の部員端末`
+    : `${cleanDisplayName}の受付端末`;
 }
 
 function getErrorMessage(
@@ -180,8 +158,6 @@ function DeviceAccessGate({
     useState("");
   const [displayName, setDisplayName] =
     useState("");
-  const [deviceName, setDeviceName] =
-    useState(getDefaultDeviceName);
   const [requestedRole, setRequestedRole] =
     useState<DeviceRole>("reception");
   const [submitting, setSubmitting] =
@@ -326,7 +302,10 @@ function DeviceAccessGate({
       try {
         await bootstrapFirstMemberDevice(
           displayName,
-          deviceName
+          createAutomaticDeviceName(
+            displayName,
+            "member"
+          )
         );
       } catch (error) {
         console.error(
@@ -353,7 +332,10 @@ function DeviceAccessGate({
         await submitDeviceAccessRequest(
           requestedRole,
           displayName,
-          deviceName,
+          createAutomaticDeviceName(
+            displayName,
+            requestedRole
+          ),
           "initial"
         );
       } catch (error) {
@@ -396,7 +378,10 @@ function DeviceAccessGate({
         await submitDeviceAccessRequest(
           "member",
           activeDevice.displayName,
-          activeDevice.deviceName,
+          createAutomaticDeviceName(
+            activeDevice.displayName,
+            "member"
+          ),
           "upgrade"
         );
       } catch (error) {
@@ -510,23 +495,6 @@ function DeviceAccessGate({
                   )
                 }
                 placeholder="例：山田"
-                required
-              />
-            </label>
-
-            <label>
-              この端末の名前
-
-              <input
-                type="text"
-                maxLength={60}
-                value={deviceName}
-                onChange={(event) =>
-                  setDeviceName(
-                    event.target.value
-                  )
-                }
-                placeholder="例：受付iPad 1"
                 required
               />
             </label>
@@ -659,23 +627,6 @@ function DeviceAccessGate({
                   )
                 }
                 placeholder="例：山田"
-                required
-              />
-            </label>
-
-            <label>
-              この端末の名前
-
-              <input
-                type="text"
-                maxLength={60}
-                value={deviceName}
-                onChange={(event) =>
-                  setDeviceName(
-                    event.target.value
-                  )
-                }
-                placeholder="例：入口受付iPad"
                 required
               />
             </label>
