@@ -2,12 +2,17 @@ import {
   doc,
   runTransaction,
   serverTimestamp,
+  type DocumentSnapshot,
+  type DocumentData,
 } from "firebase/firestore";
 
-import { db } from "./firebase";
+import {
+  db,
+} from "./firebase";
 
 import {
   ACTIVITY_COLLECTION,
+  EVENTS_COLLECTION,
   EVENT_DATA_COLLECTION,
   EVENT_MEMBERS_COLLECTION,
   MEMBER_CARDS_COLLECTION,
@@ -32,8 +37,11 @@ import {
 const RETRY_INTERVAL_MILLISECONDS =
   15 * 1000;
 
-let syncInProgress = false;
-let syncStarted = false;
+let syncInProgress =
+  false;
+
+let syncStarted =
+  false;
 
 function getActivityDocument(
   operation: PendingReceptionOperation
@@ -57,7 +65,8 @@ function shouldApplyStatus(
   if (
     typeof currentLastReceptionAt !==
       "string" ||
-    currentLastReceptionAt === ""
+    currentLastReceptionAt ===
+      ""
   ) {
     return true;
   }
@@ -66,6 +75,75 @@ function shouldApplyStatus(
     capturedAt.localeCompare(
       currentLastReceptionAt
     ) >= 0
+  );
+}
+
+type EndedEventState = {
+  ended: boolean;
+  endedAt: string | null;
+};
+
+function getEndedEventState(
+  snapshot:
+    DocumentSnapshot<DocumentData>
+): EndedEventState {
+  if (
+    !snapshot.exists()
+  ) {
+    return {
+      ended: false,
+      endedAt: null,
+    };
+  }
+
+  const data =
+    snapshot.data();
+
+  const ended =
+    data.status ===
+      "ended" ||
+    typeof data.endedAt ===
+      "string";
+
+  return {
+    ended,
+    endedAt:
+      typeof data.endedAt ===
+        "string"
+        ? data.endedAt
+        : null,
+  };
+}
+
+function wasCapturedBeforeEventEnd(
+  capturedAt: string,
+  endedAt: string | null
+) {
+  if (
+    endedAt === null
+  ) {
+    return false;
+  }
+
+  const capturedTime =
+    Date.parse(
+      capturedAt
+    );
+
+  const endedTime =
+    Date.parse(
+      endedAt
+    );
+
+  return (
+    Number.isFinite(
+      capturedTime
+    ) &&
+    Number.isFinite(
+      endedTime
+    ) &&
+    capturedTime <=
+      endedTime
   );
 }
 
@@ -81,25 +159,41 @@ async function syncTicketOperation(
       operation.eventName
     );
 
-  const ticketDocument = doc(
-    db,
-    EVENT_DATA_COLLECTION,
-    eventId,
-    TICKETS_COLLECTION,
-    operation.qrNumber
-  );
+  const eventDocument =
+    doc(
+      db,
+      EVENTS_COLLECTION,
+      eventId
+    );
+
+  const ticketDocument =
+    doc(
+      db,
+      EVENT_DATA_COLLECTION,
+      eventId,
+      TICKETS_COLLECTION,
+      operation.qrNumber
+    );
 
   const activityDocument =
-    getActivityDocument(operation);
+    getActivityDocument(
+      operation
+    );
 
   await runTransaction(
     db,
-    async (transaction) => {
+    async (
+      transaction
+    ) => {
       const [
+        eventSnapshot,
         activitySnapshot,
         ticketSnapshot,
         analyticsSnapshot,
       ] = await Promise.all([
+        transaction.get(
+          eventDocument
+        ),
         transaction.get(
           activityDocument
         ),
@@ -113,11 +207,15 @@ async function syncTicketOperation(
         ),
       ]);
 
-      if (activitySnapshot.exists()) {
+      if (
+        activitySnapshot.exists()
+      ) {
         return;
       }
 
-      if (!ticketSnapshot.exists()) {
+      if (
+        !ticketSnapshot.exists()
+      ) {
         throw new Error(
           `同期待ちチケット ${operation.qrNumber} が見つかりません。`
         );
@@ -135,7 +233,46 @@ async function syncTicketOperation(
         );
       }
 
+      const endedState =
+        getEndedEventState(
+          eventSnapshot
+        );
+
       if (
+        endedState.ended
+      ) {
+        /*
+          終了後に古い受付画面から作られた操作は破棄します。
+          終了前にオフラインで受け付けた操作だけ履歴へ残します。
+        */
+        if (
+          !wasCapturedBeforeEventEnd(
+            operation.capturedAt,
+            endedState.endedAt
+          )
+        ) {
+          return;
+        }
+
+        if (
+          ticketData.status !==
+          "無効"
+        ) {
+          transaction.update(
+            ticketDocument,
+            {
+              status:
+                "使用済み",
+              lastReceptionAt:
+                endedState.endedAt,
+              lastReceptionOperationId:
+                operation.id,
+              updatedAt:
+                serverTimestamp(),
+            }
+          );
+        }
+      } else if (
         shouldApplyStatus(
           ticketData.lastReceptionAt,
           operation.capturedAt
@@ -159,10 +296,11 @@ async function syncTicketOperation(
       transaction.set(
         activityDocument,
         {
-          id: operation.id,
+          id:
+            operation.id,
           type:
             operation.action ===
-            "entry"
+              "entry"
               ? "ticket-entry"
               : "ticket-exit",
           qrNumber:
@@ -176,8 +314,10 @@ async function syncTicketOperation(
                   operation.isReEntry,
               }
             : {}),
-          source: "scanner",
-          offline: true,
+          source:
+            "scanner",
+          offline:
+            true,
           createdAt:
             serverTimestamp(),
         }
@@ -203,32 +343,49 @@ async function syncMemberOperation(
       operation.eventName
     );
 
-  const cardDocument = doc(
-    db,
-    MEMBER_CARDS_COLLECTION,
-    operation.qrNumber
-  );
+  const eventDocument =
+    doc(
+      db,
+      EVENTS_COLLECTION,
+      eventId
+    );
 
-  const memberDocument = doc(
-    db,
-    EVENT_DATA_COLLECTION,
-    eventId,
-    EVENT_MEMBERS_COLLECTION,
-    operation.qrNumber
-  );
+  const cardDocument =
+    doc(
+      db,
+      MEMBER_CARDS_COLLECTION,
+      operation.qrNumber
+    );
+
+  const memberDocument =
+    doc(
+      db,
+      EVENT_DATA_COLLECTION,
+      eventId,
+      EVENT_MEMBERS_COLLECTION,
+      operation.qrNumber
+    );
 
   const activityDocument =
-    getActivityDocument(operation);
+    getActivityDocument(
+      operation
+    );
 
   await runTransaction(
     db,
-    async (transaction) => {
+    async (
+      transaction
+    ) => {
       const [
+        eventSnapshot,
         activitySnapshot,
         cardSnapshot,
         memberSnapshot,
         analyticsSnapshot,
       ] = await Promise.all([
+        transaction.get(
+          eventDocument
+        ),
         transaction.get(
           activityDocument
         ),
@@ -245,11 +402,15 @@ async function syncMemberOperation(
         ),
       ]);
 
-      if (activitySnapshot.exists()) {
+      if (
+        activitySnapshot.exists()
+      ) {
         return;
       }
 
-      if (!cardSnapshot.exists()) {
+      if (
+        !cardSnapshot.exists()
+      ) {
         throw new Error(
           `同期待ち部員QR ${operation.qrNumber} が見つかりません。`
         );
@@ -272,7 +433,48 @@ async function syncMemberOperation(
           ? memberSnapshot.data()
           : {};
 
+      const endedState =
+        getEndedEventState(
+          eventSnapshot
+        );
+
       if (
+        endedState.ended
+      ) {
+        if (
+          !wasCapturedBeforeEventEnd(
+            operation.capturedAt,
+            endedState.endedAt
+          )
+        ) {
+          return;
+        }
+
+        transaction.set(
+          memberDocument,
+          {
+            qrNumber:
+              operation.qrNumber,
+            name:
+              typeof memberData.name ===
+                "string"
+                ? memberData.name
+                : operation.memberName,
+            status:
+              "退出済み",
+            lastReceptionAt:
+              endedState.endedAt,
+            lastReceptionOperationId:
+              operation.id,
+            updatedAt:
+              serverTimestamp(),
+          },
+          {
+            merge:
+              true,
+          }
+        );
+      } else if (
         shouldApplyStatus(
           memberData.lastReceptionAt,
           operation.capturedAt
@@ -285,7 +487,7 @@ async function syncMemberOperation(
               operation.qrNumber,
             name:
               typeof memberData.name ===
-              "string"
+                "string"
                 ? memberData.name
                 : operation.memberName,
             status:
@@ -298,7 +500,8 @@ async function syncMemberOperation(
               serverTimestamp(),
           },
           {
-            merge: true,
+            merge:
+              true,
           }
         );
       }
@@ -306,18 +509,21 @@ async function syncMemberOperation(
       transaction.set(
         activityDocument,
         {
-          id: operation.id,
+          id:
+            operation.id,
           type:
             operation.action ===
-            "entry"
+              "entry"
               ? "member-entry"
               : "member-exit",
           qrNumber:
             operation.qrNumber,
           timestamp:
             operation.capturedAt,
-          source: "scanner",
-          offline: true,
+          source:
+            "scanner",
+          offline:
+            true,
           createdAt:
             serverTimestamp(),
         }
@@ -334,24 +540,34 @@ async function syncMemberOperation(
 async function syncOperation(
   operation: PendingReceptionOperation
 ) {
-  if (operation.kind === "ticket") {
-    await syncTicketOperation(operation);
+  if (
+    operation.kind ===
+    "ticket"
+  ) {
+    await syncTicketOperation(
+      operation
+    );
+
     return;
   }
 
-  await syncMemberOperation(operation);
+  await syncMemberOperation(
+    operation
+  );
 }
 
 export async function syncPendingReceptionOperations() {
   if (
     syncInProgress ||
-    typeof navigator === "undefined" ||
+    typeof navigator ===
+      "undefined" ||
     !navigator.onLine
   ) {
     return;
   }
 
-  syncInProgress = true;
+  syncInProgress =
+    true;
 
   try {
     const operations =
@@ -360,13 +576,20 @@ export async function syncPendingReceptionOperations() {
     const changedEventIds =
       new Set<string>();
 
-    for (const operation of operations) {
-      if (!navigator.onLine) {
+    for (
+      const operation of
+      operations
+    ) {
+      if (
+        !navigator.onLine
+      ) {
         break;
       }
 
       try {
-        await syncOperation(operation);
+        await syncOperation(
+          operation
+        );
 
         changedEventIds.add(
           operation.eventDataId ??
@@ -403,7 +626,10 @@ export async function syncPendingReceptionOperations() {
       }
     }
 
-    for (const eventId of changedEventIds) {
+    for (
+      const eventId of
+      changedEventIds
+    ) {
       try {
         await rebuildEventAnalyticsByDataId(
           eventId
@@ -416,27 +642,33 @@ export async function syncPendingReceptionOperations() {
       }
     }
   } finally {
-    syncInProgress = false;
+    syncInProgress =
+      false;
   }
 }
 
 export function startOfflineReceptionSync() {
   if (
     syncStarted ||
-    typeof window === "undefined"
+    typeof window ===
+      "undefined"
   ) {
     return;
   }
 
-  syncStarted = true;
+  syncStarted =
+    true;
 
-  const requestSync = () => {
-    if (!navigator.onLine) {
-      return;
-    }
+  const requestSync =
+    () => {
+      if (
+        !navigator.onLine
+      ) {
+        return;
+      }
 
-    void syncPendingReceptionOperations();
-  };
+      void syncPendingReceptionOperations();
+    };
 
   window.addEventListener(
     "online",
