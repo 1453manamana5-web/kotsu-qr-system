@@ -15,6 +15,18 @@ export default defineConfig({
   base:
     APP_BASE,
 
+  resolve: {
+    /*
+      管制画面はcontrol-app側のソースも再利用します。
+      Reactが2組バンドルされるとHooksが別インスタンスを
+      参照して白画面になるため、受付本体のReactへ統一します。
+    */
+    dedupe: [
+      "react",
+      "react-dom",
+    ],
+  },
+
   build: {
     rolldownOptions: {
       output: {
