@@ -338,7 +338,7 @@ export default function App() {
 
   const alerts = useMemo<SystemAlert[]>(() => {
     const result: SystemAlert[] = [];
-    if (firestoreHealth === "error") result.push({ id: "firestore", severity: "critical", title: "管制端末からFirebaseへ接続できません", detail: "この端末のネットワークと学校回線を確認してください" });
+    if (firestoreHealth === "error") result.push({ id: "firestore", severity: "critical", title: "この部員端末からFirebaseへ接続できません", detail: "この端末のネットワークと学校回線を確認してください" });
     if (streamError !== "") result.push({ id: "stream", severity: "critical", title: streamError, detail: "リアルタイム監視が停止している可能性があります" });
     if (currentEvent === null) result.push({ id: "event", severity: "critical", title: "現在のイベントが設定されていません", detail: "QR受付システムのイベント管理を確認してください" });
 
