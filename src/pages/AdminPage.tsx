@@ -1351,6 +1351,24 @@ function AdminPage({
             }
           </span>
         </button>
+
+        <button
+          type="button"
+          className="admin-control-button"
+          onClick={() =>
+            window.location.assign(
+              "/qr-system/control/"
+            )
+          }
+        >
+          <span className="admin-control-button-icon" aria-hidden="true">
+            ◎
+          </span>
+
+          <span>
+            管制画面を開く
+          </span>
+        </button>
       </footer>
     </div>
   );

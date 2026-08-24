@@ -387,6 +387,13 @@ export default function App() {
         <header className="topbar">
           <div><small>TRAFFIC RESEARCH CLUB</small><h1>QR管理・管制システム</h1></div>
           <div className="topbar-meta">
+            <button
+              type="button"
+              className="return-to-admin"
+              onClick={() => window.location.assign("/qr-system/")}
+            >
+              受付管理へ戻る
+            </button>
             <span>{currentEvent?.name ?? "イベント未設定"}</span>
             <time>{formatTime(now)}</time>
             <span className={`operation-pill ${overallSeverity}`}>{overallSeverity === "normal" ? "正常運用" : overallSeverity === "warning" ? "注意あり" : "異常検知"}</span>

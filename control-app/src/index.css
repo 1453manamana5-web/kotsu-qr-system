@@ -29,6 +29,8 @@ button { cursor: pointer; }
 .topbar small, .panel-heading small, .page-heading small, .device-card-header small { color: #7d8ca8; font-size: 9px; font-weight: 850; letter-spacing: .13em; }
 .topbar h1 { margin: 3px 0 0; font-size: clamp(21px, 2vw, 29px); line-height: 1.05; }
 .topbar-meta { display: flex; align-items: center; gap: 18px; color: #334469; font-weight: 750; }
+.return-to-admin { min-height: 38px; padding: 7px 13px; border: 1px solid #cfd8e8; border-radius: 11px; color: #304269; background: #f8faff; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.return-to-admin:active { transform: scale(.98); }
 .topbar-meta time { padding-left: 18px; border-left: 1px solid #dce3ee; font-variant-numeric: tabular-nums; }
 .operation-pill, .status-badge, .firebase-chip { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: 12px; font-weight: 850; }
 .operation-pill { min-height: 34px; padding: 0 14px; }
@@ -170,6 +172,7 @@ main { padding: 22px clamp(18px, 2.4vw, 34px) 34px; }
   .topbar small { display: none; }
   .topbar h1 { font-size: 18px; }
   .topbar-meta { gap: 8px; }
+  .return-to-admin { min-height: 34px; padding: 6px 9px; font-size: 10px; }
   .topbar-meta > span:first-child, .topbar-meta time { display: none; }
   main { padding: 14px 12px 86px; }
   .summary-grid { gap: 9px; }
