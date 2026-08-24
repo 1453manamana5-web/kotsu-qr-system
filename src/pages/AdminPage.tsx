@@ -1356,8 +1356,8 @@ function AdminPage({
           type="button"
           className="admin-control-button"
           onClick={() =>
-            window.location.assign(
-              "/qr-system/control/"
+            setPage(
+              "control"
             )
           }
         >

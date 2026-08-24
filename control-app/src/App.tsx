@@ -10,8 +10,8 @@ import {
   getDocFromServer,
   onSnapshot,
   type DocumentData,
+  type Firestore,
 } from "firebase/firestore";
-import { db } from "./firebase";
 import type {
   AnalyticsSummary,
   EventData,
@@ -212,7 +212,12 @@ function DeviceCard({ device, mode, now }: {
   );
 }
 
-export default function App() {
+type AppProps = {
+  database: Firestore;
+  onReturn?: () => void;
+};
+
+export default function App({ database, onReturn }: AppProps) {
   const [view, setView] = useState<View>("overview");
   const [events, setEvents] = useState<EventData[]>([]);
   const [currentEventId, setCurrentEventId] = useState<string | null>(null);
@@ -231,7 +236,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const unsubscribeEvents = onSnapshot(collection(db, "events"), (snapshot) => {
+    const unsubscribeEvents = onSnapshot(collection(database, "events"), (snapshot) => {
       setEvents(snapshot.docs.map((item) => readEvent(item.id, item.data())).filter((event): event is EventData => event !== null));
       setStreamError("");
     }, (error) => {
@@ -239,7 +244,7 @@ export default function App() {
       setStreamError("イベント情報を取得できませんでした");
     });
 
-    const unsubscribeCurrent = onSnapshot(doc(db, "system", "current-event"), (snapshot) => {
+    const unsubscribeCurrent = onSnapshot(doc(database, "system", "current-event"), (snapshot) => {
       const value = snapshot.exists() ? snapshot.data().eventId : null;
       setCurrentEventId(typeof value === "string" ? value : null);
     }, (error) => {
@@ -251,7 +256,7 @@ export default function App() {
       unsubscribeEvents();
       unsubscribeCurrent();
     };
-  }, []);
+  }, [database]);
 
   const currentEvent = useMemo(
     () => events.find((event) => event.id === currentEventId) ?? null,
@@ -264,14 +269,14 @@ export default function App() {
     }
 
     const basePath = ["event-data", currentEvent.dataDocumentId] as const;
-    const unsubscribeAnalytics = onSnapshot(doc(db, ...basePath, "analytics", "summary"), (snapshot) => {
+    const unsubscribeAnalytics = onSnapshot(doc(database, ...basePath, "analytics", "summary"), (snapshot) => {
       setAnalytics(snapshot.exists() ? readAnalytics(snapshot.data()) : null);
     }, (error) => {
       console.error("集計情報を取得できませんでした。", error);
       setStreamError("集計情報を取得できませんでした");
     });
 
-    const unsubscribeDevices = onSnapshot(collection(db, ...basePath, "reception-devices"), (snapshot) => {
+    const unsubscribeDevices = onSnapshot(collection(database, ...basePath, "reception-devices"), (snapshot) => {
       setDevices(snapshot.docs.map((item) => readReceptionDevice(item.id, item.data())).filter((device): device is ReceptionDevice => device !== null));
     }, (error) => {
       console.error("受付端末情報を取得できませんでした。", error);
@@ -282,12 +287,12 @@ export default function App() {
       unsubscribeAnalytics();
       unsubscribeDevices();
     };
-  }, [currentEvent]);
+  }, [currentEvent, database]);
 
   const runHealthCheck = useCallback(async () => {
     setFirestoreHealth("checking");
     try {
-      await getDocFromServer(doc(db, "system", "current-event"));
+      await getDocFromServer(doc(database, "system", "current-event"));
       setFirestoreHealth("online");
     } catch (error) {
       console.error("Firestore実通信確認に失敗しました。", error);
@@ -295,7 +300,7 @@ export default function App() {
     } finally {
       setLastHealthCheck(Date.now());
     }
-  }, []);
+  }, [database]);
 
   useEffect(() => {
     const initialCheck =
@@ -390,7 +395,7 @@ export default function App() {
             <button
               type="button"
               className="return-to-admin"
-              onClick={() => window.location.assign("/qr-system/")}
+              onClick={() => onReturn?.() ?? window.location.assign("/qr-system/")}
             >
               受付管理へ戻る
             </button>

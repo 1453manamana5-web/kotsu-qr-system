@@ -68,6 +68,10 @@ const FirebaseTestPage = lazy(() =>
   import("./pages/FirebaseTestPage")
 );
 
+const ControlPage = lazy(() =>
+  import("./pages/ControlPage")
+);
+
 import {
   createEventInFirestore,
   deleteEventFromFirestore,
@@ -110,6 +114,7 @@ type Page =
   | "past-data"
   | "settings"
   | "device-access"
+  | "control"
   | "firebase-test";
 
 const ADMIN_ONLY_PAGES =
@@ -124,6 +129,7 @@ const ADMIN_ONLY_PAGES =
     "past-data",
     "settings",
     "device-access",
+    "control",
     "firebase-test",
   ]);
 
@@ -512,7 +518,8 @@ function App() {
       page === "exit" ||
       page === "admin" ||
       page === "events" ||
-      page === "device-access";
+      page === "device-access" ||
+      page === "control";
 
     document.documentElement.classList.toggle(
       "viewport-locked",
@@ -1860,6 +1867,15 @@ function App() {
     case "firebase-test":
       return (
         <FirebaseTestPage
+          setPage={
+            changePage
+          }
+        />
+      );
+
+    case "control":
+      return (
+        <ControlPage
           setPage={
             changePage
           }
