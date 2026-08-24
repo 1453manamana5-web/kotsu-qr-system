@@ -38,7 +38,7 @@ button { cursor: pointer; }
 .operation-pill.warning, .status-badge.warning { color: #8a4a00; background: #fff0c8; }
 .operation-pill.critical, .status-badge.critical { color: #a32828; background: #ffe3e3; }
 
-main { padding: 22px clamp(18px, 2.4vw, 34px) 34px; }
+.control-shell main { padding: 22px clamp(18px, 2.4vw, 34px) 34px; }
 .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 .summary-grid article { display: flex; align-items: center; min-height: 105px; padding: 17px 19px; border: 1px solid rgba(255,255,255,.9); border-radius: 18px; background: rgba(255,255,255,.92); box-shadow: 0 9px 25px rgba(34, 55, 91, .075); }
 .summary-grid article:nth-child(1) { border-top: 4px solid #20ae68; }
@@ -174,7 +174,7 @@ main { padding: 22px clamp(18px, 2.4vw, 34px) 34px; }
   .topbar-meta { gap: 8px; }
   .return-to-admin { min-height: 34px; padding: 6px 9px; font-size: 10px; }
   .topbar-meta > span:first-child, .topbar-meta time { display: none; }
-  main { padding: 14px 12px 86px; }
+  .control-shell main { padding: 14px 12px 86px; }
   .summary-grid { gap: 9px; }
   .summary-grid article { min-height: 86px; padding: 12px; }
   .summary-icon { flex-basis: 40px; height: 40px; margin-right: 9px; }
