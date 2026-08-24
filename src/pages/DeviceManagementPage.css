@@ -235,7 +235,7 @@
 .device-management-summary {
   display: grid;
   grid-template-columns:
-    repeat(4, minmax(118px, 0.7fr))
+    repeat(3, minmax(118px, 0.7fr))
     minmax(220px, 1.5fr);
 
   gap: 12px;
@@ -557,8 +557,8 @@
 }
 
 .device-management-role-control {
-  color: #5e35b1;
-  background: #ede7f6;
+  color: #087da5;
+  background: #dff5fa;
 }
 
 .device-management-upgrade,
