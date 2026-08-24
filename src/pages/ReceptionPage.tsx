@@ -1,12 +1,17 @@
 import {
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useRef,
   useState,
 } from "react";
 
-import CameraQrScanner from "./CameraQrScanner";
 import OnlineStatus from "./OnlineStatus";
+
+const CameraQrScanner = lazy(() =>
+  import("./CameraQrScanner")
+);
 
 import {
   processTicketEntryInFirestore,
@@ -1226,16 +1231,31 @@ function ReceptionPage({
               </div>
 
               <div className={modeClass("entry-scanner-wrapper")}>
-                <CameraQrScanner
-                  enabled
-                  onScan={(
-                    qrValue
-                  ) => {
-                    void processQr(
+                <Suspense
+                  fallback={
+                    <div className="app-scanner-loading">
+                      <span
+                        className="app-route-loading-spinner"
+                        aria-hidden="true"
+                      />
+
+                      <strong>
+                        カメラを準備しています
+                      </strong>
+                    </div>
+                  }
+                >
+                  <CameraQrScanner
+                    enabled
+                    onScan={(
                       qrValue
-                    );
-                  }}
-                />
+                    ) => {
+                      void processQr(
+                        qrValue
+                      );
+                    }}
+                  />
+                </Suspense>
 
                 {receptionState ===
                   "processing" && (

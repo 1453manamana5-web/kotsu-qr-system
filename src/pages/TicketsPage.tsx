@@ -1,15 +1,17 @@
 import {
+  lazy,
+  Suspense,
   useEffect,
   useMemo,
   useState,
 } from "react";
 
-import {
-  QRCodeSVG,
-} from "qrcode.react";
-
 import OnlineStatus from "./OnlineStatus";
-import TicketDesigner from "./TicketDesigner";
+import LazyQrCode from "./LazyQrCode";
+
+const TicketDesigner = lazy(() =>
+  import("./TicketDesigner")
+);
 
 import {
   createTicketsInFirestore,
@@ -1743,7 +1745,7 @@ function TicketsPage({
             </div>
 
             <div className="ticket-qr-code">
-              <QRCodeSVG
+              <LazyQrCode
                 value={createTicketQrValue(
                   selectedTicket
                 )}
@@ -1807,23 +1809,35 @@ function TicketsPage({
       )}
 
       {showDesigner && (
-        <TicketDesigner
-          tickets={
-            tickets
+        <Suspense
+          fallback={
+            <div className="tickets-modal-background">
+              <section className="tickets-modal-window">
+                <p>
+                  印刷画面を読み込んでいます…
+                </p>
+              </section>
+            </div>
           }
-          eventName={
-            eventName
-          }
-          initialTicketNumber={
-            designerTicketNumber ??
-            undefined
-          }
-          onClose={() =>
-            setShowDesigner(
-              false
-            )
-          }
-        />
+        >
+          <TicketDesigner
+            tickets={
+              tickets
+            }
+            eventName={
+              eventName
+            }
+            initialTicketNumber={
+              designerTicketNumber ??
+              undefined
+            }
+            onClose={() =>
+              setShowDesigner(
+                false
+              )
+            }
+          />
+        </Suspense>
       )}
     </div>
   );

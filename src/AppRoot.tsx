@@ -1,15 +1,20 @@
 import {
+  lazy,
   Suspense,
   useState,
 } from "react";
-
-import App from "./App";
 
 import AppSplashScreen from "./AppSplashScreen";
 
 import DeviceAuthGate from "./DeviceAuthGate";
 
-import DeviceAccessGate from "./DeviceAccessGate";
+const DeviceAccessGate = lazy(() =>
+  import("./DeviceAccessGate")
+);
+
+const App = lazy(() =>
+  import("./App")
+);
 
 type StartupState =
   | "checking"
@@ -65,19 +70,19 @@ function AppRoot() {
           setAuthState
         }
       >
-        <DeviceAccessGate
-          onScreenStateChange={
-            setAccessState
+        <Suspense
+          fallback={
+            pageLoadingFallback
           }
         >
-          <Suspense
-            fallback={
-              pageLoadingFallback
+          <DeviceAccessGate
+            onScreenStateChange={
+              setAccessState
             }
           >
             <App />
-          </Suspense>
-        </DeviceAccessGate>
+          </DeviceAccessGate>
+        </Suspense>
       </DeviceAuthGate>
     </AppSplashScreen>
   );

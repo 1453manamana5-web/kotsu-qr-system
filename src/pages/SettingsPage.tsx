@@ -32,7 +32,7 @@ type AppSettings = {
 };
 
 const APP_VERSION =
-  "2.6.1";
+  "2.7.0";
 
 const SETTINGS_STORAGE_KEY =
   "qr-management-app-settings";
@@ -1011,7 +1011,7 @@ function SettingsPage({
               </h2>
 
               <p>
-                内部処理を整理し、受付と管理画面をより軽く安定して使えるようにしました。
+                起動を大幅に軽量化し、端末管理・過去データ・自動配備をより安定して使えるようにしました。
               </p>
             </div>
 
@@ -1023,11 +1023,11 @@ function SettingsPage({
 
                 <div>
                   <strong>
-                    受付画面の通信量を約42%削減
+                    初回JavaScriptを約64%削減
                   </strong>
 
                   <span>
-                    入場・退場画面の関連JavaScriptを、圧縮時7.76KBから4.51KBへ軽量化しました。
+                    起動時に読むJavaScriptを圧縮時約269KBから約96KBへ削減しました。
                   </span>
                 </div>
               </li>
@@ -1039,11 +1039,11 @@ function SettingsPage({
 
                 <div>
                   <strong>
-                    Firestore処理を整理
+                    必要な機能だけを追加読み込み
                   </strong>
 
                   <span>
-                    データ保存先とID生成を共通化し、修正漏れが起きにくくなりました。
+                    Firestore、QR生成、カメラ、印刷、分析処理を使う場面ごとに分割しました。
                   </span>
                 </div>
               </li>
@@ -1055,11 +1055,11 @@ function SettingsPage({
 
                 <div>
                   <strong>
-                    設定画面を約27%軽量化
+                    過去データの読み込みを安定化
                   </strong>
 
                   <span>
-                    初回に読むJavaScriptを、圧縮時6.65KBから4.85KBへ削減しました。
+                    保存済みデータを先に表示し、Firebaseとの同期と旧データ移行を背後で続けるようにしました。
                   </span>
                 </div>
               </li>
@@ -1071,11 +1071,27 @@ function SettingsPage({
 
                 <div>
                   <strong>
-                    コードの不具合候補を修正
+                    端末種別の表示に対応
                   </strong>
 
                   <span>
-                    警告と不要な再処理を取り除き、全画面の検査をエラー0件にしました。
+                    利用申請と登録済み端末に端末種別を表示し、更新時の点滅も防止しました。
+                  </span>
+                </div>
+              </li>
+
+              <li>
+                <span className="settings-update-check">
+                  ✓
+                </span>
+
+                <div>
+                  <strong>
+                    Firestoreルールを自動配備
+                  </strong>
+
+                  <span>
+                    ルール更新をGitHubからFirebaseへ自動反映し、配備忘れを防ぐようにしました。
                   </span>
                 </div>
               </li>

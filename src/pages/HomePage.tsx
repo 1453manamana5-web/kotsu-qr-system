@@ -201,6 +201,12 @@ function HomePage({
     setPage("exit");
   };
 
+  const goToAdmin = () => {
+    void unlockReceptionSound();
+
+    setPage("admin");
+  };
+
   return (
     <div className="home-page">
       <div className="home-background-decoration home-background-decoration-one" />
@@ -221,7 +227,7 @@ function HomePage({
         <button
           type="button"
           className="home-admin-button"
-          onClick={() => setPage("admin")}
+          onClick={goToAdmin}
         >
           <span className="home-admin-icon">
             <AdminIcon />

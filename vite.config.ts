@@ -15,6 +15,31 @@ export default defineConfig({
   base:
     APP_BASE,
 
+  build: {
+    rolldownOptions: {
+      output: {
+        /*
+          Firestoreの通信層を独立させ、iPadで一度に
+          解析するJavaScriptを抑えます。
+        */
+        codeSplitting: {
+          groups: [
+            {
+              name:
+                "firebase-webchannel",
+
+              test:
+                /node_modules[\\/]@firebase[\\/]webchannel-wrapper/,
+
+              priority:
+                20,
+            },
+          ],
+        },
+      },
+    },
+  },
+
   plugins: [
     react(),
 
@@ -132,14 +157,21 @@ export default defineConfig({
         ],
 
         /*
-          PDF生成は過去データ画面で操作したときだけ使います。
-          受付に不要な大容量チャンクを初回のPWA保存から外し、
-          必要になった時点で通常の通信から読み込みます。
+          PDF生成・QRデザイン・バックアップは管理画面で
+          操作したときだけ使います。受付に不要なチャンクを
+          初回のPWA保存から外し、必要時に読み込みます。
+
+          受付に必要なカメラとFirestoreは引き続き保存します。
         */
         globIgnores: [
           "**/html2canvas-*.js",
           "**/jspdf.es.min-*.js",
           "**/purify.es-*.js",
+          "**/index.es-*.js",
+          "**/TicketDesigner-*.{js,css}",
+          "**/MemberCardDesigner-*.js",
+          "**/backupRestore-*.js",
+          "**/manualPrintSupport-*.js",
         ],
 
         cleanupOutdatedCaches:

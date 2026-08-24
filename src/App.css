@@ -115,6 +115,26 @@ button {
   );
 }
 
+.app-scanner-loading {
+  display: grid;
+  min-height: 320px;
+
+  place-items: center;
+  align-content: center;
+  gap: 18px;
+
+  color: #4d3d6f;
+  background: #f5f6f8;
+}
+
+.app-scanner-loading strong {
+  font-size: clamp(
+    16px,
+    2vw,
+    22px
+  );
+}
+
 @keyframes app-route-loading-spin {
   to {
     transform: rotate(360deg);

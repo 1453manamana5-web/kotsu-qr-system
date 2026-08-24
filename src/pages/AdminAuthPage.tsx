@@ -1,11 +1,16 @@
 import {
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useState,
 } from "react";
 
-import CameraQrScanner from "./CameraQrScanner";
 import OnlineStatus from "./OnlineStatus";
+
+const CameraQrScanner = lazy(() =>
+  import("./CameraQrScanner")
+);
 
 import {
   findMemberByQrInFirestore,
@@ -664,19 +669,34 @@ function AdminAuthPage({
               </div>
 
               <div className="admin-auth-scanner-wrapper">
-                <CameraQrScanner
-                  key={
-                    scannerSession
+                <Suspense
+                  fallback={
+                    <div className="app-scanner-loading">
+                      <span
+                        className="app-route-loading-spinner"
+                        aria-hidden="true"
+                      />
+
+                      <strong>
+                        カメラを準備しています
+                      </strong>
+                    </div>
                   }
-                  enabled
-                  onScan={(
-                    qrValue
-                  ) => {
-                    void handleQrScan(
+                >
+                  <CameraQrScanner
+                    key={
+                      scannerSession
+                    }
+                    enabled
+                    onScan={(
                       qrValue
-                    );
-                  }}
-                />
+                    ) => {
+                      void handleQrScan(
+                        qrValue
+                      );
+                    }}
+                  />
+                </Suspense>
               </div>
             </div>
 

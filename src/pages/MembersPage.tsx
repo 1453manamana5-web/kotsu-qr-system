@@ -1,16 +1,18 @@
 import {
+  lazy,
+  Suspense,
   useEffect,
   useMemo,
   useState,
 } from "react";
 
-import {
-  QRCodeSVG,
-} from "qrcode.react";
-
 import OnlineStatus from "./OnlineStatus";
 
-import MemberCardDesigner from "./MemberCardDesigner";
+import LazyQrCode from "./LazyQrCode";
+
+const MemberCardDesigner = lazy(() =>
+  import("./MemberCardDesigner")
+);
 
 import {
   createMemberInFirestore,
@@ -1464,7 +1466,7 @@ function MembersPage({
               {newMemberPreview !==
                 null && (
                 <div className="members-new-qr-preview">
-                  <QRCodeSVG
+                  <LazyQrCode
                     value={createQrValue(
                       newMemberPreview
                     )}
@@ -1698,7 +1700,7 @@ function MembersPage({
               </h2>
 
               <div className="member-qr-code">
-                <QRCodeSVG
+                <LazyQrCode
                   value={createQrValue(
                     selectedMember
                   )}
@@ -1778,26 +1780,38 @@ function MembersPage({
       )}
 
       {showDesigner && (
-        <MemberCardDesigner
-          members={
-            memberCards
+        <Suspense
+          fallback={
+            <div className="members-add-modal-background">
+              <section className="members-add-modal">
+                <p>
+                  印刷画面を読み込んでいます…
+                </p>
+              </section>
+            </div>
           }
-          eventName={
-            eventName
-          }
-          initialQrNumber={
-            designerMemberQrNumber ??
-            undefined
-          }
-          onClose={() => {
-            setShowDesigner(
-              false
-            );
-            setDesignerMemberQrNumber(
-              null
-            );
-          }}
-        />
+        >
+          <MemberCardDesigner
+            members={
+              memberCards
+            }
+            eventName={
+              eventName
+            }
+            initialQrNumber={
+              designerMemberQrNumber ??
+              undefined
+            }
+            onClose={() => {
+              setShowDesigner(
+                false
+              );
+              setDesignerMemberQrNumber(
+                null
+              );
+            }}
+          />
+        </Suspense>
       )}
     </div>
   );
