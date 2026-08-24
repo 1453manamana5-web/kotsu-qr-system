@@ -130,14 +130,12 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
     };
 
     const unsubscribeDevice = onSnapshot(deviceRef, { includeMetadataChanges: true }, (snapshot) => {
-      if (!snapshot.exists() && snapshot.metadata.fromCache) return;
       device = snapshot.exists() ? readDevice(snapshot.data()) : null;
       deviceKnown = true;
       decide();
     }, onError);
 
     const unsubscribeRequest = onSnapshot(requestRef, { includeMetadataChanges: true }, (snapshot) => {
-      if (!snapshot.exists() && snapshot.metadata.fromCache) return;
       const requestData = snapshot.exists() ? snapshot.data() : null;
       requestStatus = requestData !== null && typeof requestData.status === "string"
         ? requestData.status
