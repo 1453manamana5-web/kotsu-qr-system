@@ -4,7 +4,6 @@ import {
   onSnapshot,
   runTransaction,
   serverTimestamp,
-  updateDoc,
   writeBatch,
   type DocumentData,
   type QuerySnapshot,
@@ -998,32 +997,6 @@ export async function approveDeviceAccessRequest(
             serverTimestamp(),
         }
       );
-    }
-  );
-}
-
-export async function syncCurrentDeviceType(
-  currentDeviceType: DeviceType
-) {
-  const detectedDeviceType =
-    detectDeviceType();
-
-  if (
-    detectedDeviceType === "unknown" ||
-    detectedDeviceType ===
-      currentDeviceType
-  ) {
-    return;
-  }
-
-  const uid =
-    getAuthenticatedUid();
-
-  await updateDoc(
-    getDeviceDocument(uid),
-    {
-      deviceType:
-        detectedDeviceType,
     }
   );
 }
