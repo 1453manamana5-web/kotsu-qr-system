@@ -235,7 +235,7 @@
 .device-management-summary {
   display: grid;
   grid-template-columns:
-    repeat(3, minmax(130px, 0.7fr))
+    repeat(4, minmax(118px, 0.7fr))
     minmax(220px, 1.5fr);
 
   gap: 12px;
@@ -556,6 +556,11 @@
   background: #def4f1;
 }
 
+.device-management-role-control {
+  color: #5e35b1;
+  background: #ede7f6;
+}
+
 .device-management-upgrade,
 .device-management-self {
   color: #156c91;
@@ -854,7 +859,7 @@
   }
 
   .device-management-summary {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .device-management-summary .device-management-current {

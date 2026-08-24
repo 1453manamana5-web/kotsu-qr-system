@@ -20,6 +20,11 @@ import {
   createSafeRandomId,
 } from "./firestorePaths";
 
+import type {
+  DeviceRole,
+  DeviceType,
+} from "./deviceAccessFirestore";
+
 export type ReceptionMode =
   | "entry"
   | "exit";
@@ -28,6 +33,40 @@ export type ReceptionDevice = {
   deviceId: string;
   mode: ReceptionMode;
   lastSeenAt: number;
+  registeredDeviceId: string;
+  deviceName: string;
+  deviceType: DeviceType;
+  role: DeviceRole;
+  appVersion: string;
+  lastSuccessfulSyncAt: string;
+  pendingCount: number;
+  cameraState: ReceptionCameraState;
+  screen: ReceptionScreen;
+  sessionStartedAt: string;
+  lastScanAt: string;
+};
+
+export type ReceptionCameraState =
+  | "starting"
+  | "ready"
+  | "error";
+
+export type ReceptionScreen =
+  | "entry-reception"
+  | "exit-reception";
+
+export type ReceptionHeartbeat = {
+  registeredDeviceId: string;
+  deviceName: string;
+  deviceType: DeviceType;
+  role: DeviceRole;
+  mode: ReceptionMode;
+  appVersion: string;
+  pendingCount: number;
+  cameraState: ReceptionCameraState;
+  screen: ReceptionScreen;
+  sessionStartedAt: string;
+  lastScanAt: string;
 };
 
 export type ReceptionPresenceSummary = {
@@ -78,6 +117,79 @@ function convertReceptionDevice(
 
     lastSeenAt:
       data.lastSeenAt,
+
+    registeredDeviceId:
+      typeof data.registeredDeviceId ===
+        "string"
+        ? data.registeredDeviceId
+        : "",
+
+    deviceName:
+      typeof data.deviceName ===
+        "string"
+        ? data.deviceName
+        : "受付端末",
+
+    deviceType:
+      typeof data.deviceType ===
+        "string"
+        ? data.deviceType as DeviceType
+        : "unknown",
+
+    role:
+      data.role === "member" ||
+      data.role === "reception" ||
+      data.role === "control"
+        ? data.role
+        : "reception",
+
+    appVersion:
+      typeof data.appVersion ===
+        "string"
+        ? data.appVersion
+        : "不明",
+
+    lastSuccessfulSyncAt:
+      typeof data.lastSuccessfulSyncAt ===
+        "object" &&
+      data.lastSuccessfulSyncAt !== null &&
+      "toDate" in data.lastSuccessfulSyncAt &&
+      typeof data.lastSuccessfulSyncAt.toDate ===
+        "function"
+        ? data.lastSuccessfulSyncAt.toDate().toISOString()
+        : "",
+
+    pendingCount:
+      typeof data.pendingCount ===
+        "number"
+        ? Math.max(
+            0,
+            Math.floor(data.pendingCount)
+          )
+        : 0,
+
+    cameraState:
+      data.cameraState === "ready" ||
+      data.cameraState === "error"
+        ? data.cameraState
+        : "starting",
+
+    screen:
+      data.screen === "exit-reception"
+        ? "exit-reception"
+        : "entry-reception",
+
+    sessionStartedAt:
+      typeof data.sessionStartedAt ===
+        "string"
+        ? data.sessionStartedAt
+        : "",
+
+    lastScanAt:
+      typeof data.lastScanAt ===
+        "string"
+        ? data.lastScanAt
+        : "",
   };
 }
 
@@ -152,7 +264,7 @@ export function createReceptionDeviceId(
 export async function sendReceptionHeartbeat(
   eventName: string,
   deviceId: string,
-  mode: ReceptionMode
+  heartbeat: ReceptionHeartbeat
 ) {
   if (
     eventName.trim() ===
@@ -169,7 +281,23 @@ export async function sendReceptionHeartbeat(
     {
       deviceId,
 
-      mode,
+      registeredDeviceId:
+        heartbeat.registeredDeviceId,
+
+      deviceName:
+        heartbeat.deviceName,
+
+      deviceType:
+        heartbeat.deviceType,
+
+      role:
+        heartbeat.role,
+
+      mode:
+        heartbeat.mode,
+
+      appVersion:
+        heartbeat.appVersion,
 
       /*
         画面側ですぐ判定できるように
@@ -177,6 +305,24 @@ export async function sendReceptionHeartbeat(
       */
       lastSeenAt:
         Date.now(),
+
+      lastSuccessfulSyncAt:
+        serverTimestamp(),
+
+      pendingCount:
+        heartbeat.pendingCount,
+
+      cameraState:
+        heartbeat.cameraState,
+
+      screen:
+        heartbeat.screen,
+
+      sessionStartedAt:
+        heartbeat.sessionStartedAt,
+
+      lastScanAt:
+        heartbeat.lastScanAt,
 
       updatedAt:
         serverTimestamp(),

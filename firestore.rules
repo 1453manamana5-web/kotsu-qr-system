@@ -38,12 +38,18 @@ service cloud.firestore {
       return activeDevice() && currentDevice().role == 'reception';
     }
 
+    function controlDevice() {
+      return activeDevice() && currentDevice().role == 'control';
+    }
+
     function shortText(value) {
       return value is string && value.size() > 0 && value.size() <= 60;
     }
 
     function validRole(value) {
-      return value == 'member' || value == 'reception';
+      return value == 'member'
+        || value == 'reception'
+        || value == 'control';
     }
 
     function validRequestType(value) {
@@ -214,7 +220,7 @@ service cloud.firestore {
 
     function validAnalyticsSummary(summaryId) {
       return summaryId == 'summary'
-        && request.resource.data.schemaVersion == 1
+        && request.resource.data.schemaVersion == 2
         && (request.resource.data.revision is int
           || request.resource.data.revision is float)
         && request.resource.data.revision >= 0
@@ -224,15 +230,40 @@ service cloud.firestore {
 
     function validReceptionPresence(deviceId) {
       return request.resource.data.keys().hasOnly([
-          'deviceId', 'mode', 'lastSeenAt', 'updatedAt'
+          'deviceId', 'registeredDeviceId', 'deviceName', 'deviceType',
+          'role', 'mode', 'appVersion', 'lastSeenAt', 'lastSuccessfulSyncAt',
+          'pendingCount', 'cameraState', 'screen', 'sessionStartedAt',
+          'lastScanAt', 'updatedAt'
         ])
         && request.resource.data.keys().hasAll([
-          'deviceId', 'mode', 'lastSeenAt', 'updatedAt'
+          'deviceId', 'registeredDeviceId', 'deviceName', 'deviceType',
+          'role', 'mode', 'appVersion', 'lastSeenAt', 'lastSuccessfulSyncAt',
+          'pendingCount', 'cameraState', 'screen', 'sessionStartedAt',
+          'lastScanAt', 'updatedAt'
         ])
         && request.resource.data.deviceId == deviceId
+        && request.resource.data.registeredDeviceId == currentUid()
+        && request.resource.data.deviceName == currentDevice().deviceName
+        && (
+          !('deviceType' in currentDevice())
+          || request.resource.data.deviceType == currentDevice().deviceType
+        )
+        && request.resource.data.role == currentDevice().role
         && request.resource.data.mode in ['entry', 'exit']
+        && request.resource.data.appVersion is string
+        && request.resource.data.appVersion.size() > 0
+        && request.resource.data.appVersion.size() <= 20
         && (request.resource.data.lastSeenAt is int
           || request.resource.data.lastSeenAt is float)
+        && request.resource.data.lastSuccessfulSyncAt == request.time
+        && request.resource.data.pendingCount is int
+        && request.resource.data.pendingCount >= 0
+        && request.resource.data.cameraState in ['starting', 'ready', 'error']
+        && request.resource.data.screen in ['entry-reception', 'exit-reception']
+        && request.resource.data.sessionStartedAt is string
+        && request.resource.data.sessionStartedAt.size() <= 60
+        && request.resource.data.lastScanAt is string
+        && request.resource.data.lastScanAt.size() <= 60
         && request.resource.data.updatedAt == request.time;
     }
 
@@ -368,7 +399,7 @@ service cloud.firestore {
     }
 
     match /member-cards/{memberId} {
-      allow read: if activeDevice();
+      allow read: if memberDevice() || receptionDevice();
       allow create, update, delete: if memberDevice();
     }
 
@@ -376,14 +407,14 @@ service cloud.firestore {
       allow read, create, update, delete: if memberDevice();
 
       match /tickets/{ticketId} {
-        allow read: if activeDevice();
+        allow read: if memberDevice() || receptionDevice();
         allow create, delete: if memberDevice();
         allow update: if memberDevice()
           || (receptionDevice() && validReceptionStatusUpdate());
       }
 
       match /members/{memberId} {
-        allow read: if activeDevice();
+        allow read: if memberDevice() || receptionDevice();
         allow create: if memberDevice()
           || (receptionDevice() && validReceptionMemberCreate(memberId));
         allow update: if memberDevice()
@@ -392,7 +423,7 @@ service cloud.firestore {
       }
 
       match /activity/{activityId} {
-        allow read: if activeDevice();
+        allow read: if memberDevice() || receptionDevice();
         allow create: if memberDevice()
           || (receptionDevice() && validScannerActivity(activityId));
         allow update, delete: if memberDevice();
@@ -407,8 +438,9 @@ service cloud.firestore {
 
       match /reception-devices/{deviceId} {
         allow read: if activeDevice();
-        allow create, update: if activeDevice() && validReceptionPresence(deviceId);
-        allow delete: if activeDevice();
+        allow create, update: if (memberDevice() || receptionDevice())
+          && validReceptionPresence(deviceId);
+        allow delete: if memberDevice() || receptionDevice();
       }
     }
 
