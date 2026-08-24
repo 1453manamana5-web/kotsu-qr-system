@@ -41,7 +41,7 @@ function readDevice(data: DocumentData): AuthorizedDevice | null {
   return {
     role: data.role,
     active: data.active,
-    deviceName: typeof data.deviceName === "string" ? data.deviceName : "管制端末",
+    deviceName: typeof data.deviceName === "string" ? data.deviceName : "部員端末",
   };
 }
 
@@ -100,16 +100,20 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
     let requestKnown = false;
     let device: AuthorizedDevice | null = null;
     let requestStatus = "";
+    let requestedRole = "";
 
     const decide = () => {
       if (!deviceKnown || !requestKnown) return;
 
-      if (device?.active === true && device.role === "control") {
+      if (
+        device?.active === true &&
+        (device.role === "member" || device.role === "control")
+      ) {
         setState("ready");
       } else if (device?.active === true) {
-        setError("この端末は管制端末として登録されていません。");
+        setError("この端末は部員端末として登録されていません。QR受付システムから部員端末への変更を申請してください。");
         setState("error");
-      } else if (requestStatus === "pending") {
+      } else if (requestStatus === "pending" && requestedRole === "member") {
         setState("pending");
       } else {
         setState("request");
@@ -134,8 +138,12 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
 
     const unsubscribeRequest = onSnapshot(requestRef, { includeMetadataChanges: true }, (snapshot) => {
       if (!snapshot.exists() && snapshot.metadata.fromCache) return;
-      requestStatus = snapshot.exists() && typeof snapshot.data().status === "string"
-        ? snapshot.data().status
+      const requestData = snapshot.exists() ? snapshot.data() : null;
+      requestStatus = requestData !== null && typeof requestData.status === "string"
+        ? requestData.status
+        : "";
+      requestedRole = requestData !== null && typeof requestData.requestedRole === "string"
+        ? requestData.requestedRole
         : "";
       requestKnown = true;
       decide();
@@ -161,11 +169,11 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
       const batch = writeBatch(db);
       const requestRef = doc(db, "system", "device-access", "requests", user.uid);
       const auditRef = doc(collection(db, "system", "device-access", "audit"));
-      const deviceName = `${cleanName}の管制端末`;
+      const deviceName = `${cleanName}の部員端末`;
 
       batch.set(requestRef, {
         requestType: "initial",
-        requestedRole: "control",
+        requestedRole: "member",
         displayName: cleanName,
         deviceName,
         deviceType: detectDeviceType(),
@@ -182,13 +190,13 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
         actorName: cleanName,
         targetUid: user.uid,
         targetName: deviceName,
-        role: "control",
+        role: "member",
         createdAt: serverTimestamp(),
       });
 
       await batch.commit();
     } catch (submitError) {
-      console.error("管制端末の申請に失敗しました。", submitError);
+      console.error("部員端末の申請に失敗しました。", submitError);
       setError("利用申請を送信できませんでした。受付システムの初期設定と通信状態を確認してください。");
     } finally {
       setSubmitting(false);
@@ -198,11 +206,11 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
   if (state === "ready") return children;
 
   if (state === "auth" || state === "checking") {
-    return <AccessCard><div className="access-spinner" /><h1>管制端末を確認しています</h1><p>Firebaseとの接続を確認中です</p></AccessCard>;
+    return <AccessCard><div className="access-spinner" /><h1>部員端末を確認しています</h1><p>Firebaseとの接続を確認中です</p></AccessCard>;
   }
 
   if (state === "pending") {
-    return <AccessCard><span className="access-badge">申請中</span><h1>承認を待っています</h1><p>QR受付システムの「端末管理」から、この管制端末を承認してください。承認後は自動で開きます。</p></AccessCard>;
+    return <AccessCard><span className="access-badge">申請中</span><h1>承認を待っています</h1><p>QR受付システムの「端末管理」から、この部員端末を承認してください。承認後は自動で開きます。</p></AccessCard>;
   }
 
   if (state === "error") {
@@ -211,9 +219,9 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
 
   return (
     <AccessCard>
-      <span className="access-badge">CONTROL DEVICE</span>
-      <h1>管制端末を申請</h1>
-      <p>申請後、登録済みの部員端末で承認すると監視画面を利用できます。</p>
+      <span className="access-badge">MEMBER DEVICE</span>
+      <h1>部員端末を申請</h1>
+      <p>管制専用の端末登録はありません。部員端末として承認されると、受付システムと管制画面の両方を利用できます。</p>
       <form onSubmit={submitRequest}>
         <label>
           操作する部員名
@@ -228,7 +236,7 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
         </label>
         {error !== "" && <p className="access-error" role="alert">{error}</p>}
         <button type="submit" disabled={submitting}>
-          {submitting ? "送信しています…" : "管制端末として申請"}
+          {submitting ? "送信しています…" : "部員端末として申請"}
         </button>
       </form>
     </AccessCard>
