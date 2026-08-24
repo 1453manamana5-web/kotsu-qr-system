@@ -11,7 +11,6 @@ import {
 
 import {
   bootstrapFirstMemberDevice,
-  syncCurrentDeviceType,
   submitDeviceAccessRequest,
   subscribeToAuthorizedDevice,
   subscribeToDeviceAccessConfig,
@@ -238,27 +237,6 @@ function DeviceAccessGate({
     device?.active === true
       ? device
       : null;
-
-  useEffect(() => {
-    if (
-      activeDevice === null ||
-      deviceFromCache
-    ) {
-      return;
-    }
-
-    void syncCurrentDeviceType(
-      activeDevice.deviceType
-    ).catch((error) => {
-      console.warn(
-        "端末種別を更新できませんでした。",
-        error
-      );
-    });
-  }, [
-    activeDevice,
-    deviceFromCache,
-  ]);
 
   const configKnown =
     configLoaded &&
