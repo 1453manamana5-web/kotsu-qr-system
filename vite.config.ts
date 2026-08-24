@@ -183,6 +183,14 @@ export default defineConfig({
         */
         navigateFallback:
           "index.html",
+
+        /*
+          管制PWAは /control/ 配下に独自のService Workerを持ちます。
+          受付PWAが管制画面への移動を横取りしないよう除外します。
+        */
+        navigateFallbackDenylist: [
+          /^\/qr-system\/control(?:\/|$)/,
+        ],
       },
     }),
   ],
