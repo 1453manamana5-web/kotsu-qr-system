@@ -4,6 +4,7 @@ import {
   onSnapshot,
   runTransaction,
   serverTimestamp,
+  updateDoc,
   writeBatch,
   type DocumentData,
   type QuerySnapshot,
@@ -29,11 +30,21 @@ export type DeviceRequestStatus =
   | "approved"
   | "rejected";
 
+export type DeviceType =
+  | "ipad"
+  | "iphone"
+  | "android"
+  | "windows"
+  | "mac"
+  | "other"
+  | "unknown";
+
 export type AuthorizedDevice = {
   uid: string;
   role: DeviceRole;
   displayName: string;
   deviceName: string;
+  deviceType: DeviceType;
   active: boolean;
   createdAt: string;
   approvedAt: string;
@@ -47,6 +58,7 @@ export type DeviceAccessRequest = {
   requestedRole: DeviceRole;
   displayName: string;
   deviceName: string;
+  deviceType: DeviceType;
   status: DeviceRequestStatus;
   requestedAt: string;
   decidedAt: string;
@@ -171,7 +183,7 @@ function getAuthenticatedUid() {
   return uid;
 }
 
-function detectDeviceType() {
+function detectDeviceType(): DeviceType {
   if (
     typeof navigator === "undefined"
   ) {
@@ -245,6 +257,20 @@ function isRequestStatus(
   );
 }
 
+function isDeviceType(
+  value: unknown
+): value is DeviceType {
+  return (
+    value === "ipad" ||
+    value === "iphone" ||
+    value === "android" ||
+    value === "windows" ||
+    value === "mac" ||
+    value === "other" ||
+    value === "unknown"
+  );
+}
+
 function readText(
   value: unknown
 ) {
@@ -296,6 +322,10 @@ function convertDevice(
       readText(data.displayName),
     deviceName:
       readText(data.deviceName),
+    deviceType:
+      isDeviceType(data.deviceType)
+        ? data.deviceType
+        : "unknown",
     active: data.active,
     createdAt:
       readDateText(data.createdAt),
@@ -330,6 +360,10 @@ function convertRequest(
       readText(data.displayName),
     deviceName:
       readText(data.deviceName),
+    deviceType:
+      isDeviceType(data.deviceType)
+        ? data.deviceType
+        : "unknown",
     status:
       data.status,
     requestedAt:
@@ -670,6 +704,8 @@ export async function bootstrapFirstMemberDevice(
             cleanDisplayName,
           deviceName:
             cleanDeviceName,
+          deviceType:
+            detectDeviceType(),
           active: true,
           createdAt:
             serverTimestamp(),
@@ -894,6 +930,8 @@ export async function approveDeviceAccessRequest(
           request.displayName,
         deviceName:
           request.deviceName,
+        deviceType:
+          request.deviceType,
         active: true,
         approvedAt:
           serverTimestamp(),
@@ -960,6 +998,32 @@ export async function approveDeviceAccessRequest(
             serverTimestamp(),
         }
       );
+    }
+  );
+}
+
+export async function syncCurrentDeviceType(
+  currentDeviceType: DeviceType
+) {
+  const detectedDeviceType =
+    detectDeviceType();
+
+  if (
+    detectedDeviceType === "unknown" ||
+    detectedDeviceType ===
+      currentDeviceType
+  ) {
+    return;
+  }
+
+  const uid =
+    getAuthenticatedUid();
+
+  await updateDoc(
+    getDeviceDocument(uid),
+    {
+      deviceType:
+        detectedDeviceType,
     }
   );
 }

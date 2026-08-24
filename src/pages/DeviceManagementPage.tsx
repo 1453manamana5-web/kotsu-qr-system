@@ -15,6 +15,7 @@ import {
   type AuthorizedDevice,
   type DeviceAccessAudit,
   type DeviceAccessRequest,
+  type DeviceType,
 } from "../deviceAccessFirestore";
 
 import {
@@ -57,6 +58,33 @@ function getRoleLabel(
   return role === "member"
     ? "部員端末"
     : "受付専用端末";
+}
+
+function getDeviceTypeLabel(
+  deviceType: DeviceType
+) {
+  switch (deviceType) {
+    case "ipad":
+      return "iPad";
+
+    case "iphone":
+      return "iPhone";
+
+    case "android":
+      return "Android";
+
+    case "windows":
+      return "Windows";
+
+    case "mac":
+      return "Mac";
+
+    case "other":
+      return "その他";
+
+    case "unknown":
+      return "端末種別不明";
+  }
 }
 
 function formatDateTime(
@@ -338,6 +366,8 @@ function DeviceManagementPage({
           request.displayName,
         deviceName:
           request.deviceName,
+        deviceType:
+          request.deviceType,
         active: true,
         createdAt:
           previousDevice?.createdAt ||
@@ -633,6 +663,12 @@ function DeviceManagementPage({
                           )}
                         </span>
 
+                        <span className="device-management-device-type">
+                          {getDeviceTypeLabel(
+                            request.deviceType
+                          )}
+                        </span>
+
                         {request.requestType ===
                           "upgrade" && (
                           <span className="device-management-upgrade">
@@ -776,6 +812,12 @@ function DeviceManagementPage({
                         >
                           {getRoleLabel(
                             device.role
+                          )}
+                        </span>
+
+                        <span className="device-management-device-type">
+                          {getDeviceTypeLabel(
+                            device.deviceType
                           )}
                         </span>
 

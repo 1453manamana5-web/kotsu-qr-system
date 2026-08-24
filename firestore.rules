@@ -281,10 +281,20 @@ service cloud.firestore {
             )
           );
 
-        allow update: if memberDevice()
-          && validDevice(request.resource.data)
+        allow update: if validDevice(request.resource.data)
           && (
             (
+              activeDevice()
+              && deviceId == currentUid()
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                'deviceType'
+              ])
+              && validDeviceType(request.resource.data.deviceType)
+            )
+            ||
+            (
+              memberDevice()
+              &&
               deviceId == currentUid()
               &&
               request.resource.data.diff(resource.data).affectedKeys().hasOnly([
@@ -293,6 +303,8 @@ service cloud.firestore {
               && shortText(request.resource.data.deviceName)
             )
             || (
+              memberDevice()
+              &&
               deviceId != currentUid()
               && request.resource.data.active == true
             )

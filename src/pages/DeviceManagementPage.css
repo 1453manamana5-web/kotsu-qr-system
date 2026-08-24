@@ -525,6 +525,7 @@
 }
 
 .device-management-role,
+.device-management-device-type,
 .device-management-upgrade,
 .device-management-self,
 .device-management-stopped {
@@ -538,6 +539,11 @@
 
   font-size: 11px;
   font-weight: 820;
+}
+
+.device-management-device-type {
+  color: #5f557d;
+  background: #eee9fa;
 }
 
 .device-management-role-member {
