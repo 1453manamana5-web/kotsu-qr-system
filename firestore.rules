@@ -31,15 +31,12 @@ service cloud.firestore {
     }
 
     function memberDevice() {
-      return activeDevice() && currentDevice().role == 'member';
+      return activeDevice()
+        && (currentDevice().role == 'member' || currentDevice().role == 'control');
     }
 
     function receptionDevice() {
       return activeDevice() && currentDevice().role == 'reception';
-    }
-
-    function controlDevice() {
-      return activeDevice() && currentDevice().role == 'control';
     }
 
     function shortText(value) {
@@ -49,6 +46,7 @@ service cloud.firestore {
     function validRole(value) {
       return value == 'member'
         || value == 'reception'
+        // v2.8.0初期版で承認済みの管制端末を壊さないための互換値です。
         || value == 'control';
     }
 
@@ -101,6 +99,7 @@ service cloud.firestore {
         ])
         && validRequestType(data.requestType)
         && validRole(data.requestedRole)
+        && data.requestedRole != 'control'
         && shortText(data.displayName)
         && shortText(data.deviceName)
         && validDeviceType(data.deviceType)

@@ -63,7 +63,7 @@ function getRoleLabel(
       return "受付専用端末";
 
     case "control":
-      return "管制端末";
+      return "部員端末";
   }
 }
 
@@ -136,7 +136,7 @@ function getAuditLabel(
       }
 
       return entry.role === "control"
-        ? "管制端末を申請"
+        ? "部員端末を申請"
         : "受付専用端末を申請";
 
     case "request-approved":
@@ -331,19 +331,14 @@ function DeviceManagementPage({
   const memberCount =
     activeDevices.filter(
       (device) =>
-        device.role === "member"
+        device.role === "member" ||
+        device.role === "control"
     ).length;
   const receptionCount =
     activeDevices.filter(
       (device) =>
         device.role === "reception"
     ).length;
-  const controlCount =
-    activeDevices.filter(
-      (device) =>
-        device.role === "control"
-    ).length;
-
   const runOperation =
     async (
       nextOperation:
@@ -605,17 +600,6 @@ function DeviceManagementPage({
 
             <strong>
               {receptionCount}
-              <span>台</span>
-            </strong>
-          </article>
-
-          <article>
-            <small>
-              管制端末
-            </small>
-
-            <strong>
-              {controlCount}
               <span>台</span>
             </strong>
           </article>
