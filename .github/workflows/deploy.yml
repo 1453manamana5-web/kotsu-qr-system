@@ -34,8 +34,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install control app dependencies
+        run: npm ci --prefix control-app
+
+      - name: Check source code
+        run: npm run lint
+
+      - name: Check control app source code
+        run: npm run lint --prefix control-app
+
       - name: Build website
         run: npm run build
+
+      - name: Build control app
+        run: npm run build --prefix control-app
+
+      - name: Add control app to website
+        run: |
+          mkdir -p dist/control
+          cp -R control-app/dist/. dist/control/
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5

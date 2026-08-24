@@ -19,9 +19,13 @@ type CameraQrScannerProps = {
   onScan: (
     qrValue: string
   ) => void;
+
+  onStateChange?: (
+    state: CameraState
+  ) => void;
 };
 
-type CameraState =
+export type CameraState =
   | "starting"
   | "ready"
   | "error";
@@ -142,6 +146,7 @@ function stopReaderVideoTracks(
 function CameraQrScanner({
   enabled,
   onScan,
+  onStateChange,
 }: CameraQrScannerProps) {
   const reactId =
     useId();
@@ -190,6 +195,15 @@ function CameraQrScanner({
     errorMessage,
     setErrorMessage,
   ] = useState("");
+
+  useEffect(() => {
+    onStateChange?.(
+      cameraState
+    );
+  }, [
+    cameraState,
+    onStateChange,
+  ]);
 
   useEffect(() => {
     onScanRef.current =

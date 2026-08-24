@@ -21,7 +21,8 @@ import {
 
 export type DeviceRole =
   | "member"
-  | "reception";
+  | "reception"
+  | "control";
 
 export type DeviceRequestType =
   | "initial"
@@ -236,7 +237,8 @@ function isDeviceRole(
 ): value is DeviceRole {
   return (
     value === "member" ||
-    value === "reception"
+    value === "reception" ||
+    value === "control"
   );
 }
 

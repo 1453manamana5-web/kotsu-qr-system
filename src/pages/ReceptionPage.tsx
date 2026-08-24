@@ -9,6 +9,10 @@ import {
 
 import OnlineStatus from "./OnlineStatus";
 
+import type {
+  CameraState,
+} from "./CameraQrScanner";
+
 const CameraQrScanner = lazy(() =>
   import("./CameraQrScanner")
 );
@@ -27,6 +31,19 @@ import {
   removeReceptionPresence,
   sendReceptionHeartbeat,
 } from "../receptionPresenceFirestore";
+
+import {
+  getPendingReceptionCount,
+  subscribeToPendingReceptionCount,
+} from "../offlineReceptionStore";
+
+import {
+  useDeviceAccess,
+} from "../deviceAccessContext";
+
+import {
+  APP_VERSION,
+} from "../appVersion";
 
 import {
   playQrDetectedSound,
@@ -394,6 +411,10 @@ function ReceptionPage({
   setPage,
   openAdminAuth,
 }: ReceptionPageProps) {
+  const {
+    uid,
+    device,
+  } = useDeviceAccess();
   const isEntry =
     mode === "entry";
 
@@ -448,6 +469,87 @@ function ReceptionPage({
         mode
       )
   );
+
+  const [
+    cameraState,
+    setCameraState,
+  ] = useState<CameraState>(
+    "starting"
+  );
+
+  const [
+    pendingCount,
+    setPendingCount,
+  ] = useState(
+    getPendingReceptionCount
+  );
+
+  const [
+    sessionStartedAt,
+  ] = useState(
+    () => new Date().toISOString()
+  );
+
+  const [
+    lastScanAt,
+    setLastScanAt,
+  ] = useState("");
+
+  const heartbeatDataRef =
+    useRef({
+      registeredDeviceId: uid,
+      deviceName:
+        device.deviceName,
+      deviceType:
+        device.deviceType,
+      role:
+        device.role,
+      mode,
+      appVersion:
+        APP_VERSION,
+      pendingCount,
+      cameraState,
+      screen:
+        `${mode}-reception` as const,
+      sessionStartedAt,
+      lastScanAt,
+    });
+
+  useEffect(() =>
+    subscribeToPendingReceptionCount(
+      setPendingCount
+    ), []);
+
+  useEffect(() => {
+    heartbeatDataRef.current = {
+      registeredDeviceId: uid,
+      deviceName:
+        device.deviceName,
+      deviceType:
+        device.deviceType,
+      role:
+        device.role,
+      mode,
+      appVersion:
+        APP_VERSION,
+      pendingCount,
+      cameraState,
+      screen:
+        `${mode}-reception` as const,
+      sessionStartedAt,
+      lastScanAt,
+    };
+  }, [
+    cameraState,
+    device.deviceName,
+    device.deviceType,
+    device.role,
+    lastScanAt,
+    mode,
+    pendingCount,
+    sessionStartedAt,
+    uid,
+  ]);
 
   const [
     soundReady,
@@ -507,7 +609,7 @@ function ReceptionPage({
           await sendReceptionHeartbeat(
             eventName,
             receptionDeviceId,
-            mode
+            heartbeatDataRef.current
           );
         } catch (error) {
           if (
@@ -1247,9 +1349,16 @@ function ReceptionPage({
                 >
                   <CameraQrScanner
                     enabled
+                    onStateChange={
+                      setCameraState
+                    }
                     onScan={(
                       qrValue
                     ) => {
+                      setLastScanAt(
+                        new Date().toISOString()
+                      );
+
                       void processQr(
                         qrValue
                       );

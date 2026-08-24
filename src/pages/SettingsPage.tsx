@@ -13,6 +13,10 @@ import type {
 
 import OnlineStatus from "./OnlineStatus";
 
+import {
+  APP_VERSION,
+} from "../appVersion";
+
 import "./SettingsPage.css";
 
 type SettingsPageProps = {
@@ -30,9 +34,6 @@ type AppSettings = {
   successSoundEnabled: boolean;
   errorSoundEnabled: boolean;
 };
-
-const APP_VERSION =
-  "2.7.0";
 
 const SETTINGS_STORAGE_KEY =
   "qr-management-app-settings";
@@ -1011,7 +1012,7 @@ function SettingsPage({
               </h2>
 
               <p>
-                起動を大幅に軽量化し、端末管理・過去データ・自動配備をより安定して使えるようにしました。
+                QR管理・管制システムと連携し、入口・出口端末を安全に見守れる最終大型アップデートです。
               </p>
             </div>
 
@@ -1023,11 +1024,11 @@ function SettingsPage({
 
                 <div>
                   <strong>
-                    初回JavaScriptを約64%削減
+                    管制システムとの連携に対応
                   </strong>
 
                   <span>
-                    起動時に読むJavaScriptを圧縮時約269KBから約96KBへ削減しました。
+                    入口・出口端末の稼働状況を、別の管制アプリからリアルタイムで確認できます。
                   </span>
                 </div>
               </li>
@@ -1039,11 +1040,11 @@ function SettingsPage({
 
                 <div>
                   <strong>
-                    必要な機能だけを追加読み込み
+                    端末の状態を5秒ごとに共有
                   </strong>
 
                   <span>
-                    Firestore、QR生成、カメラ、印刷、分析処理を使う場面ごとに分割しました。
+                    通信、カメラ、同期待ち、アプリバージョン、最終読取時刻を安全に送信します。
                   </span>
                 </div>
               </li>
@@ -1055,11 +1056,11 @@ function SettingsPage({
 
                 <div>
                   <strong>
-                    過去データの読み込みを安定化
+                    読み取り専用の管制端末を追加
                   </strong>
 
                   <span>
-                    保存済みデータを先に表示し、Firebaseとの同期と旧データ移行を背後で続けるようにしました。
+                    管制端末は申請・承認制で、チケットや部員の認証情報にはアクセスできません。
                   </span>
                 </div>
               </li>
@@ -1071,11 +1072,11 @@ function SettingsPage({
 
                 <div>
                   <strong>
-                    端末種別の表示に対応
+                    Firebase実通信を判定可能に
                   </strong>
 
                   <span>
-                    利用申請と登録済み端末に端末種別を表示し、更新時の点滅も防止しました。
+                    Wi-Fi表示だけでなく、最後にFirestoreへ接続できた時刻を管制側で確認できます。
                   </span>
                 </div>
               </li>
@@ -1087,11 +1088,11 @@ function SettingsPage({
 
                 <div>
                   <strong>
-                    Firestoreルールを自動配備
+                    受付機能は独立して継続
                   </strong>
 
                   <span>
-                    ルール更新をGitHubからFirebaseへ自動反映し、配備忘れを防ぐようにしました。
+                    管制システムが停止しても、QR読取とオフライン保存・自動同期はそのまま動作します。
                   </span>
                 </div>
               </li>

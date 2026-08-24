@@ -55,9 +55,16 @@ function getErrorMessage(
 function getRoleLabel(
   role: AuthorizedDevice["role"]
 ) {
-  return role === "member"
-    ? "部員端末"
-    : "受付専用端末";
+  switch (role) {
+    case "member":
+      return "部員端末";
+
+    case "reception":
+      return "受付専用端末";
+
+    case "control":
+      return "管制端末";
+  }
 }
 
 function getDeviceTypeLabel(
@@ -124,8 +131,12 @@ function getAuditLabel(
       return "最初の部員端末を登録";
 
     case "request-created":
-      return entry.role === "member"
-        ? "部員端末を申請"
+      if (entry.role === "member") {
+        return "部員端末を申請";
+      }
+
+      return entry.role === "control"
+        ? "管制端末を申請"
         : "受付専用端末を申請";
 
     case "request-approved":
@@ -323,8 +334,15 @@ function DeviceManagementPage({
         device.role === "member"
     ).length;
   const receptionCount =
-    activeDevices.length -
-    memberCount;
+    activeDevices.filter(
+      (device) =>
+        device.role === "reception"
+    ).length;
+  const controlCount =
+    activeDevices.filter(
+      (device) =>
+        device.role === "control"
+    ).length;
 
   const runOperation =
     async (
@@ -587,6 +605,17 @@ function DeviceManagementPage({
 
             <strong>
               {receptionCount}
+              <span>台</span>
+            </strong>
+          </article>
+
+          <article>
+            <small>
+              管制端末
+            </small>
+
+            <strong>
+              {controlCount}
               <span>台</span>
             </strong>
           </article>
