@@ -244,6 +244,10 @@ function DeviceManagementPage({
     useState<string | null>(null);
   const [editingName, setEditingName] =
     useState("");
+  const [linkCode, setLinkCode] =
+    useState("");
+  const [linkError, setLinkError] =
+    useState("");
 
   useEffect(() => {
     let deviceReady = false;
@@ -376,9 +380,13 @@ function DeviceManagementPage({
         uid: request.uid,
         role: request.requestedRole,
         displayName:
-          request.displayName,
+          request.pairingCode !== ""
+            ? currentDevice.displayName
+            : request.displayName,
         deviceName:
-          request.deviceName,
+          request.pairingCode !== ""
+            ? `${currentDevice.displayName}の管制アプリ`
+            : request.deviceName,
         deviceType:
           request.deviceType,
         active: true,
@@ -453,6 +461,49 @@ function DeviceManagementPage({
         }
       }
     );
+  };
+
+  const handleLinkControlApp = () => {
+    const normalizedCode =
+      linkCode
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "");
+    const request =
+      requests.find(
+        (item) =>
+          item.pairingCode ===
+          normalizedCode
+      );
+
+    if (normalizedCode.length !== 8) {
+      setLinkError(
+        "8文字の連携コードを入力してください。"
+      );
+      return;
+    }
+
+    if (request === undefined) {
+      setLinkError(
+        "一致する連携コードが見つかりません。管制アプリで新しいコードを発行してください。"
+      );
+      return;
+    }
+
+    if (
+      request.pairingExpiresAt !== "" &&
+      new Date(
+        request.pairingExpiresAt
+      ).getTime() <= Date.now()
+    ) {
+      setLinkError(
+        "この連携コードは期限切れです。管制アプリで新しいコードを発行してください。"
+      );
+      return;
+    }
+
+    setLinkError("");
+    setLinkCode("");
+    handleApprove(request);
   };
 
   const handleReject = (
@@ -646,6 +697,48 @@ function DeviceManagementPage({
                 {requests.length}
               </strong>
             </div>
+
+            <form
+              className="device-management-link-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                handleLinkControlApp();
+              }}
+            >
+              <div>
+                <strong>管制アプリを連携</strong>
+                <small>管制アプリに表示された8文字を入力</small>
+              </div>
+
+              <input
+                type="text"
+                value={linkCode}
+                maxLength={9}
+                inputMode="text"
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
+                placeholder="ABCD-EFGH"
+                aria-label="管制アプリの連携コード"
+                onChange={(event) => {
+                  setLinkCode(
+                    event.target.value
+                      .toUpperCase()
+                  );
+                  setLinkError("");
+                }}
+              />
+
+              <button type="submit">
+                連携する
+              </button>
+            </form>
+
+            {linkError !== "" && (
+              <p className="device-management-link-error" role="alert">
+                {linkError}
+              </p>
+            )}
 
             <div className="device-management-list">
               {loading ? (

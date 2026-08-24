@@ -67,6 +67,8 @@ export type DeviceAccessRequest = {
   decidedAt: string;
   decidedByUid: string;
   decidedByName: string;
+  pairingCode: string;
+  pairingExpiresAt: string;
 };
 
 export type DeviceAccessAudit = {
@@ -378,6 +380,10 @@ function convertRequest(
       readText(data.decidedByUid),
     decidedByName:
       readText(data.decidedByName),
+    pairingCode:
+      readText(data.pairingCode),
+    pairingExpiresAt:
+      readDateText(data.pairingExpiresAt),
   };
 }
 
@@ -931,9 +937,13 @@ export async function approveDeviceAccessRequest(
         role:
           request.requestedRole,
         displayName:
-          request.displayName,
+          request.pairingCode !== ""
+            ? actor.displayName
+            : request.displayName,
         deviceName:
-          request.deviceName,
+          request.pairingCode !== ""
+            ? `${actor.displayName}の管制アプリ`
+            : request.deviceName,
         deviceType:
           request.deviceType,
         active: true,
@@ -944,6 +954,18 @@ export async function approveDeviceAccessRequest(
         approvedByName:
           actor.displayName,
       };
+
+      if (
+        request.pairingCode !== "" &&
+        request.pairingExpiresAt !== "" &&
+        new Date(
+          request.pairingExpiresAt
+        ).getTime() <= Date.now()
+      ) {
+        throw new Error(
+          "連携コードの有効期限が切れています。管制アプリで新しいコードを発行してください。"
+        );
+      }
 
       if (currentTarget === null) {
         targetData.createdAt =
@@ -995,7 +1017,9 @@ export async function approveDeviceAccessRequest(
             actor.displayName,
           targetUid,
           targetName:
-            request.deviceName,
+            request.pairingCode !== ""
+              ? `${actor.displayName}の管制アプリ`
+              : request.deviceName,
           role:
             request.requestedRole,
           createdAt:

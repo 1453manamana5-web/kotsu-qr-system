@@ -90,7 +90,7 @@ service cloud.firestore {
         && data.keys().hasOnly([
           'requestType', 'requestedRole', 'displayName', 'deviceName', 'deviceType',
           'status', 'requestedAt', 'decidedAt', 'decidedByUid',
-          'decidedByName'
+          'decidedByName', 'pairingCode', 'pairingExpiresAt'
         ])
         && data.keys().hasAll([
           'requestType', 'requestedRole', 'displayName', 'deviceName', 'deviceType',
@@ -110,6 +110,22 @@ service cloud.firestore {
         && data.decidedByName == ''
         && (
           (
+            !('pairingCode' in data)
+            && !('pairingExpiresAt' in data)
+          )
+          ||
+          (
+            data.pairingCode is string
+            && data.pairingCode.matches('^[A-HJ-NP-Z2-9]{8}$')
+            && data.pairingExpiresAt is timestamp
+            && data.pairingExpiresAt > request.time
+            && data.pairingExpiresAt <= request.time + duration.value(15, 'm')
+            && data.requestType == 'initial'
+            && data.requestedRole == 'member'
+          )
+        )
+        && (
+          (
             data.requestType == 'initial'
             && (!currentDeviceExists() || currentDevice().active != true)
           )
@@ -124,6 +140,8 @@ service cloud.firestore {
 
     function validDecision(data) {
       return resource.data.status == 'pending'
+        && (!('pairingExpiresAt' in resource.data)
+          || resource.data.pairingExpiresAt > request.time)
         && data.diff(resource.data).affectedKeys().hasOnly([
           'status', 'decidedAt', 'decidedByUid', 'decidedByName'
         ])
