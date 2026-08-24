@@ -485,19 +485,13 @@ function App() {
         null
     );
 
+  const hasReceivedServerEventsRef =
+    useRef(false);
+
   const allowEventDataMigrationRef =
     useRef(
       navigator.onLine &&
       isMemberDevice
-    );
-
-  const needsInitialEventDataMigrationRef =
-    useRef(
-      eventStore.events.some(
-        (event) =>
-          event.dataDocumentId !==
-          event.id
-      )
     );
 
   const autoSelectingEventIdRef =
@@ -571,14 +565,7 @@ function App() {
   ] = useState(
     () =>
       navigator.onLine === false ||
-      (
-        eventStore.events.length > 0 &&
-        eventStore.events.every(
-          (event) =>
-            event.dataDocumentId ===
-            event.id
-        )
-      )
+      eventStore.events.length > 0
   );
 
   const [
@@ -653,19 +640,28 @@ function App() {
     const unsubscribeEvents =
       subscribeToEvents(
         (events, fromCache) => {
+          const isInitialEmptyServerSnapshot =
+            !fromCache &&
+            !hasReceivedServerEventsRef.current &&
+            events.length === 0 &&
+            hasUsableEventsRef.current;
+
+          if (!fromCache) {
+            hasReceivedServerEventsRef.current =
+              true;
+          }
+
           if (
-            fromCache &&
+            (
+              fromCache ||
+              isInitialEmptyServerSnapshot
+            ) &&
             events.length === 0 &&
             hasUsableEventsRef.current
           ) {
-            if (
-              !allowEventDataMigrationRef.current ||
-              !needsInitialEventDataMigrationRef.current
-            ) {
-              setEventSyncReady(
-                true
-              );
-            }
+            setEventSyncReady(
+              true
+            );
 
             setEventSyncError("");
             return;
