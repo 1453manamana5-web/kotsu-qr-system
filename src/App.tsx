@@ -81,26 +81,9 @@ import {
 } from "./eventFirestore";
 
 import {
-  subscribeToTickets,
-} from "./ticketFirestore";
-
-import {
-  subscribeToEventMembers,
-  subscribeToMemberCards,
-} from "./memberFirestore";
-
-import {
   createSafeRandomId,
   registerEventDataId,
 } from "./firestorePaths";
-
-import {
-  migrateAllEventDataToIds,
-} from "./eventDataMigration";
-
-import {
-  ensureEventAnalytics,
-} from "./eventAnalyticsFirestore";
 
 import {
   useDeviceAccess,
@@ -701,6 +684,12 @@ function App() {
             migrationQueue.then(
               async () => {
                 try {
+                  const {
+                    migrateAllEventDataToIds,
+                  } = await import(
+                    "./eventDataMigration"
+                  );
+
                   const migration =
                     await migrateAllEventDataToIds(
                       events
@@ -858,14 +847,22 @@ function App() {
       return;
     }
 
-    void ensureEventAnalytics(
-      currentEvent.name
-    ).catch((error) => {
-      console.warn(
-        "イベント集計の事前準備を次回へ延期します。",
-        error
-      );
-    });
+    void import(
+      "./eventAnalyticsFirestore"
+    )
+      .then(({
+        ensureEventAnalytics,
+      }) =>
+        ensureEventAnalytics(
+          currentEvent.name
+        )
+      )
+      .catch((error) => {
+        console.warn(
+          "イベント集計の事前準備を次回へ延期します。",
+          error
+        );
+      });
   }, [
     currentEvent,
     currentEventSyncReady,
@@ -997,6 +994,11 @@ function App() {
       return;
     }
 
+    let active = true;
+
+    const unsubscribeFunctions:
+      Array<() => void> = [];
+
     const handleCacheError = (
       error: Error
     ) => {
@@ -1008,36 +1010,63 @@ function App() {
       }
     };
 
-    const unsubscribeTickets =
-      subscribeToTickets(
-        eventName,
-        () => {
-          // チケットを端末へ保存します。
-        },
-        handleCacheError
-      );
+    void Promise.all([
+      import(
+        "./ticketFirestore"
+      ),
 
-    const unsubscribeCards =
-      subscribeToMemberCards(
-        () => {
-          // 部員QR台帳を端末へ保存します。
+      import(
+        "./memberFirestore"
+      ),
+    ])
+      .then(([
+        {
+          subscribeToTickets,
         },
-        handleCacheError
-      );
+        {
+          subscribeToEventMembers,
+          subscribeToMemberCards,
+        },
+      ]) => {
+        if (!active) {
+          return;
+        }
 
-    const unsubscribeMembers =
-      subscribeToEventMembers(
-        eventName,
-        () => {
-          // 部員の入退室状態を端末へ保存します。
-        },
-        handleCacheError
-      );
+        unsubscribeFunctions.push(
+          subscribeToTickets(
+            eventName,
+            () => {
+              // チケットを端末へ保存します。
+            },
+            handleCacheError
+          ),
+
+          subscribeToMemberCards(
+            () => {
+              // 部員QR台帳を端末へ保存します。
+            },
+            handleCacheError
+          ),
+
+          subscribeToEventMembers(
+            eventName,
+            () => {
+              // 部員の入退室状態を端末へ保存します。
+            },
+            handleCacheError
+          )
+        );
+      })
+      .catch(handleCacheError);
 
     return () => {
-      unsubscribeTickets();
-      unsubscribeCards();
-      unsubscribeMembers();
+      active = false;
+
+      unsubscribeFunctions.forEach(
+        (unsubscribe) => {
+          unsubscribe();
+        }
+      );
     };
   }, [
     currentEvent?.name,

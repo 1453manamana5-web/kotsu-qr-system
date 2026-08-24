@@ -12,9 +12,12 @@ import {
 } from "firebase/firestore";
 
 import {
-  auth,
   db,
 } from "./firebase";
+
+import {
+  auth,
+} from "./firebaseAuth";
 
 export type DeviceRole =
   | "member"

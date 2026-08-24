@@ -2,33 +2,36 @@ import ReactDOM from "react-dom/client";
 
 import AppRoot from "./AppRoot";
 
-import {
-  installReceptionSoundUnlock,
-} from "./receptionSound";
-
-import {
-  installManualPrintSupport,
-} from "./manualPrintSupport";
-
 import "./index.css";
-
-/*
-  iPad・Safariでは、最初のユーザー操作があるまで
-  音声再生が制限されます。
-
-  アプリ内で最初に画面をタップしたとき、
-  成功音を使える状態にします。
-*/
-installReceptionSoundUnlock();
 
 /*
   iPad用印刷画面が表示されるたびに、
   ホーム画面アプリ向けのPDF印刷ボタンを追加します。
 
-  印刷サポート側で同じツールバーを二重処理しないため、
-  MutationObserverは継続して監視してもループしません。
+  初回表示を妨げないよう、ブラウザが空いた時点で
+  印刷サポートだけを追加読み込みします。
 */
-installManualPrintSupport();
+const installPrintSupport = () => {
+  void import(
+    "./manualPrintSupport"
+  )
+    .then(({
+      installManualPrintSupport,
+    }) => {
+      installManualPrintSupport();
+    })
+    .catch((error) => {
+      console.warn(
+        "印刷サポートを読み込めませんでした。",
+        error
+      );
+    });
+};
+
+window.setTimeout(
+  installPrintSupport,
+  1000
+);
 
 const rootElement =
   document.getElementById(

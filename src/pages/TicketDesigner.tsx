@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 
-import { QRCodeSVG } from "qrcode.react";
+import LazyQrCode from "./LazyQrCode";
 
 import {
   analyzeTicketBackgroundFromDataUrl,
@@ -753,7 +753,7 @@ function TicketDesigner({
                   width: `${settings.qrSize}%`,
                 }}
               >
-                <QRCodeSVG
+                <LazyQrCode
                   value={createQrValue(
                     ticket,
                     designKind
@@ -921,7 +921,7 @@ function TicketDesigner({
                       width: `${settings.qrSize}%`,
                     }}
                   >
-                    <QRCodeSVG
+                    <LazyQrCode
                       value={createQrValue(
                         previewTicket,
                         designKind
@@ -1634,7 +1634,7 @@ function TicketDesigner({
                   width: `${settings.qrSize}%`,
                 }}
               >
-                <QRCodeSVG
+                <LazyQrCode
                   value={createQrValue(
                     ticket,
                     designKind

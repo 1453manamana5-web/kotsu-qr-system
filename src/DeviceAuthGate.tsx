@@ -11,11 +11,7 @@ import {
 
 import {
   auth,
-} from "./firebase";
-
-import {
-  startOfflineReceptionSync,
-} from "./offlineReceptionSync";
+} from "./firebaseAuth";
 
 import "./DeviceAuthGate.css";
 
@@ -154,7 +150,20 @@ function DeviceAuthGate({
 
   useEffect(() => {
     if (screenState === "ready") {
-      startOfflineReceptionSync();
+      void import(
+        "./offlineReceptionSync"
+      )
+        .then(({
+          startOfflineReceptionSync,
+        }) => {
+          startOfflineReceptionSync();
+        })
+        .catch((error) => {
+          console.warn(
+            "オフライン受付の同期準備を次回へ延期します。",
+            error
+          );
+        });
     }
   }, [screenState]);
 

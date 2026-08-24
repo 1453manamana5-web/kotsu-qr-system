@@ -7,7 +7,7 @@ import {
 
 import {
   auth,
-} from "./firebase";
+} from "./firebaseAuth";
 
 import {
   bootstrapFirstMemberDevice,
