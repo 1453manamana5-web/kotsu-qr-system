@@ -7,7 +7,7 @@ import ExperimentalLabBridge from "./ExperimentalLabBridge";
 import TicketControlBridge from "./TicketControlBridge";
 import MemberControlBridge from "./MemberControlBridge";
 import HybridTicketInventoryForecastBridge from "./HybridTicketInventoryForecastBridge";
-import PersonalizedControlBridge from "./PersonalizedControlBridge";
+import AuthenticatedPersonalizedControlBridge from "./AuthenticatedPersonalizedControlBridge";
 import AdminOpsBridge from "./AdminOpsBridge";
 import MaintenanceDataBridge from "./MaintenanceDataBridge";
 import CopilotLanguageExpansionBridge from "./CopilotLanguageExpansionBridge";
@@ -38,7 +38,7 @@ createRoot(document.getElementById("root")!).render(
         <TicketControlBridge database={db} />
         <MemberControlBridge database={db} />
         <HybridTicketInventoryForecastBridge database={db} />
-        <PersonalizedControlBridge database={db} />
+        <AuthenticatedPersonalizedControlBridge />
         <AdminOpsBridge database={db} />
         <MaintenanceDataBridge database={db} />
         <CopilotLanguageExpansionBridge />
