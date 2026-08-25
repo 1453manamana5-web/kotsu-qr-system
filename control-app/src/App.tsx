@@ -563,8 +563,8 @@ export default function App({ database, onReturn }: AppProps) {
   );
 
   const selectedDevice = useMemo(
-    () => observedDevices.find((device) => device.id === selectedDeviceId) ?? null,
-    [observedDevices, selectedDeviceId]
+    () => activeDevices.find((device) => device.id === selectedDeviceId) ?? null,
+    [activeDevices, selectedDeviceId]
   );
 
   const openDevice = (device: ReceptionDevice) => {
@@ -573,11 +573,11 @@ export default function App({ database, onReturn }: AppProps) {
   };
 
   const latestDevice = (mode: ReceptionMode) =>
-    observedDevices.filter((device) => device.mode === mode).sort((a, b) => b.lastSeenAt - a.lastSeenAt)[0] ?? null;
+    activeDevices.filter((device) => device.mode === mode).sort((a, b) => b.lastSeenAt - a.lastSeenAt)[0] ?? null;
 
   const entryDevice = latestDevice("entry");
   const exitDevice = latestDevice("exit");
-  const totalPending = observedDevices.reduce((total, device) => total + device.pendingCount, 0);
+  const totalPending = activeDevices.reduce((total, device) => total + device.pendingCount, 0);
 
   const alerts = useMemo<SystemAlert[]>(() => {
     const result: SystemAlert[] = [];
@@ -599,10 +599,10 @@ export default function App({ database, onReturn }: AppProps) {
       if (device.appVersion !== EXPECTED_RECEPTION_VERSION) result.push({ id: `${mode}-version`, severity: "warning", title: `${label}端末のバージョンが一致しません`, detail: `現在 ${device.appVersion}／推奨 ${EXPECTED_RECEPTION_VERSION}` });
     }
 
-    if (observedDevices.filter((device) => device.mode === "entry" && now - device.lastSeenAt <= CRITICAL_AFTER).length > 1) result.push({ id: "entry-duplicate", severity: "warning", title: "入口モードの端末が複数稼働しています", detail: "意図した配置か確認してください" });
-    if (observedDevices.filter((device) => device.mode === "exit" && now - device.lastSeenAt <= CRITICAL_AFTER).length > 1) result.push({ id: "exit-duplicate", severity: "warning", title: "出口モードの端末が複数稼働しています", detail: "意図した配置か確認してください" });
+    if (activeDevices.filter((device) => device.mode === "entry").length > 1) result.push({ id: "entry-duplicate", severity: "warning", title: "入口モードの端末が複数稼働しています", detail: "意図した配置か確認してください" });
+    if (activeDevices.filter((device) => device.mode === "exit").length > 1) result.push({ id: "exit-duplicate", severity: "warning", title: "出口モードの端末が複数稼働しています", detail: "意図した配置か確認してください" });
     return result;
-  }, [currentEvent, entryDevice, exitDevice, firestoreHealth, now, observedDevices, streamError]);
+  }, [activeDevices, currentEvent, entryDevice, exitDevice, firestoreHealth, now, streamError]);
 
   const overallSeverity: HealthSeverity = alerts.some((alert) => alert.severity === "critical")
     ? "critical"
@@ -743,7 +743,7 @@ export default function App({ database, onReturn }: AppProps) {
             />
           )}
 
-          {view === "devices" && selectedDevice === null && <section className="page-panel"><div className="page-heading"><div><small>TERMINALS</small><h2>受付端末一覧</h2></div><span>{observedDevices.length}台を記録</span></div><div className="all-device-grid">{observedDevices.length === 0 ? <p className="empty-state">受付端末の生存通知を待っています</p> : [...observedDevices].sort((a, b) => b.lastSeenAt - a.lastSeenAt).map((device) => <DeviceCard key={device.id} device={device} mode={device.mode} now={now} onOpen={() => openDevice(device)} />)}</div></section>}
+          {view === "devices" && selectedDevice === null && <section className="page-panel"><div className="page-heading"><div><small>TERMINALS</small><h2>受付端末一覧</h2></div><span>{activeDevices.length}台が稼働中</span></div><div className="all-device-grid">{activeDevices.length === 0 ? <p className="empty-state">稼働中の受付端末が見つかりません</p> : [...activeDevices].sort((a, b) => b.lastSeenAt - a.lastSeenAt).map((device) => <DeviceCard key={device.id} device={device} mode={device.mode} now={now} onOpen={() => openDevice(device)} />)}</div></section>}
 
           {view === "incidents" && <section className="page-panel"><div className="page-heading"><div><small>INCIDENTS</small><h2>現在の異常・注意</h2></div><span>{alerts.length}件</span></div><div className="alert-list">{alerts.length === 0 ? <div className="empty-state success">現在、異常はありません</div> : alerts.map((alert) => <article key={alert.id} className={alert.severity}><span>!</span><div><strong>{alert.title}</strong><p>{alert.detail}</p></div></article>)}</div></section>}
 
