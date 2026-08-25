@@ -41,6 +41,12 @@ const CRITICAL_AFTER = 45_000;
 
 type View = "overview" | "analysis" | "past-data" | "devices" | "incidents" | "diagnostics";
 type FirestoreHealth = "checking" | "online" | "error";
+type NetworkQualitySample = {
+  recordedAt: number;
+  firebaseLatencyMs: number;
+  downloadMbps: number;
+  networkMeasuredAt: string;
+};
 
 function timestampToMilliseconds(value: unknown) {
   if (
@@ -58,6 +64,12 @@ function timestampToMilliseconds(value: unknown) {
 function readNumber(value: unknown) {
   return typeof value === "number" && Number.isFinite(value)
     ? Math.max(0, Math.floor(value))
+    : 0;
+}
+
+function readDecimal(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.max(0, Math.round(value * 10) / 10)
     : 0;
 }
 
@@ -133,6 +145,9 @@ function readReceptionDevice(id: string, data: DocumentData): ReceptionDevice | 
     pendingCount: readNumber(data.pendingCount),
     cameraState,
     receptionPaused: data.receptionPaused === true,
+    firebaseLatencyMs: readNumber(data.firebaseLatencyMs),
+    downloadMbps: readDecimal(data.downloadMbps),
+    networkMeasuredAt: typeof data.networkMeasuredAt === "string" ? data.networkMeasuredAt : "",
     screen: typeof data.screen === "string" ? data.screen : "",
     sessionStartedAt: typeof data.sessionStartedAt === "string" ? data.sessionStartedAt : "",
     lastScanAt: typeof data.lastScanAt === "string" ? data.lastScanAt : "",
@@ -276,6 +291,8 @@ function DeviceCard({ device, mode, now, onOpen }: {
           <div><dt>Firebase</dt><dd className={device.lastSuccessfulSyncAt > 0 ? "ok-text" : "muted-text"}>{device.lastSuccessfulSyncAt > 0 ? "接続確認済み" : "記録なし"}</dd></div>
           <div><dt>カメラ</dt><dd className={device.cameraState === "error" ? "error-text" : "ok-text"}>{device.cameraState === "ready" ? "正常" : device.cameraState === "error" ? "エラー" : "準備中"}</dd></div>
           <div><dt>受付状態</dt><dd className={operatingStatus.severity === "critical" ? "error-text" : operatingStatus.severity === "warning" ? "warning-text" : "ok-text"}>{operatingStatus.label}</dd></div>
+          <div><dt>Firebase応答</dt><dd>{device.firebaseLatencyMs > 0 ? `${device.firebaseLatencyMs}ms` : "測定中"}</dd></div>
+          <div><dt>下り速度</dt><dd>{device.downloadMbps > 0 ? `${device.downloadMbps.toFixed(1)}Mbps` : "測定中"}</dd></div>
           <div><dt>バージョン</dt><dd className={device.appVersion !== EXPECTED_RECEPTION_VERSION ? "warning-text" : ""}>{device.appVersion}</dd></div>
           <div><dt>同期待ち</dt><dd className={device.pendingCount > 0 ? "warning-text strong" : ""}>{device.pendingCount}件</dd></div>
           <div><dt>最終読取</dt><dd>{device.lastScanAt === "" ? "記録なし" : formatTime(device.lastScanAt)}</dd></div>
@@ -303,9 +320,50 @@ function remoteCommandStatusLabel(status: ReceptionRemoteCommandStatus) {
   return "失敗";
 }
 
-function DeviceDetail({ eventDataId, device, now, onClose }: {
+function MetricChart({ label, unit, values, color }: {
+  label: string;
+  unit: string;
+  values: number[];
+  color: string;
+}) {
+  const measuredValues = values.filter((value) => Number.isFinite(value) && value > 0);
+  const currentValue = measuredValues[measuredValues.length - 1] ?? 0;
+  const maximumValue = Math.max(1, ...measuredValues);
+  const averageValue = measuredValues.length === 0
+    ? 0
+    : measuredValues.reduce((total, value) => total + value, 0) / measuredValues.length;
+  const chartPoints = measuredValues.map((value, index) => {
+    const x = measuredValues.length === 1 ? 300 : 20 + index / (measuredValues.length - 1) * 560;
+    const y = 145 - value / maximumValue * 115;
+    return { x, y };
+  });
+  const points = chartPoints.map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const lastPoint = chartPoints[chartPoints.length - 1];
+
+  return (
+    <article className="metric-chart-card">
+      <div className="metric-chart-heading">
+        <div><small>{label}</small><strong>{currentValue > 0 ? currentValue.toFixed(unit === "Mbps" ? 1 : 0) : "—"}<em>{unit}</em></strong></div>
+        <span>平均 {averageValue > 0 ? averageValue.toFixed(unit === "Mbps" ? 1 : 0) : "—"}／最大 {measuredValues.length > 0 ? maximumValue.toFixed(unit === "Mbps" ? 1 : 0) : "—"}</span>
+      </div>
+      {measuredValues.length < 2 ? (
+        <div className="metric-chart-empty">測定データを集めています</div>
+      ) : (
+        <svg viewBox="0 0 600 170" preserveAspectRatio="none" role="img" aria-label={`${label}の直近5分グラフ`}>
+          {[30, 68, 106, 145].map((y) => <line key={y} x1="20" y1={y} x2="580" y2={y} className="metric-grid-line" />)}
+          <polyline points={points} fill="none" stroke={color} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+          <circle cx={lastPoint?.x ?? 0} cy={lastPoint?.y ?? 0} r="6" fill={color} />
+        </svg>
+      )}
+      <div className="metric-chart-axis"><span>測定開始</span><span>現在</span></div>
+    </article>
+  );
+}
+
+function DeviceDetail({ eventDataId, device, networkSamples, now, onClose }: {
   eventDataId: string;
   device: ReceptionDevice;
+  networkSamples: NetworkQualitySample[];
   now: number;
   onClose: () => void;
 }) {
@@ -314,6 +372,13 @@ function DeviceDetail({ eventDataId, device, now, onClose }: {
   const [commandError, setCommandError] = useState("");
   const online = now - device.lastSeenAt <= CRITICAL_AFTER;
   const operatingStatus = receptionOperatingStatus(device, now);
+  const latencyHistory = networkSamples.map((sample) => sample.firebaseLatencyMs);
+  const networkMeasuredAt = new Date(device.networkMeasuredAt).getTime();
+  const downloadHistory = networkSamples
+    .filter((sample, index) => sample.downloadMbps > 0 && (
+      index === 0 || sample.networkMeasuredAt !== networkSamples[index - 1]?.networkMeasuredAt
+    ))
+    .map((sample) => sample.downloadMbps);
 
   useEffect(() => {
     return subscribeToReceptionRemoteCommands(
@@ -384,6 +449,8 @@ function DeviceDetail({ eventDataId, device, now, onClose }: {
             <div><dt>受付モード</dt><dd>{device.mode === "entry" ? "入口受付" : "出口受付"}</dd></div>
             <div><dt>カメラ</dt><dd className={device.cameraState === "error" ? "error-text" : "ok-text"}>{device.cameraState === "ready" ? "正常" : device.cameraState === "error" ? "エラー" : "準備中"}</dd></div>
             <div><dt>Firebase</dt><dd className={device.lastSuccessfulSyncAt > 0 ? "ok-text" : "muted-text"}>{device.lastSuccessfulSyncAt > 0 ? "接続確認済み" : "記録なし"}</dd></div>
+            <div><dt>Firebase応答</dt><dd>{device.firebaseLatencyMs > 0 ? `${device.firebaseLatencyMs}ms` : "測定中"}</dd></div>
+            <div><dt>下り速度</dt><dd>{device.downloadMbps > 0 ? `${device.downloadMbps.toFixed(1)}Mbps` : "測定中"}</dd></div>
             <div><dt>同期待ち</dt><dd className={device.pendingCount > 0 ? "warning-text" : "ok-text"}>{device.pendingCount}件</dd></div>
             <div><dt>最終読取</dt><dd>{device.lastScanAt === "" ? "記録なし" : formatTime(device.lastScanAt)}</dd></div>
             <div><dt>バージョン</dt><dd>{device.appVersion}</dd></div>
@@ -412,6 +479,18 @@ function DeviceDetail({ eventDataId, device, now, onClose }: {
           {commandError !== "" && <p className="remote-control-error" role="alert">{commandError}</p>}
         </article>
       </div>
+
+      <article className="network-quality-panel">
+        <div className="network-quality-heading">
+          <div><small>NETWORK QUALITY</small><h3>受付端末の通信品質</h3></div>
+          <span>{device.networkMeasuredAt === "" || !Number.isFinite(networkMeasuredAt) ? "下り速度を測定中" : `速度測定 ${formatAge(networkMeasuredAt, now)}`}</span>
+        </div>
+        <div className="network-chart-grid">
+          <MetricChart label="FIREBASE RESPONSE" unit="ms" values={latencyHistory} color="#7a58d6" />
+          <MetricChart label="DOWNLOAD SPEED" unit="Mbps" values={downloadHistory} color="#137f75" />
+        </div>
+        <p className="network-quality-note">Firebase応答は5秒ごと、下りMbpsは受付への負荷を抑えるため256KBのデータで30秒ごとに測定します。グラフは管制を開いてから直近約5分です。</p>
+      </article>
 
       <article className="command-history-panel">
         <div className="command-history-heading"><div><small>COMMAND HISTORY</small><h3>遠隔操作の実行状況</h3></div><span>{commands.length}件</span></div>
@@ -450,6 +529,7 @@ export default function App({ database, onReturn }: AppProps) {
   const [currentEventId, setCurrentEventId] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [devices, setDevices] = useState<ReceptionDevice[]>([]);
+  const [networkHistory, setNetworkHistory] = useState<Record<string, NetworkQualitySample[]>>({});
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [now, setNow] = useState(
     () => Date.now()
@@ -505,7 +585,34 @@ export default function App({ database, onReturn }: AppProps) {
     });
 
     const unsubscribeDevices = onSnapshot(collection(database, ...basePath, "reception-devices"), (snapshot) => {
-      setDevices(snapshot.docs.map((item) => readReceptionDevice(item.id, item.data())).filter((device): device is ReceptionDevice => device !== null));
+      const nextDevices = snapshot.docs.map((item) => readReceptionDevice(item.id, item.data())).filter((device): device is ReceptionDevice => device !== null);
+      setDevices(nextDevices);
+      setNetworkHistory((currentHistory) => {
+        const nextHistory: Record<string, NetworkQualitySample[]> = {};
+
+        for (const device of nextDevices) {
+          const historyKey = `${currentEvent.dataDocumentId}:${device.id}`;
+          const existingSamples = currentHistory[historyKey] ?? [];
+          const latestSample = existingSamples[existingSamples.length - 1];
+
+          if (device.lastSeenAt <= 0 || latestSample?.recordedAt === device.lastSeenAt) {
+            nextHistory[historyKey] = existingSamples;
+            continue;
+          }
+
+          nextHistory[historyKey] = [
+            ...existingSamples,
+            {
+              recordedAt: device.lastSeenAt,
+              firebaseLatencyMs: device.firebaseLatencyMs,
+              downloadMbps: device.downloadMbps,
+              networkMeasuredAt: device.networkMeasuredAt,
+            },
+          ].filter((sample) => device.lastSeenAt - sample.recordedAt <= 5 * 60 * 1000).slice(-60);
+        }
+
+        return nextHistory;
+      });
     }, (error) => {
       console.error("受付端末情報を取得できませんでした。", error);
       setStreamError("受付端末情報を取得できませんでした");
@@ -738,6 +845,7 @@ export default function App({ database, onReturn }: AppProps) {
             <DeviceDetail
               eventDataId={currentEvent.dataDocumentId}
               device={selectedDevice}
+              networkSamples={networkHistory[`${currentEvent.dataDocumentId}:${selectedDevice.id}`] ?? []}
               now={now}
               onClose={() => setSelectedDeviceId(null)}
             />
