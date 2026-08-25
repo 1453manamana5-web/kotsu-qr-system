@@ -36,5 +36,11 @@ export default tseslint.config(
     rules: {
       "react-hooks/set-state-in-effect": "off",
     },
+  },
+  {
+    files: ["src/CopilotCapabilityBridge.tsx"],
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
+    },
   }
 );
