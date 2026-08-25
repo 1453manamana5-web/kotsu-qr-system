@@ -6,7 +6,7 @@ import PredictiveOpsOverlay from "./PredictiveOpsOverlay";
 import ExperimentalLabBridge from "./ExperimentalLabBridge";
 import TicketControlBridge from "./TicketControlBridge";
 import MemberControlBridge from "./MemberControlBridge";
-import TicketInventoryForecastBridge from "./TicketInventoryForecastBridge";
+import HybridTicketInventoryForecastBridge from "./HybridTicketInventoryForecastBridge";
 import AdminOpsBridge from "./AdminOpsBridge";
 import MaintenanceDataBridge from "./MaintenanceDataBridge";
 import CopilotLanguageExpansionBridge from "./CopilotLanguageExpansionBridge";
@@ -36,7 +36,7 @@ createRoot(document.getElementById("root")!).render(
         <ExperimentalLabBridge database={db} />
         <TicketControlBridge database={db} />
         <MemberControlBridge database={db} />
-        <TicketInventoryForecastBridge database={db} />
+        <HybridTicketInventoryForecastBridge database={db} />
         <AdminOpsBridge database={db} />
         <MaintenanceDataBridge database={db} />
         <CopilotLanguageExpansionBridge />
