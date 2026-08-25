@@ -1453,8 +1453,11 @@ export default function App({ database, onReturn }: AppProps) {
                 </article>
 
                 <aside className="autopilot-panel">
-                  <div className="autopilot-heading"><div><small>OPERATIONS AUTOPILOT</small><h2>運用オートパイロット</h2></div><span>提案モード</span></div>
-                  <p className="autopilot-intro">状況を監視し、必要な操作だけを提案します。操作は承認後に実行されます。</p>
+                  <div className="autopilot-summary">
+                    <div className="autopilot-heading"><div><small>OPERATIONS AUTOPILOT</small><h2>運用オートパイロット</h2></div><span>提案モード</span></div>
+                    <p className="autopilot-intro">状況を監視し、必要な操作だけを提案します。操作は承認後に実行されます。</p>
+                    {autopilotFeedback !== "" && <p className="autopilot-feedback" role="status">{autopilotFeedback}</p>}
+                  </div>
                   <div className="autopilot-list">
                     {autopilotSuggestions.length === 0 ? (
                       <article className="autopilot-clear"><span>✓</span><div><strong>対応が必要な項目はありません</strong><p>端末と会場の流れは安定しています。</p></div></article>
@@ -1468,7 +1471,6 @@ export default function App({ database, onReturn }: AppProps) {
                       </article>
                     ))}
                   </div>
-                  {autopilotFeedback !== "" && <p className="autopilot-feedback" role="status">{autopilotFeedback}</p>}
                   <button type="button" className="autopilot-incidents" onClick={() => setView("incidents")}>異常・注意をすべて確認</button>
                 </aside>
               </section>
