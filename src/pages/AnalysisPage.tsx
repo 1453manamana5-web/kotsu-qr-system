@@ -11,6 +11,10 @@ import {
   type EventAnalyticsSummary,
 } from "../eventAnalyticsFirestore";
 
+import {
+  registerEventDataId,
+} from "../firestorePaths";
+
 import OnlineStatus from "./OnlineStatus";
 
 import "./AnalysisPage.css";
@@ -22,6 +26,7 @@ type AnalysisPageProps = {
 
   eventData: {
     id?: string;
+    dataDocumentId?: string;
     name: string;
     date: string;
     startTime: string;
@@ -203,6 +208,10 @@ function AnalysisPage({
       eventData?.name ??
       "";
 
+    const eventDataId =
+      eventData?.dataDocumentId ??
+      "";
+
     queueMicrotask(() => {
       if (cancelled) {
         return;
@@ -220,6 +229,16 @@ function AnalysisPage({
         );
 
         return;
+      }
+
+      if (
+        eventDataId.trim() !==
+        ""
+      ) {
+        registerEventDataId(
+          eventName,
+          eventDataId
+        );
       }
 
       setLoading(
@@ -265,6 +284,7 @@ function AnalysisPage({
       unsubscribeAnalytics();
     };
   }, [
+    eventData?.dataDocumentId,
     eventData?.name,
   ]);
 
