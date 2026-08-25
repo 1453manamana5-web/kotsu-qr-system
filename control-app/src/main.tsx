@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import DeviceAccessGate from "./DeviceAccessGate";
 import PredictiveOpsOverlay from "./PredictiveOpsOverlay";
+import PredictiveChatBridge from "./PredictiveChatBridge";
 import { db } from "./firebase";
 import "./index.css";
 import "./experimental-nav.css";
@@ -14,6 +15,7 @@ createRoot(document.getElementById("root")!).render(
       <>
         <App database={db} />
         <PredictiveOpsOverlay database={db} />
+        <PredictiveChatBridge database={db} />
       </>
     </DeviceAccessGate>
   </StrictMode>
