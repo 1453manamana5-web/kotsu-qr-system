@@ -8,6 +8,13 @@ export type EventData = {
   endTime: string;
   status: EventStatus;
   dataDocumentId: string;
+  capacity: number;
+};
+
+export type LiveActivity = {
+  id: string;
+  type: "ticket-entry" | "ticket-exit" | "member-entry" | "member-exit";
+  timestamp: number;
 };
 
 export type AnalyticsSummary = {
