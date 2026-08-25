@@ -1,9 +1,15 @@
 .ticket-control-panel {
   margin-top: 18px;
   padding: 18px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid rgba(251, 191, 36, 0.24);
   border-radius: 16px;
-  background: rgba(15, 23, 42, 0.5);
+  background: linear-gradient(
+    135deg,
+    rgba(120, 53, 15, 0.2),
+    rgba(15, 23, 42, 0.54) 46%,
+    rgba(15, 23, 42, 0.46)
+  );
+  box-shadow: inset 0 1px 0 rgba(253, 230, 138, 0.04);
 }
 
 .ticket-control-heading,
@@ -17,7 +23,7 @@
 .ticket-control-heading small,
 .ticket-control-current small {
   display: block;
-  color: #8ea6c8;
+  color: #f6c96b;
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -29,7 +35,7 @@
 }
 
 .ticket-control-heading > span {
-  color: #a9bbd4;
+  color: #d9c6a0;
   font-size: 0.78rem;
 }
 
@@ -44,28 +50,35 @@
   width: 100%;
   min-width: 0;
   padding: 11px 13px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  border: 1px solid rgba(245, 158, 11, 0.26);
   border-radius: 10px;
-  background: rgba(2, 6, 23, 0.55);
-  color: #f8fafc;
+  background: rgba(40, 24, 7, 0.48);
+  color: #fffaf0;
   font: inherit;
 }
 
 .ticket-control-search input:focus {
-  outline: 2px solid rgba(56, 189, 248, 0.3);
-  border-color: rgba(56, 189, 248, 0.55);
+  outline: 2px solid rgba(245, 158, 11, 0.26);
+  border-color: rgba(251, 191, 36, 0.58);
 }
 
 .ticket-control-search button,
 .ticket-status-actions button,
 .ticket-ai-action-button {
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  border: 1px solid rgba(245, 158, 11, 0.34);
   border-radius: 10px;
-  background: rgba(14, 116, 144, 0.2);
-  color: #dff7ff;
+  background: rgba(146, 64, 14, 0.24);
+  color: #fff2c7;
   font: inherit;
   font-weight: 800;
   cursor: pointer;
+}
+
+.ticket-control-search button:hover,
+.ticket-status-actions button:not(:disabled):hover,
+.ticket-ai-action-button:not(:disabled):hover {
+  border-color: rgba(251, 191, 36, 0.58);
+  background: rgba(180, 83, 9, 0.32);
 }
 
 .ticket-control-search button {
@@ -75,14 +88,15 @@
 .ticket-control-result {
   margin-top: 14px;
   padding: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.2);
   border-radius: 12px;
-  background: rgba(2, 6, 23, 0.34);
+  background: rgba(56, 32, 9, 0.3);
 }
 
 .ticket-control-current strong {
   display: block;
   margin-top: 3px;
+  color: #fff4d6;
   font-size: 1.08rem;
   letter-spacing: 0.04em;
 }
@@ -117,7 +131,7 @@
 .ticket-control-result > p,
 .ticket-control-note,
 .ticket-control-empty {
-  color: #9fb0c7;
+  color: #cbb995;
   font-size: 0.78rem;
   line-height: 1.6;
 }
