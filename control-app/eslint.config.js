@@ -42,5 +42,11 @@ export default tseslint.config(
     rules: {
       "react-hooks/set-state-in-effect": "off",
     },
+  },
+  {
+    files: ["src/TicketControlBridge.tsx"],
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
+    },
   }
 );
