@@ -29,7 +29,7 @@ const EMPTY_SNAPSHOT: HomeSnapshot = {
   guidanceDetail: "ライブデータが揃うと、ここに最初に見るべき内容を表示します。",
 };
 
-function textOf(element: Element | null) {
+function textOf(element: Element | null | undefined) {
   return (element?.textContent ?? "").replace(/\s+/g, " ").trim();
 }
 
