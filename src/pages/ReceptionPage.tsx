@@ -38,6 +38,17 @@ import {
 } from "../offlineReceptionStore";
 
 import {
+  syncPendingReceptionOperations,
+} from "../offlineReceptionSync";
+
+import {
+  finishReceptionRemoteCommand,
+  markReceptionRemoteCommandReceived,
+  subscribeToPendingReceptionRemoteCommands,
+  type ReceptionRemoteCommand,
+} from "../receptionRemoteControlFirestore";
+
+import {
   useDeviceAccess,
 } from "../deviceAccessContext";
 
@@ -478,6 +489,16 @@ function ReceptionPage({
   );
 
   const [
+    receptionPaused,
+    setReceptionPaused,
+  ] = useState(false);
+
+  const [
+    cameraRestartKey,
+    setCameraRestartKey,
+  ] = useState(0);
+
+  const [
     pendingCount,
     setPendingCount,
   ] = useState(
@@ -509,6 +530,7 @@ function ReceptionPage({
         APP_VERSION,
       pendingCount,
       cameraState,
+      receptionPaused,
       screen:
         `${mode}-reception` as const,
       sessionStartedAt,
@@ -534,6 +556,7 @@ function ReceptionPage({
         APP_VERSION,
       pendingCount,
       cameraState,
+      receptionPaused,
       screen:
         `${mode}-reception` as const,
       sessionStartedAt,
@@ -547,6 +570,7 @@ function ReceptionPage({
     lastScanAt,
     mode,
     pendingCount,
+    receptionPaused,
     sessionStartedAt,
     uid,
   ]);
@@ -1100,6 +1124,7 @@ function ReceptionPage({
         qrValue: string
       ) => {
         if (
+          receptionPaused ||
           receptionState !==
           "waiting"
         ) {
@@ -1160,6 +1185,7 @@ function ReceptionPage({
         );
       },
       [
+        receptionPaused,
         receptionState,
         processMember,
         processTicket,
@@ -1167,9 +1193,189 @@ function ReceptionPage({
       ]
     );
 
+  const processingRemoteCommandsRef =
+    useRef(
+      new Set<string>()
+    );
+
+  const executeRemoteCommand =
+    useCallback(
+      async (
+        command:
+          ReceptionRemoteCommand
+      ) => {
+        if (
+          processingRemoteCommandsRef.current.has(
+            command.id
+          )
+        ) {
+          return;
+        }
+
+        processingRemoteCommandsRef.current.add(
+          command.id
+        );
+
+        try {
+          if (
+            command.expiresAt > 0 &&
+            command.expiresAt < Date.now()
+          ) {
+            await finishReceptionRemoteCommand(
+              currentEventName,
+              receptionDeviceId,
+              command.id,
+              false,
+              "受付端末が受信する前に操作の有効期限が切れました。"
+            );
+
+            return;
+          }
+
+          await markReceptionRemoteCommandReceived(
+            currentEventName,
+            receptionDeviceId,
+            command.id
+          );
+
+          if (
+            command.type ===
+            "pause-reception"
+          ) {
+            setReceptionPaused(true);
+          } else if (
+            command.type ===
+            "resume-reception"
+          ) {
+            setReceptionPaused(false);
+          } else if (
+            command.type ===
+            "restart-camera"
+          ) {
+            if (!soundReady) {
+              throw new Error(
+                "受付開始前のためカメラを再起動できません。"
+              );
+            }
+
+            setCameraState("starting");
+            setCameraRestartKey(
+              (currentKey) =>
+                currentKey + 1
+            );
+          } else if (
+            command.type ===
+            "sync-pending"
+          ) {
+            if (!navigator.onLine) {
+              throw new Error(
+                "受付端末がオフラインです。"
+              );
+            }
+
+            await syncPendingReceptionOperations();
+          } else if (
+            command.type ===
+            "play-sound"
+          ) {
+            const played =
+              await playReceptionSuccessSound();
+
+            if (!played) {
+              throw new Error(
+                "iPad側で音声が有効になっていません。"
+              );
+            }
+          } else if (
+            command.type ===
+            "reload-app"
+          ) {
+            await finishReceptionRemoteCommand(
+              currentEventName,
+              receptionDeviceId,
+              command.id,
+              true
+            );
+
+            window.setTimeout(
+              () =>
+                window.location.reload(),
+              500
+            );
+
+            return;
+          }
+
+          await finishReceptionRemoteCommand(
+            currentEventName,
+            receptionDeviceId,
+            command.id,
+            true
+          );
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "遠隔操作を実行できませんでした。";
+
+          console.error(
+            `遠隔操作 ${command.type} を実行できませんでした。`,
+            error
+          );
+
+          try {
+            await finishReceptionRemoteCommand(
+              currentEventName,
+              receptionDeviceId,
+              command.id,
+              false,
+              message
+            );
+          } catch (finishError) {
+            processingRemoteCommandsRef.current.delete(
+              command.id
+            );
+
+            console.error(
+              "遠隔操作の失敗結果を保存できませんでした。",
+              finishError
+            );
+          }
+        }
+      },
+      [
+        currentEventName,
+        receptionDeviceId,
+        soundReady,
+      ]
+    );
+
+  useEffect(() => {
+    if (
+      currentEventName.trim() ===
+      ""
+    ) {
+      return undefined;
+    }
+
+    return subscribeToPendingReceptionRemoteCommands(
+      currentEventName,
+      receptionDeviceId,
+      (command) => {
+        void executeRemoteCommand(
+          command
+        );
+      }
+    );
+  }, [
+    currentEventName,
+    executeRemoteCommand,
+    receptionDeviceId,
+  ]);
+
   return (
     <div
-      className={`${mode}-reception-page ${receptionState} ${soundReady ? "sound-ready" : "sound-locked"}`}
+      className={`${mode}-reception-page ${receptionState} ${soundReady ? "sound-ready" : "sound-locked"} ${receptionPaused ? "remote-paused" : ""}`}
     >
       <div className={modeClass("entry-background-circle entry-background-circle-one")} />
 
@@ -1226,8 +1432,20 @@ function ReceptionPage({
       </header>
 
       <main className={modeClass("entry-reception-main")}>
+        {receptionPaused && (
+          <section className="remote-reception-paused" role="status" aria-live="polite">
+            <span aria-hidden="true">Ⅱ</span>
+            <div>
+              <small>REMOTE CONTROL</small>
+              <h2>管制システムから受付を一時停止しています</h2>
+              <p>管制側で再開されるまでQRコードは読み取りません。</p>
+            </div>
+          </section>
+        )}
+
         {receptionState ===
           "waiting" &&
+          !receptionPaused &&
           !soundReady && (
           <section className={modeClass("entry-sound-start-panel")}>
             <div className={modeClass("entry-sound-start-icon")}>
@@ -1296,6 +1514,7 @@ function ReceptionPage({
             "processing" ||
           receptionState ===
             "success-animation") &&
+          !receptionPaused &&
           soundReady && (
           <section className={modeClass("entry-waiting-panel")}>
             <div className={modeClass("entry-scanner-card")}>
@@ -1348,7 +1567,8 @@ function ReceptionPage({
                   }
                 >
                   <CameraQrScanner
-                    enabled
+                    key={cameraRestartKey}
+                    enabled={!receptionPaused}
                     onStateChange={
                       setCameraState
                     }
