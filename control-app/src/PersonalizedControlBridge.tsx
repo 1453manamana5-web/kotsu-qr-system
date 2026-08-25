@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { onAuthStateChanged } from "firebase/auth";
 import {
   doc,
   onSnapshot,
@@ -7,9 +8,14 @@ import {
   type Firestore,
 } from "firebase/firestore";
 import {
+  subscribeToAuthorizedDevice,
+  type AuthorizedDevice,
+} from "../../src/deviceAccessFirestore";
+import {
   subscribeToEventMembers,
   type EventMember,
 } from "../../src/memberFirestore";
+import { auth } from "./firebase";
 
 import "./personalized-control.css";
 
@@ -47,7 +53,15 @@ type RankedFeature = {
   reason: string;
 };
 
-const ACTIVE_OPERATOR_KEY = "qr-control-active-operator-v1";
+type OperatorIdentity = {
+  uid: string;
+  profileKey: string;
+  displayName: string;
+  deviceName: string;
+  memberQrNumber: string | null;
+  memberMatched: boolean;
+};
+
 const PROFILE_PREFIX = "qr-control-personalization-v1:";
 const MAX_EVENTS = 320;
 
@@ -77,13 +91,43 @@ function readCurrentEvent(data: DocumentData): CurrentEvent | null {
   return { name: data.name };
 }
 
-function storageKey(qrNumber: string) {
-  return `${PROFILE_PREFIX}${qrNumber}`;
+function normalizeName(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s\u3000。、・.．_-]/g, "");
 }
 
-function readProfile(qrNumber: string): MemberLearningProfile {
+function resolveOperatorIdentity(
+  device: AuthorizedDevice | null,
+  members: EventMember[]
+): OperatorIdentity | null {
+  if (device === null || !device.active) return null;
+
+  const displayName = device.displayName.trim() || device.deviceName.trim() || "認証済み部員";
+  const normalizedDisplayName = normalizeName(displayName);
+  const matches = normalizedDisplayName === ""
+    ? []
+    : members.filter((member) => normalizeName(member.name) === normalizedDisplayName);
+  const matchedMember = matches.length === 1 ? matches[0] : null;
+
+  return {
+    uid: device.uid,
+    profileKey: matchedMember?.qrNumber ?? `device:${device.uid}`,
+    displayName: matchedMember?.name.trim() || displayName,
+    deviceName: device.deviceName.trim() || "部員端末",
+    memberQrNumber: matchedMember?.qrNumber ?? null,
+    memberMatched: matchedMember !== null,
+  };
+}
+
+function storageKey(profileKey: string) {
+  return `${PROFILE_PREFIX}${profileKey}`;
+}
+
+function readProfile(profileKey: string): MemberLearningProfile {
   try {
-    const raw = window.localStorage.getItem(storageKey(qrNumber));
+    const raw = window.localStorage.getItem(storageKey(profileKey));
     if (raw === null) return DEFAULT_PROFILE;
     const parsed = JSON.parse(raw) as Partial<MemberLearningProfile>;
     if (parsed.version !== 1 || !Array.isArray(parsed.events)) return DEFAULT_PROFILE;
@@ -111,8 +155,8 @@ function readProfile(qrNumber: string): MemberLearningProfile {
   }
 }
 
-function writeProfile(qrNumber: string, profile: MemberLearningProfile) {
-  window.localStorage.setItem(storageKey(qrNumber), JSON.stringify(profile));
+function writeProfile(profileKey: string, profile: MemberLearningProfile) {
+  window.localStorage.setItem(storageKey(profileKey), JSON.stringify(profile));
 }
 
 function timeBucket(timestamp = Date.now()) {
@@ -229,7 +273,7 @@ function ensureOverviewHost() {
 }
 
 function PersonalizedPanel({
-  member,
+  operator,
   profile,
   frequent,
   nextFeatures,
@@ -238,7 +282,7 @@ function PersonalizedPanel({
   onTogglePause,
   onReset,
 }: {
-  member: EventMember;
+  operator: OperatorIdentity;
   profile: MemberLearningProfile;
   frequent: RankedFeature[];
   nextFeatures: RankedFeature[];
@@ -255,8 +299,12 @@ function PersonalizedPanel({
       <div className="personalized-control-heading">
         <div>
           <small>AI PERSONALIZED CONTROL</small>
-          <h2>{member.name || member.qrNumber} 専用の管制アシスト</h2>
-          <p>{profile.paused ? "学習を一時停止しています。これまでの傾向だけを表示します。" : `${learningLabel(profile.events.length)} · ${profile.events.length}件の操作から傾向を計算`}</p>
+          <h2>{operator.displayName} 専用の管制アシスト</h2>
+          <p>
+            {profile.paused
+              ? "学習を一時停止しています。これまでの傾向だけを表示します。"
+              : `${learningLabel(profile.events.length)} · ${profile.events.length}件の操作から傾向を計算`}
+          </p>
         </div>
         <div className="personalized-control-actions">
           <button type="button" onClick={onTogglePause}>{profile.paused ? "学習を再開" : "学習を一時停止"}</button>
@@ -271,7 +319,7 @@ function PersonalizedPanel({
             <span>{currentFeature === null ? "現在画面を確認中" : `${featureById(currentFeature).label}から予測`}</span>
           </div>
           {nextFeatures.length === 0 ? (
-            <p className="personalized-empty">もう少し操作すると、ここに部員ごとの候補が出ます。</p>
+            <p className="personalized-empty">もう少し操作すると、ここに本人専用の候補が出ます。</p>
           ) : (
             <div className="personalized-ranking">
               {nextFeatures.map((item, index) => (
@@ -310,7 +358,12 @@ function PersonalizedPanel({
         </article>
       </div>
 
-      <p className="personalized-control-note">この学習は選択中の部員ごとに、この管制端末内へ保存します。まだサイドバー自体の順番は自動変更しません。</p>
+      <p className="personalized-control-note">
+        受付アプリの端末認証から担当部員を自動識別しています。他の部員へ切り替えることはできません。
+        {operator.memberMatched && operator.memberQrNumber !== null
+          ? ` 部員QR ${operator.memberQrNumber} と連携中です。`
+          : " イベント部員名と一致しない場合は、この認証端末本人のUIDで学習を分離します。"}
+      </p>
     </section>
   );
 }
@@ -318,10 +371,8 @@ function PersonalizedPanel({
 export default function PersonalizedControlBridge({ database }: { database: Firestore }) {
   const [currentEvent, setCurrentEvent] = useState<CurrentEvent | null>(null);
   const [members, setMembers] = useState<EventMember[]>([]);
-  const [selectedQr, setSelectedQr] = useState(() => window.localStorage.getItem(ACTIVE_OPERATOR_KEY) ?? "");
-  const [profile, setProfile] = useState<MemberLearningProfile>(() => (
-    selectedQr === "" ? DEFAULT_PROFILE : readProfile(selectedQr)
-  ));
+  const [authorizedDevice, setAuthorizedDevice] = useState<AuthorizedDevice | null>(null);
+  const [profile, setProfile] = useState<MemberLearningProfile>(DEFAULT_PROFILE);
   const [overviewHost, setOverviewHost] = useState<HTMLElement | null>(null);
   const [topbarHost, setTopbarHost] = useState<Element | null>(null);
   const [currentFeature, setCurrentFeature] = useState<FeatureId | null>(() => currentFeatureFromDom());
@@ -349,15 +400,43 @@ export default function PersonalizedControlBridge({ database }: { database: Fire
   }, [currentEvent]);
 
   useEffect(() => {
-    if (selectedQr === "") {
-      window.localStorage.removeItem(ACTIVE_OPERATOR_KEY);
+    let unsubscribeDevice = () => {};
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      unsubscribeDevice();
+      unsubscribeDevice = () => {};
+
+      if (user === null) {
+        setAuthorizedDevice(null);
+        return;
+      }
+
+      unsubscribeDevice = subscribeToAuthorizedDevice(
+        user.uid,
+        (device) => setAuthorizedDevice(device),
+        (error) => console.error("個人化AI用の端末認証情報を取得できませんでした。", error)
+      );
+    });
+
+    return () => {
+      unsubscribeAuth();
+      unsubscribeDevice();
+    };
+  }, []);
+
+  const operator = useMemo(
+    () => resolveOperatorIdentity(authorizedDevice, members),
+    [authorizedDevice, members]
+  );
+
+  useEffect(() => {
+    if (operator === null) {
       queueMicrotask(() => setProfile(DEFAULT_PROFILE));
       return;
     }
 
-    window.localStorage.setItem(ACTIVE_OPERATOR_KEY, selectedQr);
-    queueMicrotask(() => setProfile(readProfile(selectedQr)));
-  }, [selectedQr]);
+    queueMicrotask(() => setProfile(readProfile(operator.profileKey)));
+  }, [operator]);
 
   useEffect(() => {
     const refreshHosts = () => {
@@ -379,7 +458,7 @@ export default function PersonalizedControlBridge({ database }: { database: Fire
   }, []);
 
   useEffect(() => {
-    if (selectedQr === "") return undefined;
+    if (operator === null) return undefined;
 
     const handleClick = (event: MouseEvent) => {
       const target = event.target;
@@ -403,19 +482,14 @@ export default function PersonalizedControlBridge({ database }: { database: Fire
           ...current,
           events: [...current.events, nextEvent].slice(-MAX_EVENTS),
         };
-        writeProfile(selectedQr, nextProfile);
+        writeProfile(operator.profileKey, nextProfile);
         return nextProfile;
       });
     };
 
     document.addEventListener("click", handleClick, true);
     return () => document.removeEventListener("click", handleClick, true);
-  }, [selectedQr]);
-
-  const selectedMember = useMemo(
-    () => members.find((member) => member.qrNumber === selectedQr) ?? null,
-    [members, selectedQr]
-  );
+  }, [operator]);
 
   const frequent = useMemo(
     () => buildFrequentRanking(profile.events, clock),
@@ -433,48 +507,36 @@ export default function PersonalizedControlBridge({ database }: { database: Fire
   }, []);
 
   const togglePause = useCallback(() => {
-    if (selectedQr === "") return;
+    if (operator === null) return;
     setProfile((current) => {
       const nextProfile = { ...current, paused: !current.paused };
-      writeProfile(selectedQr, nextProfile);
+      writeProfile(operator.profileKey, nextProfile);
       return nextProfile;
     });
-  }, [selectedQr]);
+  }, [operator]);
 
   const resetLearning = useCallback(() => {
-    if (selectedQr === "" || profile.events.length === 0) return;
-    if (!window.confirm(`${selectedMember?.name || selectedQr}の管制学習データをリセットしますか？`)) return;
+    if (operator === null || profile.events.length === 0) return;
+    if (!window.confirm(`${operator.displayName}の管制学習データをリセットしますか？`)) return;
     const nextProfile: MemberLearningProfile = { version: 1, paused: false, events: [] };
-    writeProfile(selectedQr, nextProfile);
+    writeProfile(operator.profileKey, nextProfile);
     setProfile(nextProfile);
-  }, [profile.events.length, selectedMember?.name, selectedQr]);
-
-  const sortedMembers = useMemo(
-    () => [...members].sort((first, second) => (first.name || first.qrNumber).localeCompare(second.name || second.qrNumber, "ja")),
-    [members]
-  );
+  }, [operator, profile.events.length]);
 
   return (
     <>
-      {topbarHost !== null && createPortal(
-        <label className="personalized-operator-selector">
+      {topbarHost !== null && operator !== null && createPortal(
+        <div className="personalized-operator-selector" title={`${operator.deviceName}の受付アプリ認証を使用`}>
           <span>担当部員</span>
-          <select value={selectedQr} onChange={(event) => setSelectedQr(event.target.value)}>
-            <option value="">未選択</option>
-            {sortedMembers.map((member) => (
-              <option key={member.qrNumber} value={member.qrNumber}>
-                {member.name || "名前未登録"} · {member.qrNumber}
-              </option>
-            ))}
-          </select>
-          <i className={selectedQr === "" ? "idle" : profile.paused ? "paused" : "learning"} aria-hidden="true" />
-        </label>,
+          <strong>{operator.displayName}</strong>
+          <i className={profile.paused ? "paused" : "learning"} aria-hidden="true" />
+        </div>,
         topbarHost
       )}
 
-      {overviewHost !== null && selectedMember !== null && createPortal(
+      {overviewHost !== null && operator !== null && createPortal(
         <PersonalizedPanel
-          member={selectedMember}
+          operator={operator}
           profile={profile}
           frequent={frequent}
           nextFeatures={nextFeatures}
@@ -486,12 +548,12 @@ export default function PersonalizedControlBridge({ database }: { database: Fire
         overviewHost
       )}
 
-      {overviewHost !== null && selectedMember === null && createPortal(
+      {overviewHost !== null && operator === null && createPortal(
         <section className="personalized-control-panel personalized-control-empty">
           <div>
             <small>AI PERSONALIZED CONTROL</small>
-            <h2>担当部員を選ぶと管制画面が学習を開始します</h2>
-            <p>右上の「担当部員」から選択すると、その部員専用の利用傾向と次の操作候補を作ります。</p>
+            <h2>受付アプリの端末認証を確認しています</h2>
+            <p>認証済みの部員端末が確認できると、その本人専用の管制学習を自動で開始します。</p>
           </div>
         </section>,
         overviewHost
