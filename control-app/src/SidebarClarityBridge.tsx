@@ -79,12 +79,15 @@ export default function SidebarClarityBridge() {
 
     const initial = window.setTimeout(update, 0);
     const observer = new MutationObserver(update);
-    observer.observe(document.body, { childList: true, subtree: true });
-    const timer = window.setInterval(update, 120);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "aria-pressed"],
+    });
 
     return () => {
       window.clearTimeout(initial);
-      window.clearInterval(timer);
       observer.disconnect();
     };
   }, []);
