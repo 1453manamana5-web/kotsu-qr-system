@@ -1,0 +1,167 @@
+.ticket-forecast-panel {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid #d9e2ef;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #fffdf7, #ffffff 58%, #f8fbff);
+  box-shadow: 0 8px 20px rgba(41, 55, 85, .06);
+}
+
+.admin-stock-intelligence {
+  display: none;
+}
+
+.ticket-forecast-heading,
+.ticket-forecast-detail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.ticket-forecast-heading small,
+.ticket-forecast-metrics small,
+.ticket-forecast-copilot-hint small {
+  color: #8b6a1f;
+  font-size: .67rem;
+  font-weight: 850;
+  letter-spacing: .12em;
+}
+
+.ticket-forecast-heading h3,
+.ticket-forecast-copilot-hint h3 {
+  margin: 4px 0 0;
+  color: #21314f;
+}
+
+.ticket-forecast-heading > span,
+.ticket-forecast-copilot-hint > span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: .74rem;
+  font-weight: 850;
+  color: #6a511b;
+  background: #fff0bd;
+}
+
+.ticket-forecast-panel.normal .ticket-forecast-heading > span,
+.ticket-forecast-copilot-hint > span.normal {
+  color: #0b6f47;
+  background: #def5e9;
+}
+
+.ticket-forecast-panel.watch .ticket-forecast-heading > span,
+.ticket-forecast-copilot-hint > span.watch {
+  color: #8a5600;
+  background: #fff0c9;
+}
+
+.ticket-forecast-panel.warning .ticket-forecast-heading > span,
+.ticket-forecast-copilot-hint > span.warning {
+  color: #a43232;
+  background: #ffe1e1;
+}
+
+.ticket-forecast-metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.ticket-forecast-metrics article {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #e7e2d4;
+  border-radius: 12px;
+  background: rgba(255,255,255,.94);
+}
+
+.ticket-forecast-metrics strong {
+  display: block;
+  margin-top: 5px;
+  color: #1e2e4c;
+  font-size: clamp(21px, 2.4vw, 29px);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ticket-forecast-metrics strong em {
+  margin-left: 3px;
+  color: #6f7d96;
+  font-size: .42em;
+  font-style: normal;
+}
+
+.ticket-forecast-metrics p,
+.ticket-forecast-note,
+.ticket-forecast-detail p,
+.ticket-forecast-copilot-hint p {
+  color: #68758b;
+  font-size: .76rem;
+  line-height: 1.55;
+}
+
+.ticket-forecast-metrics p {
+  margin: 7px 0 0;
+}
+
+.ticket-forecast-detail {
+  margin-top: 11px;
+  padding-top: 11px;
+  border-top: 1px solid #ece6d8;
+}
+
+.ticket-forecast-detail p {
+  margin: 0;
+  flex: 1;
+}
+
+.ticket-forecast-detail span {
+  white-space: nowrap;
+  color: #5f6d84;
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.ticket-forecast-note {
+  margin: 10px 0 0;
+  color: #8893a4;
+}
+
+.ticket-forecast-copilot-hint {
+  margin-top: 14px;
+  padding: 15px;
+  border: 1px solid #e3d9bf;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fffaf0, #fff);
+}
+
+.ticket-forecast-copilot-hint p {
+  margin: 8px 0 10px;
+}
+
+.ticket-forecast-message .copilot-bubble {
+  border-color: rgba(210, 157, 45, .3);
+}
+
+@media (max-width: 1050px) {
+  .ticket-forecast-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .ticket-forecast-heading,
+  .ticket-forecast-detail {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ticket-forecast-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
