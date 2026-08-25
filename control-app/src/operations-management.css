@@ -32,12 +32,15 @@
 }
 
 .operations-management-page-heading {
+  padding: 4px 2px 18px;
+  border-bottom: 1px solid #e2e8f1;
+}
+
+.operations-management-title-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  padding: 4px 2px 18px;
-  border-bottom: 1px solid #e2e8f1;
 }
 
 .operations-management-page-heading small {
@@ -60,7 +63,7 @@
   line-height: 1.6;
 }
 
-.operations-management-page-heading > span {
+.operations-management-title-row > span {
   flex: 0 0 auto;
   padding: 7px 11px;
   border: 1px solid #d6dfec;
@@ -69,6 +72,88 @@
   background: #f4f7fb;
   font-size: .72rem;
   font-weight: 850;
+}
+
+.operations-management-guide {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.operations-management-guide button {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 72px;
+  padding: 11px 12px;
+  border: 1px solid #dce4ef;
+  border-radius: 13px;
+  color: #263b5f;
+  background: #fff;
+  text-align: left;
+  box-shadow: 0 5px 14px rgba(36, 54, 88, .045);
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.operations-management-guide button:hover,
+.operations-management-guide button:focus-visible {
+  border-color: #9aa9dc;
+  box-shadow: 0 9px 20px rgba(43, 60, 111, .1);
+  transform: translateY(-1px);
+  outline: 0;
+}
+
+.operations-management-guide button > span {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  color: #fff;
+  background: #4d5fd1;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.operations-management-guide button:nth-child(2) > span {
+  background: #c88718;
+}
+
+.operations-management-guide button:nth-child(3) > span {
+  background: #1c967b;
+}
+
+.operations-management-guide button:nth-child(4) > span {
+  background: #64708b;
+}
+
+.operations-management-guide button strong {
+  display: block;
+  overflow: hidden;
+  color: #24385c;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.operations-management-guide button small {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #74829a;
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.operations-management-guide button b {
+  color: #8794aa;
+  font-size: 15px;
 }
 
 .control-shell.operations-management-view-open .live-forecast-grid {
@@ -81,7 +166,9 @@
 }
 
 .control-shell.operations-management-view-open .live-forecast-grid > .admin-ops-panel {
-  display: block !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
   width: 100%;
   min-height: 0;
   padding: 20px;
@@ -91,23 +178,151 @@
   box-shadow: 0 10px 28px rgba(34, 52, 87, .07);
 }
 
+.control-shell.operations-management-view-open .admin-ops-heading,
+.control-shell.operations-management-view-open .admin-ops-grid,
+.control-shell.operations-management-view-open .admin-stock-intelligence,
+.control-shell.operations-management-view-open .ticket-forecast-panel {
+  grid-column: 1 / -1;
+}
+
+.control-shell.operations-management-view-open .admin-ops-heading {
+  padding-bottom: 13px;
+  border-bottom: 1px solid #e1e7ef;
+  scroll-margin-top: 18px;
+}
+
+.control-shell.operations-management-view-open .admin-ops-heading h2 {
+  color: #1e3459;
+  font-size: 19px;
+}
+
 .control-shell.operations-management-view-open .admin-ops-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 0;
+}
+
+.control-shell.operations-management-view-open .admin-ops-grid > section {
+  min-height: 138px;
+  padding: 15px;
+  border-color: #dfe6ef;
+  background: #fff;
+  box-shadow: 0 5px 14px rgba(37, 55, 86, .035);
+}
+
+.control-shell.operations-management-view-open .admin-ops-grid > .event-card {
+  grid-column: 1 / -1;
+  order: -1;
+  min-height: 96px;
+  background: linear-gradient(135deg, #f8faff, #f1f4ff);
+}
+
+.control-shell.operations-management-view-open .admin-ops-grid > section > strong {
+  font-size: 30px;
+}
+
+.control-shell.operations-management-view-open .admin-ops-grid > .event-card > strong {
+  font-size: 19px;
+}
+
+.control-shell.operations-management-view-open .admin-stock-intelligence {
+  margin-top: 0;
+  padding: 13px 15px;
+  border-radius: 12px;
 }
 
 .control-shell.operations-management-view-open .admin-ops-panel .ticket-control-panel,
 .control-shell.operations-management-view-open .admin-ops-panel .member-control-panel,
 .control-shell.operations-management-view-open .admin-ops-panel .ticket-forecast-panel {
-  margin-top: 14px;
+  min-width: 0;
+  margin-top: 2px;
+  scroll-margin-top: 18px;
+  box-shadow: 0 6px 18px rgba(37, 55, 86, .045);
+  transition: box-shadow .18s ease, transform .18s ease;
+}
+
+.control-shell.operations-management-view-open .admin-ops-panel .ticket-control-panel {
+  grid-column: 1;
+}
+
+.control-shell.operations-management-view-open .admin-ops-panel .member-control-panel {
+  grid-column: 2;
+}
+
+.control-shell.operations-management-view-open .admin-ops-panel .ticket-forecast-panel {
+  grid-column: 1 / -1;
+}
+
+.control-shell.operations-management-view-open .ticket-control-heading h3,
+.control-shell.operations-management-view-open .member-control-heading h3,
+.control-shell.operations-management-view-open .ticket-forecast-heading h3 {
+  font-size: 15px;
+}
+
+.control-shell.operations-management-view-open .ticket-control-search input,
+.control-shell.operations-management-view-open .member-control-search input {
+  min-height: 42px;
+}
+
+.control-shell.operations-management-view-open .ticket-control-search button,
+.control-shell.operations-management-view-open .member-control-search button {
+  min-width: 64px;
 }
 
 .control-shell.operations-management-view-open .admin-ops-panel .ticket-forecast-metrics {
   grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.control-shell.operations-management-view-open .ticket-forecast-metrics article {
+  min-height: 106px;
+}
+
+.control-shell.operations-management-view-open .ticket-forecast-detail {
+  min-height: 44px;
+}
+
+.management-section-highlight {
+  animation: management-section-focus .9s ease;
+}
+
+@keyframes management-section-focus {
+  0%, 100% {
+    box-shadow: 0 6px 18px rgba(37, 55, 86, .045);
+  }
+  35% {
+    box-shadow: 0 0 0 3px rgba(77, 95, 209, .22), 0 12px 28px rgba(55, 72, 151, .13);
+  }
+}
+
+.admin-ops-heading.management-section-highlight {
+  animation-name: management-heading-focus;
+}
+
+@keyframes management-heading-focus {
+  0%, 100% { background: transparent; }
+  35% { background: rgba(77, 95, 209, .07); }
+}
+
+@media (max-width: 1180px) {
+  .operations-management-guide {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .control-shell.operations-management-view-open .admin-ops-panel .ticket-control-panel,
+  .control-shell.operations-management-view-open .admin-ops-panel .member-control-panel {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 1050px) {
   .control-shell.operations-management-view-open .admin-ops-grid {
     grid-template-columns: 1fr;
+  }
+
+  .control-shell.operations-management-view-open .admin-ops-grid > .event-card,
+  .control-shell.operations-management-view-open .admin-ops-grid > section {
+    grid-column: 1;
   }
 
   .control-shell.operations-management-view-open .admin-ops-panel .ticket-forecast-metrics {
@@ -120,15 +335,24 @@
 }
 
 @media (max-width: 720px) {
-  .operations-management-page-heading {
+  .operations-management-title-row {
     align-items: flex-start;
   }
 
-  .operations-management-page-heading > span {
+  .operations-management-title-row > span {
     display: none;
   }
 
+  .operations-management-guide {
+    grid-template-columns: 1fr;
+  }
+
+  .operations-management-guide button {
+    min-height: 64px;
+  }
+
   .control-shell.operations-management-view-open .live-forecast-grid > .admin-ops-panel {
+    grid-template-columns: 1fr;
     padding: 15px;
   }
 }
