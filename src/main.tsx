@@ -1,6 +1,9 @@
 import ReactDOM from "react-dom/client";
 
 import AppRoot from "./AppRoot";
+import {
+  installIntentionalReceptionStopGuard,
+} from "./receptionIntentionalStopGuard";
 
 import "./index.css";
 
@@ -56,6 +59,7 @@ const installAutomaticAppUpdate = () => {
 };
 
 installAutomaticAppUpdate();
+installIntentionalReceptionStopGuard();
 
 /*
   iPad用印刷画面が表示されるたびに、
