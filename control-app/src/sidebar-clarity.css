@@ -84,12 +84,17 @@
 
 .sidebar nav button[data-nav-key]::before {
   content: "" !important;
+  position: static !important;
+  inset: auto !important;
   display: block !important;
   width: 21px;
   height: 21px;
   justify-self: center;
   margin: 0 !important;
+  pointer-events: none;
+  color: inherit;
   background: currentColor;
+  font-size: 0 !important;
   -webkit-mask: var(--nav-icon) center / contain no-repeat;
   mask: var(--nav-icon) center / contain no-repeat;
   opacity: .96;
