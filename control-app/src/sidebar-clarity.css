@@ -1,0 +1,116 @@
+.sidebar nav {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.18) transparent;
+}
+
+.sidebar-section-label {
+  display: block;
+  padding: 0 10px;
+  color: #8294bd;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .14em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.sidebar-section-label-daily { order: 10; margin-top: 1px; }
+.sidebar-section-label-check { order: 20; margin-top: 12px; }
+.sidebar-section-label-settings { order: 30; margin-top: 12px; }
+.sidebar-section-label-experimental { order: 40; margin-top: 12px; }
+
+.sidebar nav button[data-nav-key="overview"] { order: 11; }
+.sidebar nav button[data-nav-key="operations"] { order: 12; }
+.sidebar nav button[data-nav-key="analysis"] { order: 21; }
+.sidebar nav button[data-nav-key="devices"] { order: 22; }
+.sidebar nav button[data-nav-key="incidents"] { order: 23; }
+.sidebar nav button[data-nav-key="diagnostics"] { order: 24; }
+.sidebar nav button[data-nav-key="settings"] { order: 31; }
+.sidebar nav button[data-nav-key="lab"] { order: 41; margin-top: 0; }
+.sidebar nav button[data-nav-key="copilot"] { order: 42; }
+
+/* The old experimental label was attached to the sixth native button. */
+.sidebar nav button[data-nav-key="lab"]::before {
+  display: none !important;
+  content: none !important;
+}
+
+.sidebar nav button[data-nav-key] {
+  position: relative;
+}
+
+.sidebar nav button[data-nav-key="overview"],
+.sidebar nav button[data-nav-key="operations"] {
+  color: #dde6f8;
+}
+
+.sidebar nav button[data-nav-key="operations"] {
+  background: rgba(255,255,255,.035);
+}
+
+.sidebar nav button[data-nav-key="settings"] {
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.025);
+}
+
+.sidebar nav button[data-nav-key="lab"],
+.sidebar nav button[data-nav-key="copilot"] {
+  color: #b7c3df;
+  background: rgba(110, 103, 255, .045);
+}
+
+.sidebar nav button[data-nav-key].active {
+  color: #fff;
+}
+
+@media (max-height: 720px) and (min-width: 721px) {
+  .sidebar {
+    padding-top: 16px;
+    padding-bottom: 12px;
+  }
+
+  .brand {
+    padding-bottom: 16px;
+  }
+
+  .sidebar nav {
+    gap: 5px;
+  }
+
+  .sidebar nav button {
+    min-height: 43px;
+  }
+
+  .sidebar-section-label-check,
+  .sidebar-section-label-settings,
+  .sidebar-section-label-experimental {
+    margin-top: 7px;
+  }
+}
+
+@media (max-width: 720px) {
+  .sidebar-section-label {
+    display: none;
+  }
+
+  .sidebar nav {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+
+  .sidebar nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sidebar nav button[data-nav-key] {
+    flex: 0 0 74px;
+    order: initial;
+    margin-top: 0;
+  }
+}
