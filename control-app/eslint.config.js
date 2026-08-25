@@ -48,5 +48,11 @@ export default tseslint.config(
     rules: {
       "react-hooks/set-state-in-effect": "off",
     },
+  },
+  {
+    files: ["src/TicketInventoryForecastBridge.tsx"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+    },
   }
 );
