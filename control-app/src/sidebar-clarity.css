@@ -47,8 +47,9 @@
 .sidebar-section-label-settings { order: 30; margin-top: 9px; }
 .sidebar-section-label-experimental { order: 40; margin-top: 9px; }
 
-.sidebar nav button[data-nav-key="overview"] { order: 11; }
-.sidebar nav button[data-nav-key="operations"] { order: 12; }
+.sidebar nav button[data-nav-key="home"] { order: 11; }
+.sidebar nav button[data-nav-key="overview"] { order: 12; }
+.sidebar nav button[data-nav-key="operations"] { order: 13; }
 .sidebar nav button[data-nav-key="analysis"] { order: 21; }
 .sidebar nav button[data-nav-key="devices"] { order: 22; }
 .sidebar nav button[data-nav-key="incidents"] { order: 23; }
@@ -106,6 +107,10 @@
   overflow: hidden;
 }
 
+.sidebar nav button[data-nav-key="home"] {
+  --nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3.5 11.5 12 4l8.5 7.5M6.5 10.5V20h11v-9.5M9.5 20v-6h5v6' fill='none' stroke='%23cbd6ed' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
 .sidebar nav button[data-nav-key="overview"] {
   --nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 5h16v11H4zM8 20h8M12 16v4M7 12l3-3 2 2 4-4' fill='none' stroke='%23cbd6ed' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
@@ -142,6 +147,7 @@
   --nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 11 15.5 7M7 13l8.5 4M18 9v6' fill='none' stroke='%23cbd6ed' stroke-width='1.9' stroke-linecap='round'/%3E%3Ccircle cx='5' cy='12' r='2' fill='%23cbd6ed'/%3E%3Ccircle cx='18' cy='6' r='2' fill='%23cbd6ed'/%3E%3Ccircle cx='18' cy='18' r='2' fill='%23cbd6ed'/%3E%3C/svg%3E");
 }
 
+.sidebar nav button[data-nav-key="home"],
 .sidebar nav button[data-nav-key="overview"],
 .sidebar nav button[data-nav-key="operations"] {
   background: rgba(255,255,255,.025);
@@ -166,7 +172,8 @@
   filter: brightness(0) invert(1);
 }
 
-/* 運用管理・設定はライブ運行を内部表示元にするため、裏側のactive表示だけ消す。 */
+/* 独立画面はライブ運行を内部表示元にするため、裏側のactive表示だけ消す。 */
+.control-shell.beginner-home-view-open .sidebar nav button[data-nav-key].active:not([data-nav-key="home"]),
 .control-shell.operations-management-view-open .sidebar nav button[data-nav-key].active:not([data-nav-key="operations"]),
 .control-shell.maintenance-view-open .sidebar nav button[data-nav-key].active:not([data-nav-key="settings"]) {
   color: #c4d0e9 !important;
@@ -175,6 +182,7 @@
   box-shadow: none !important;
 }
 
+.control-shell.beginner-home-view-open .sidebar nav button[data-nav-key].active:not([data-nav-key="home"]) > span:first-child,
 .control-shell.operations-management-view-open .sidebar nav button[data-nav-key].active:not([data-nav-key="operations"]) > span:first-child,
 .control-shell.maintenance-view-open .sidebar nav button[data-nav-key].active:not([data-nav-key="settings"]) > span:first-child {
   filter: none;
