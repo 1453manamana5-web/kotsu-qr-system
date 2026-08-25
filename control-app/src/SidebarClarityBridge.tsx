@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 type NavKey =
+  | "home"
   | "overview"
   | "operations"
   | "analysis"
@@ -17,7 +18,8 @@ const NAV_ITEMS: ReadonlyArray<{
   match: string;
   description: string;
 }> = [
-  { key: "overview", match: "ライブ運行", description: "会場のいまを確認" },
+  { key: "home", match: "ホーム", description: "まず確認する現在状況" },
+  { key: "overview", match: "ライブ運行", description: "会場の流れを詳しく確認" },
   { key: "operations", match: "運用管理", description: "照会・修正・チケット予測" },
   { key: "analysis", match: "分析", description: "来場者データを確認" },
   { key: "devices", match: "端末", description: "入口・出口端末を確認" },
