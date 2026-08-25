@@ -4,6 +4,7 @@ import App from "./App";
 import DeviceAccessGate from "./DeviceAccessGate";
 import PredictiveOpsOverlay from "./PredictiveOpsOverlay";
 import TicketControlBridge from "./TicketControlBridge";
+import MemberControlBridge from "./MemberControlBridge";
 import AdminOpsBridge from "./AdminOpsBridge";
 import CopilotLanguageExpansionBridge from "./CopilotLanguageExpansionBridge";
 import CopilotRemoteCommandBridge from "./CopilotRemoteCommandBridge";
@@ -18,6 +19,7 @@ import "./predictive-correlation.css";
 import "./copilot-capabilities.css";
 import "./admin-ops.css";
 import "./ticket-control.css";
+import "./member-control.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -26,6 +28,7 @@ createRoot(document.getElementById("root")!).render(
         <App database={db} />
         <PredictiveOpsOverlay database={db} />
         <TicketControlBridge database={db} />
+        <MemberControlBridge database={db} />
         <AdminOpsBridge database={db} />
         <CopilotLanguageExpansionBridge />
         <CopilotRemoteCommandBridge database={db} />
