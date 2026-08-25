@@ -1,0 +1,134 @@
+.sidebar nav .operations-management-nav-button {
+  order: 1;
+  margin-top: 2px;
+}
+
+.sidebar nav .maintenance-nav-button {
+  order: 2;
+}
+
+.sidebar nav button:nth-of-type(6),
+.sidebar nav button:nth-of-type(7) {
+  order: 3;
+}
+
+.sidebar nav .operations-management-nav-button > span:first-child {
+  font-size: 17px;
+  font-weight: 950;
+}
+
+/* ライブ運行では管理系を表示せず、専用の「運用管理」でだけ見せる。 */
+.control-shell:not(.operations-management-view-open) .live-forecast-grid > .admin-ops-panel {
+  display: none !important;
+}
+
+.control-shell.operations-management-view-open main > * {
+  display: none !important;
+}
+
+.control-shell.operations-management-view-open main > .operations-management-page-heading,
+.control-shell.operations-management-view-open main > .live-forecast-grid {
+  display: block !important;
+}
+
+.operations-management-page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 4px 2px 18px;
+  border-bottom: 1px solid #e2e8f1;
+}
+
+.operations-management-page-heading small {
+  color: #71819d;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+
+.operations-management-page-heading h2 {
+  margin: 4px 0 0;
+  color: #1b3156;
+  font-size: 25px;
+}
+
+.operations-management-page-heading p {
+  margin: 7px 0 0;
+  color: #6c7a91;
+  font-size: .82rem;
+  line-height: 1.6;
+}
+
+.operations-management-page-heading > span {
+  flex: 0 0 auto;
+  padding: 7px 11px;
+  border: 1px solid #d6dfec;
+  border-radius: 999px;
+  color: #4e6386;
+  background: #f4f7fb;
+  font-size: .72rem;
+  font-weight: 850;
+}
+
+.control-shell.operations-management-view-open .live-forecast-grid {
+  margin-top: 18px;
+}
+
+.control-shell.operations-management-view-open .live-forecast-grid > .forecast-panel,
+.control-shell.operations-management-view-open .live-forecast-grid > .flow-panel {
+  display: none !important;
+}
+
+.control-shell.operations-management-view-open .live-forecast-grid > .admin-ops-panel {
+  display: block !important;
+  width: 100%;
+  min-height: 0;
+  padding: 20px;
+  border: 1px solid #d9e2ee;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #ffffff, #f7f9fc);
+  box-shadow: 0 10px 28px rgba(34, 52, 87, .07);
+}
+
+.control-shell.operations-management-view-open .admin-ops-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.control-shell.operations-management-view-open .admin-ops-panel .ticket-control-panel,
+.control-shell.operations-management-view-open .admin-ops-panel .member-control-panel,
+.control-shell.operations-management-view-open .admin-ops-panel .ticket-forecast-panel {
+  margin-top: 14px;
+}
+
+.control-shell.operations-management-view-open .admin-ops-panel .ticket-forecast-metrics {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media (max-width: 1050px) {
+  .control-shell.operations-management-view-open .admin-ops-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .control-shell.operations-management-view-open .admin-ops-panel .ticket-forecast-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .control-shell.operations-management-view-open .admin-ops-panel .ticket-forecast-metrics article:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .operations-management-page-heading {
+    align-items: flex-start;
+  }
+
+  .operations-management-page-heading > span {
+    display: none;
+  }
+
+  .control-shell.operations-management-view-open .live-forecast-grid > .admin-ops-panel {
+    padding: 15px;
+  }
+}
