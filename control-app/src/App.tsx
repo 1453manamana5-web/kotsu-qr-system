@@ -53,9 +53,24 @@ const ACTIVITY_HISTORY_LIMIT = 240;
 const HISTORICAL_EVENT_LIMIT = 5;
 const HISTORICAL_ACTIVITY_LIMIT = 2_000;
 
-type View = "overview" | "analysis" | "past-data" | "devices" | "incidents" | "diagnostics" | "lab";
+type View = "overview" | "analysis" | "past-data" | "devices" | "incidents" | "diagnostics" | "lab" | "copilot";
 type FirestoreHealth = "checking" | "online" | "error";
 type AutopilotLevel = 0 | 1 | 2 | 3;
+type CopilotAction = {
+  id: string;
+  label: string;
+  deviceId: string;
+  deviceName: string;
+  command: ReceptionRemoteCommandType;
+};
+type CopilotMessage = {
+  id: string;
+  role: "operator" | "copilot";
+  text: string;
+  evidence: string[];
+  createdAt: number;
+  action?: CopilotAction;
+};
 type NetworkQualitySample = {
   recordedAt: number;
   firebaseLatencyMs: number;
@@ -459,7 +474,9 @@ function NavIcon({ kind }: { kind: View }) {
           ? "△"
           : kind === "lab"
             ? "⌬"
-            : "⌁";
+            : kind === "copilot"
+              ? "✦"
+              : "⌁";
   return <span aria-hidden="true">{symbol}</span>;
 }
 
@@ -867,12 +884,31 @@ export default function App({ database, onReturn }: AppProps) {
   const [autopilotLevel, setAutopilotLevel] = useState<AutopilotLevel>(2);
   const [autopilotLevelSaving, setAutopilotLevelSaving] = useState(false);
   const [autopilotUpdatedAt, setAutopilotUpdatedAt] = useState(0);
+  const [copilotInput, setCopilotInput] = useState("");
+  const [copilotThinking, setCopilotThinking] = useState(false);
+  const [copilotActionSending, setCopilotActionSending] = useState<string | null>(null);
+  const [copilotCompletedActionIds, setCopilotCompletedActionIds] = useState<string[]>([]);
+  const [copilotMessages, setCopilotMessages] = useState<CopilotMessage[]>([
+    {
+      id: "copilot-welcome",
+      role: "copilot",
+      text: "管制コパイロットを起動しました。会場・端末・通信について質問するか、受付端末への操作を指示してください。",
+      evidence: ["外部AI未使用", "ライブデータから回答", "遠隔操作は実行前に確認"],
+      createdAt: 0,
+    },
+  ]);
   const autoExecutedSuggestionIds = useRef(new Set<string>());
+  const copilotEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (view !== "copilot") return;
+    copilotEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [copilotMessages, copilotThinking, view]);
 
   useEffect(() => {
     const unsubscribeEvents = onSnapshot(collection(database, "events"), (snapshot) => {
@@ -1324,6 +1360,281 @@ export default function App({ database, onReturn }: AppProps) {
     : autopilotSuggestions.length > 0 ? "warning" : "normal";
   const displayedAutopilotSeverity: HealthSeverity = autopilotLevel === 0 ? "normal" : autopilotSeverity;
 
+  const buildCopilotReply = (
+    question: string
+  ): Omit<CopilotMessage, "id" | "role" | "createdAt"> => {
+    const normalized = question
+      .toLowerCase()
+      .replace(/[\s\u3000。、！？!?]/g, "");
+    const mentionsEntry = /入口|入場|entry/.test(normalized);
+    const mentionsExit = /出口|退場|exit/.test(normalized);
+    const targetDevice = mentionsEntry
+      ? entryDevice
+      : mentionsExit
+        ? exitDevice
+        : null;
+    const targetLabel = mentionsEntry ? "入口" : mentionsExit ? "出口" : "受付";
+    const totalVisitors = observedAnalytics?.totalVisitors ?? 0;
+
+    if (/使い方|できる|ヘルプ|help|例/.test(normalized)) {
+      return {
+        text: "会場状況、人数予測、入口・出口端末、通信、異常の優先順位を質問できます。受付端末への操作指示も、確認後に実行できます。",
+        evidence: [
+          "例：今どんな状態？",
+          "例：入口の通信を調べて",
+          "例：出口のカメラを再起動して",
+        ],
+      };
+    }
+
+    let command: ReceptionRemoteCommandType | null = null;
+    if (/カメラ/.test(normalized) && /再起動|直して|復旧/.test(normalized)) {
+      command = "restart-camera";
+    } else if (/同期|未送信/.test(normalized) && /して|実行|再/.test(normalized)) {
+      command = "sync-pending";
+    } else if (/受付/.test(normalized) && /停止|止めて|一時停止/.test(normalized)) {
+      command = "pause-reception";
+    } else if (/受付/.test(normalized) && /再開|始めて|戻して/.test(normalized)) {
+      command = "resume-reception";
+    }
+
+    if (command !== null) {
+      if (!mentionsEntry && !mentionsExit) {
+        return {
+          text: "操作対象を特定できませんでした。「入口」か「出口」を含めて指示してください。",
+          evidence: ["安全のため、対象が曖昧な遠隔操作は実行しません"],
+        };
+      }
+
+      if (targetDevice === null) {
+        return {
+          text: `${targetLabel}端末が通信中ではないため、遠隔操作を準備できません。現地で端末とWi-Fiを確認してください。`,
+          evidence: [`${targetLabel}端末：見つかりません`, "遠隔操作には端末の通信が必要"],
+        };
+      }
+
+      const label = remoteCommandLabel(command);
+      return {
+        text: `${targetDevice.deviceName}への「${label}」を準備しました。内容を確認してから実行してください。`,
+        evidence: [
+          `対象：${targetDevice.deviceName}`,
+          `最終通信：${formatAge(targetDevice.lastSeenAt, now)}`,
+          `現在の受付：${targetDevice.receptionPaused ? "一時停止中" : "受付中"}`,
+        ],
+        action: {
+          id: `copilot-action-${now}-${targetDevice.id}`,
+          label: `${label}を実行`,
+          deviceId: targetDevice.id,
+          deviceName: targetDevice.deviceName,
+          command,
+        },
+      };
+    }
+
+    if ((mentionsEntry || mentionsExit) && /状態|調べ|おかしい|大丈夫|どう|診断/.test(normalized)) {
+      if (targetDevice === null) {
+        return {
+          text: `${targetLabel}端末から現在通信がありません。管制から確認できる最新状態がないため、現地確認が必要です。`,
+          evidence: [`${targetLabel}端末：通信なし`, `切断判定：${Math.round(CRITICAL_AFTER / 1000)}秒`],
+        };
+      }
+
+      const concerns = [
+        targetDevice.cameraState === "error" ? "カメラエラー" : "",
+        targetDevice.pendingCount > 0 ? `同期待ち${targetDevice.pendingCount}件` : "",
+        targetDevice.firebaseLatencyMs > 1_000 ? "Firebase応答遅延" : "",
+        targetDevice.receptionPaused ? "受付一時停止中" : "",
+      ].filter(Boolean);
+      return {
+        text: concerns.length === 0
+          ? `${targetLabel}端末は正常に稼働しています。現在、対応が必要な兆候は見つかりません。`
+          : `${targetLabel}端末で${concerns.join("、")}を確認しました。端末詳細から状態を確認してください。`,
+        evidence: [
+          `Firebase応答：${targetDevice.firebaseLatencyMs > 0 ? `${targetDevice.firebaseLatencyMs}ms` : "計測待ち"}`,
+          `下り速度：${targetDevice.downloadMbps > 0 ? `${targetDevice.downloadMbps.toFixed(1)}Mbps` : "計測待ち"}`,
+          `最終通信：${formatAge(targetDevice.lastSeenAt, now)}`,
+        ],
+      };
+    }
+
+    if (/通信|速度|ネット|遅い|latency|mbps/.test(normalized)) {
+      if (activeDevices.length === 0) {
+        return {
+          text: "通信中の受付端末がないため、ネットワーク品質を比較できません。",
+          evidence: [`Firestore実通信：${firestoreHealth === "online" ? "正常" : firestoreHealth === "error" ? "接続不可" : "確認中"}`],
+        };
+      }
+
+      const slowest = [...activeDevices].sort((a, b) => b.firebaseLatencyMs - a.firebaseLatencyMs)[0];
+      const unstable = activeDevices.filter((device) =>
+        device.firebaseLatencyMs > 1_000 ||
+        (device.downloadMbps > 0 && device.downloadMbps < 1)
+      );
+      return {
+        text: unstable.length === 0
+          ? "通信中の受付端末に大きなネットワーク異常は見つかりません。"
+          : `${unstable.length}台で通信品質の低下を検知しました。最も応答が遅いのは${slowest.deviceName}です。`,
+        evidence: activeDevices.map((device) =>
+          `${device.mode === "entry" ? "入口" : "出口"}：${device.firebaseLatencyMs || "—"}ms・${device.downloadMbps > 0 ? device.downloadMbps.toFixed(1) : "—"}Mbps`
+        ),
+      };
+    }
+
+    if (/さっき|比較|変化|増え|減っ|傾向/.test(normalized)) {
+      const difference = entryRate - previousEntryRate;
+      const trend = Math.abs(difference) < 0.2
+        ? "ほぼ変化していません"
+        : difference > 0
+          ? `毎分${difference.toFixed(1)}人増えています`
+          : `毎分${Math.abs(difference).toFixed(1)}人減っています`;
+      return {
+        text: `入場ペースは前の5分と比べて${trend}。現在の室内人数は${currentOccupancy}人です。`,
+        evidence: [
+          `直近5分：毎分${entryRate.toFixed(1)}人入場`,
+          `その前の5分：毎分${previousEntryRate.toFixed(1)}人入場`,
+          `現在の増減：毎分${netRate >= 0 ? "+" : ""}${netRate.toFixed(1)}人`,
+        ],
+      };
+    }
+
+    if (/混雑|人数|何人|予測|定員|会場/.test(normalized)) {
+      const direction = predicted15 > currentOccupancy
+        ? "増える"
+        : predicted15 < currentOccupancy
+          ? "減る"
+          : "ほぼ変わらない";
+      return {
+        text: `現在は${currentOccupancy}人で、定員${capacity}人の${occupancyRate}%です。15分後は${predicted15}人となり、${direction}予測です。`,
+        evidence: [
+          `本日の来場者：${totalVisitors}人`,
+          `予測範囲：${forecast15?.lower ?? predicted15}〜${forecast15?.upper ?? predicted15}人`,
+          `予測信頼度：${forecast15?.confidence ?? 20}%`,
+        ],
+      };
+    }
+
+    if (/優先|最初|確認すべき|危ない|異常|問題/.test(normalized)) {
+      if (alerts.length === 0) {
+        return {
+          text: "現在、優先対応が必要な異常はありません。通常監視を継続できます。",
+          evidence: [`稼働端末：${activeDevices.length}台`, "異常・注意：0件", `Firestore：${firestoreHealth === "online" ? "正常" : "確認中"}`],
+        };
+      }
+
+      const first = alerts[0];
+      return {
+        text: `最初に確認すべきなのは「${first.title}」です。${first.detail}`,
+        evidence: [
+          `重要度：${first.severity === "critical" ? "重大" : "注意"}`,
+          `未解決項目：${alerts.length}件`,
+          ...alerts.slice(1, 3).map((alert) => `次候補：${alert.title}`),
+        ],
+      };
+    }
+
+    if (/まとめ|全体|現在|今|状況|どう/.test(normalized)) {
+      const statusText = overallSeverity === "critical"
+        ? "重大な確認項目があります"
+        : overallSeverity === "warning"
+          ? "注意項目があります"
+          : "全体は正常です";
+      return {
+        text: `${statusText}。室内${currentOccupancy}人、本日の来場者${totalVisitors}人、受付端末${activeDevices.length}台が通信中です。`,
+        evidence: [
+          `入場：毎分${entryRate.toFixed(1)}人`,
+          `退場：毎分${exitRate.toFixed(1)}人`,
+          `異常・注意：${alerts.length}件`,
+          `15分予測：${predicted15}人`,
+        ],
+      };
+    }
+
+    return {
+      text: "その質問はまだ学習していません。会場人数、端末状態、通信、異常、時間変化について言い換えてください。",
+      evidence: ["疑似AIのため、対応していない内容を推測では回答しません", "「使い方」と入力すると質問例を表示します"],
+    };
+  };
+
+  const submitCopilotQuestion = (preset?: string) => {
+    const question = (preset ?? copilotInput).trim();
+    if (question === "" || copilotThinking) return;
+
+    const operatorMessage: CopilotMessage = {
+      id: `operator-${now}-${copilotMessages.length}`,
+      role: "operator",
+      text: question,
+      evidence: [],
+      createdAt: now,
+    };
+    setCopilotMessages((current) => [...current, operatorMessage]);
+    setCopilotInput("");
+    setCopilotThinking(true);
+
+    const reply = buildCopilotReply(question);
+    window.setTimeout(() => {
+      setCopilotMessages((current) => [
+        ...current,
+        {
+          ...reply,
+          id: `copilot-${now}-${current.length}`,
+          role: "copilot",
+          createdAt: now,
+        },
+      ]);
+      setCopilotThinking(false);
+    }, 320);
+  };
+
+  const executeCopilotAction = async (action: CopilotAction) => {
+    if (currentEvent === null || copilotActionSending !== null) return;
+    const target = activeDevices.find((device) => device.id === action.deviceId);
+    if (target === undefined) {
+      setCopilotMessages((current) => [
+        ...current,
+        {
+          id: `copilot-${now}-${current.length}`,
+          role: "copilot",
+          text: `${action.deviceName}との通信が切れたため、操作を中止しました。`,
+          evidence: ["対象端末を再確認してから指示してください"],
+          createdAt: now,
+        },
+      ]);
+      return;
+    }
+
+    if (!window.confirm(`${action.deviceName}で「${remoteCommandLabel(action.command)}」を実行しますか？`)) return;
+
+    setCopilotActionSending(action.id);
+    try {
+      await sendReceptionRemoteCommand(currentEvent.dataDocumentId, action.deviceId, action.command);
+      setCopilotCompletedActionIds((current) => [...current, action.id]);
+      setCopilotMessages((current) => [
+        ...current,
+        {
+          id: `copilot-${now}-${current.length}`,
+          role: "copilot",
+          text: `${action.deviceName}へ「${remoteCommandLabel(action.command)}」を送信しました。端末からの完了報告を監視してください。`,
+          evidence: ["遠隔操作：送信済み", `送信時刻：${formatTime(now)}`],
+          createdAt: now,
+        },
+      ]);
+    } catch (error) {
+      console.error("管制コパイロットから操作を送信できませんでした。", error);
+      setCopilotMessages((current) => [
+        ...current,
+        {
+          id: `copilot-${now}-${current.length}`,
+          role: "copilot",
+          text: "操作を送信できませんでした。端末権限と通信状態を確認してください。",
+          evidence: ["遠隔操作：送信失敗"],
+          createdAt: now,
+        },
+      ]);
+    } finally {
+      setCopilotActionSending(null);
+    }
+  };
+
   const changeCapacity = async () => {
     if (currentEvent === null || capacitySaving) return;
     const value = window.prompt("会場の定員を入力してください", String(capacity));
@@ -1505,13 +1816,13 @@ export default function App({ database, onReturn }: AppProps) {
       <aside className="sidebar">
         <div className="brand"><span>QR</span><strong>管制</strong></div>
         <nav aria-label="管制メニュー">
-          {(["overview", "analysis", "devices", "incidents", "diagnostics", "lab"] as const).map((item) => (
+          {(["overview", "analysis", "devices", "incidents", "diagnostics", "lab", "copilot"] as const).map((item) => (
             <button key={item} className={view === item ? "active" : ""} onClick={() => {
               setView(item);
               if (item !== "devices") setSelectedDeviceId(null);
             }}>
               <NavIcon kind={item} />
-              {item === "overview" ? "ライブ運行" : item === "analysis" ? "分析" : item === "devices" ? "端末" : item === "incidents" ? "障害履歴" : item === "diagnostics" ? "通信診断" : "管制ラボ"}
+              {item === "overview" ? "ライブ運行" : item === "analysis" ? "分析" : item === "devices" ? "端末" : item === "incidents" ? "障害履歴" : item === "diagnostics" ? "通信診断" : item === "lab" ? "管制ラボ" : "AI管制"}
               {item === "incidents" && alerts.length > 0 && <b>{alerts.length}</b>}
               {item === "lab" && autopilotLevel > 0 && autopilotSuggestions.length > 0 && <b>{autopilotSuggestions.length}</b>}
             </button>
@@ -1614,6 +1925,104 @@ export default function App({ database, onReturn }: AppProps) {
           {view === "devices" && selectedDevice === null && <section className="page-panel"><div className="page-heading"><div><small>TERMINALS</small><h2>受付端末一覧</h2></div><span>{activeDevices.length}台が稼働中</span></div><div className="all-device-grid">{activeDevices.length === 0 ? <p className="empty-state">稼働中の受付端末が見つかりません</p> : [...activeDevices].sort((a, b) => b.lastSeenAt - a.lastSeenAt).map((device) => <DeviceCard key={device.id} device={device} mode={device.mode} now={now} onOpen={() => openDevice(device)} />)}</div></section>}
 
           {view === "incidents" && <section className="page-panel"><div className="page-heading"><div><small>INCIDENTS</small><h2>現在の異常・注意</h2></div><span>{alerts.length}件</span></div><div className="alert-list">{alerts.length === 0 ? <div className="empty-state success">現在、異常はありません</div> : alerts.map((alert) => <article key={alert.id} className={alert.severity}><span>!</span><div><strong>{alert.title}</strong><p>{alert.detail}</p></div></article>)}</div></section>}
+
+          {view === "copilot" && (
+            <section className="page-panel copilot-page">
+              <div className="page-heading copilot-page-heading">
+                <div><small>EXPERIMENTAL INTELLIGENCE</small><h2>管制コパイロット</h2></div>
+                <span>実験システム 02 · 疑似AI</span>
+              </div>
+
+              <div className="copilot-status-strip">
+                <div className="copilot-core" aria-hidden="true"><span>AI</span></div>
+                <div>
+                  <small>CONTROL INTELLIGENCE CORE</small>
+                  <strong>ライブデータ接続中</strong>
+                  <p>ルール推論と意図解析で回答します。外部の生成AIやAPIは使用していません。</p>
+                </div>
+                <dl>
+                  <div><dt>イベント</dt><dd>{currentEvent?.name ?? "未設定"}</dd></div>
+                  <div><dt>取得データ</dt><dd>{activeDevices.length + 3}系統</dd></div>
+                  <div><dt>判断状態</dt><dd className={overallSeverity === "critical" ? "error-text" : overallSeverity === "warning" ? "warning-text" : "ok-text"}>{overallSeverity === "critical" ? "要確認" : overallSeverity === "warning" ? "注意" : "正常"}</dd></div>
+                </dl>
+              </div>
+
+              <div className="copilot-layout">
+                <div className="copilot-console">
+                  <div className="copilot-quick-prompts" aria-label="質問例">
+                    {["今どんな状態？", "一番確認すべきことは？", "入口の通信を調べて", "さっきより増えてる？"].map((prompt) => (
+                      <button type="button" key={prompt} onClick={() => submitCopilotQuestion(prompt)} disabled={copilotThinking}>{prompt}</button>
+                    ))}
+                  </div>
+
+                  <div className="copilot-messages" aria-live="polite">
+                    {copilotMessages.map((message) => (
+                      <article key={message.id} className={`copilot-message ${message.role}`}>
+                        <div className="copilot-avatar" aria-hidden="true">{message.role === "copilot" ? "AI" : "管"}</div>
+                        <div className="copilot-bubble">
+                          <small>{message.role === "copilot" ? "CONTROL COPILOT" : "OPERATOR"} · {message.createdAt === 0 ? "起動時" : formatTime(message.createdAt)}</small>
+                          <p>{message.text}</p>
+                          {message.evidence.length > 0 && (
+                            <ul>
+                              {message.evidence.map((item) => <li key={item}>{item}</li>)}
+                            </ul>
+                          )}
+                          {message.action !== undefined && (
+                            <button
+                              type="button"
+                              className="copilot-action"
+                              onClick={() => void executeCopilotAction(message.action as CopilotAction)}
+                              disabled={
+                                copilotActionSending !== null ||
+                                copilotCompletedActionIds.includes(message.action.id)
+                              }
+                            >
+                              {copilotCompletedActionIds.includes(message.action.id)
+                                ? "実行済み"
+                                : copilotActionSending === message.action.id
+                                  ? "送信中…"
+                                  : message.action.label}
+                            </button>
+                          )}
+                        </div>
+                      </article>
+                    ))}
+                    {copilotThinking && (
+                      <article className="copilot-message copilot is-thinking">
+                        <div className="copilot-avatar" aria-hidden="true">AI</div>
+                        <div className="copilot-bubble"><small>CONTROL COPILOT</small><p><span /><span /><span /></p></div>
+                      </article>
+                    )}
+                    <div ref={copilotEndRef} />
+                  </div>
+
+                  <form className="copilot-input" onSubmit={(event) => {
+                    event.preventDefault();
+                    submitCopilotQuestion();
+                  }}>
+                    <input
+                      type="text"
+                      value={copilotInput}
+                      onChange={(event) => setCopilotInput(event.target.value)}
+                      placeholder="例：出口端末は大丈夫？"
+                      aria-label="管制コパイロットへの質問"
+                      autoComplete="off"
+                    />
+                    <button type="submit" disabled={copilotInput.trim() === "" || copilotThinking}>解析</button>
+                  </form>
+                </div>
+
+                <aside className="copilot-context">
+                  <div className="copilot-context-heading"><small>LIVE CONTEXT</small><strong>現在の判断材料</strong></div>
+                  <article><span>人</span><div><small>OCCUPANCY</small><strong>{currentOccupancy}人</strong><p>定員の{occupancyRate}%</p></div></article>
+                  <article><span>流</span><div><small>FLOW</small><strong>{netRate >= 0 ? "+" : ""}{netRate.toFixed(1)}人/分</strong><p>15分後 {predicted15}人</p></div></article>
+                  <article><span>端</span><div><small>TERMINALS</small><strong>{activeDevices.length}台</strong><p>同期待ち {totalPending}件</p></div></article>
+                  <article><span>!</span><div><small>ISSUES</small><strong>{alerts.length}件</strong><p>{alerts[0]?.title ?? "異常なし"}</p></div></article>
+                  <p className="copilot-context-note">回答には、この画面を開いた時点ではなく質問した瞬間のライブ値を使用します。</p>
+                </aside>
+              </div>
+            </section>
+          )}
 
           {view === "lab" && (
             <section className="page-panel lab-page">
