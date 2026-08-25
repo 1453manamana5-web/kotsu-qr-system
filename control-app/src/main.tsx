@@ -9,6 +9,7 @@ import MemberControlBridge from "./MemberControlBridge";
 import HybridTicketInventoryForecastBridge from "./HybridTicketInventoryForecastBridge";
 import AuthenticatedPersonalizedControlBridge from "./AuthenticatedPersonalizedControlBridge";
 import BeginnerHomeBridge from "./BeginnerHomeBridge";
+import OperationsManagementBridge from "./OperationsManagementBridge";
 import AdminOpsBridge from "./AdminOpsBridge";
 import MaintenanceDataBridge from "./MaintenanceDataBridge";
 import CopilotLanguageExpansionBridge from "./CopilotLanguageExpansionBridge";
@@ -28,7 +29,7 @@ import "./member-control.css";
 import "./ticket-inventory-forecast.css";
 import "./maintenance-data.css";
 import "./experimental-lab-extensions.css";
-import "./management-workspace.css";
+import "./operations-management.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -42,6 +43,7 @@ createRoot(document.getElementById("root")!).render(
         <HybridTicketInventoryForecastBridge database={db} />
         <AuthenticatedPersonalizedControlBridge />
         <BeginnerHomeBridge />
+        <OperationsManagementBridge />
         <AdminOpsBridge database={db} />
         <MaintenanceDataBridge database={db} />
         <CopilotLanguageExpansionBridge />
