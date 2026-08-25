@@ -30,6 +30,7 @@ import {
   createReceptionDeviceId,
   removeReceptionPresence,
   sendReceptionHeartbeat,
+  type ReceptionViewState,
 } from "../receptionPresenceFirestore";
 
 import {
@@ -84,12 +85,7 @@ export type ReceptionMode =
   | "exit";
 
 type ReceptionState =
-  | "waiting"
-  | "processing"
-  | "success-animation"
-  | "ticket-success"
-  | "member-success"
-  | "error";
+  ReceptionViewState;
 
 type SuccessResultState =
   | "ticket-success"
@@ -554,6 +550,8 @@ function ReceptionPage({
         "",
       screen:
         `${mode}-reception` as const,
+      viewState:
+        receptionState,
       sessionStartedAt,
       lastScanAt,
     });
@@ -581,6 +579,8 @@ function ReceptionPage({
       ...networkMetricsRef.current,
       screen:
         `${mode}-reception` as const,
+      viewState:
+        receptionState,
       sessionStartedAt,
       lastScanAt,
     };
@@ -593,8 +593,50 @@ function ReceptionPage({
     mode,
     pendingCount,
     receptionPaused,
+    receptionState,
     sessionStartedAt,
     uid,
+  ]);
+
+  const lastReportedViewStateRef =
+    useRef<ReceptionState>(
+      receptionState
+    );
+
+  useEffect(() => {
+    if (
+      lastReportedViewStateRef.current ===
+      receptionState
+    ) {
+      return;
+    }
+
+    lastReportedViewStateRef.current =
+      receptionState;
+
+    const eventName =
+      loadCurrentEventName();
+
+    if (
+      eventName.trim() === "" ||
+      !navigator.onLine
+    ) {
+      return;
+    }
+
+    void sendReceptionHeartbeat(
+      eventName,
+      receptionDeviceId,
+      heartbeatDataRef.current
+    ).catch((error) => {
+      console.warn(
+        "受付画面の状態を管制へ送信できませんでした。",
+        error
+      );
+    });
+  }, [
+    receptionDeviceId,
+    receptionState,
   ]);
 
   const [
