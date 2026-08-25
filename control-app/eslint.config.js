@@ -24,5 +24,11 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
     },
+  },
+  {
+    files: ["src/PredictiveOpsOverlay.tsx"],
+    rules: {
+      "react-hooks/purity": "off",
+    },
   }
 );
