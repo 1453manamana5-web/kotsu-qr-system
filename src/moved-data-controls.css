@@ -1,0 +1,12 @@
+/*
+  完全バックアップと全データ初期化は管制画面へ移動しました。
+  管理画面にはイベント単位の部員状態リセットだけを残します。
+*/
+.settings-data-section .settings-export-button,
+.settings-data-section .settings-import-button,
+.settings-data-section > .settings-help,
+.settings-data-section > .settings-backup-warning,
+.settings-data-section > .settings-backup-status,
+.settings-danger-section {
+  display: none !important;
+}
