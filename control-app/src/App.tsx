@@ -876,16 +876,32 @@ function DeviceDetail({ eventDataId, device, networkSamples, now, onClose }: {
         <div className="device-detail-side">
           <article className="device-live-panel">
             <div className="device-live-title"><span className={`mode-icon ${device.mode}`}>{device.mode === "entry" ? "→" : "←"}</span><div><small>LIVE STATUS</small><strong>端末の現在状態</strong></div></div>
-            <dl>
+            <div className="device-status-grid">
+              <div className={device.cameraState === "error" ? "is-error" : "is-ok"}>
+                <span aria-hidden="true">◉</span><small>カメラ</small>
+                <strong>{device.cameraState === "ready" ? "正常" : device.cameraState === "error" ? "エラー" : "準備中"}</strong>
+                <em>{device.cameraState === "ready" ? "読取可能" : "状態を確認"}</em>
+              </div>
+              <div className={device.lastSuccessfulSyncAt > 0 ? "is-ok" : "is-muted"}>
+                <span aria-hidden="true">◆</span><small>Firebase接続</small>
+                <strong>{device.lastSuccessfulSyncAt > 0 ? "接続中" : "未確認"}</strong>
+                <em>{device.firebaseLatencyMs > 0 ? `${device.firebaseLatencyMs}ms` : "応答測定中"}</em>
+              </div>
+              <div className={device.pendingCount > 0 ? "is-warning" : "is-ok"}>
+                <span aria-hidden="true">▤</span><small>同期待ち件数</small>
+                <strong>{device.pendingCount}件</strong>
+                <em>{device.pendingCount > 0 ? "再送が必要" : "正常"}</em>
+              </div>
+              <div className={device.appVersion === EXPECTED_RECEPTION_VERSION ? "is-ok" : "is-warning"}>
+                <span aria-hidden="true">▯</span><small>アプリバージョン</small>
+                <strong>{device.appVersion}</strong>
+                <em>{device.appVersion === EXPECTED_RECEPTION_VERSION ? "最新" : `推奨 ${EXPECTED_RECEPTION_VERSION}`}</em>
+              </div>
+            </div>
+            <dl className="device-live-meta">
               <div><dt>最終通信</dt><dd>{formatAge(device.lastSeenAt, now)}</dd></div>
               <div><dt>受付モード</dt><dd>{device.mode === "entry" ? "入口受付" : "出口受付"}</dd></div>
-              <div><dt>カメラ</dt><dd className={device.cameraState === "error" ? "error-text" : "ok-text"}>{device.cameraState === "ready" ? "正常" : device.cameraState === "error" ? "エラー" : "準備中"}</dd></div>
-              <div><dt>Firebase</dt><dd className={device.lastSuccessfulSyncAt > 0 ? "ok-text" : "muted-text"}>{device.lastSuccessfulSyncAt > 0 ? "接続確認済み" : "記録なし"}</dd></div>
-              <div><dt>Firebase応答</dt><dd>{device.firebaseLatencyMs > 0 ? `${device.firebaseLatencyMs}ms` : "測定中"}</dd></div>
-              <div><dt>下り速度</dt><dd>{device.downloadMbps > 0 ? `${device.downloadMbps.toFixed(1)}Mbps` : "測定中"}</dd></div>
-              <div><dt>同期待ち</dt><dd className={device.pendingCount > 0 ? "warning-text" : "ok-text"}>{device.pendingCount}件</dd></div>
               <div><dt>最終読取</dt><dd>{device.lastScanAt === "" ? "記録なし" : formatTime(device.lastScanAt)}</dd></div>
-              <div><dt>バージョン</dt><dd>{device.appVersion}</dd></div>
               <div><dt>端末種別</dt><dd>{device.deviceType}</dd></div>
             </dl>
           </article>
@@ -910,20 +926,20 @@ function DeviceDetail({ eventDataId, device, networkSamples, now, onClose }: {
             {!online && <p className="remote-control-note">通信が復旧すると操作できるようになります。古い命令の誤実行を防ぐため、オフライン中は予約送信しません。</p>}
             {commandError !== "" && <p className="remote-control-error" role="alert">{commandError}</p>}
           </article>
+
+          <article className="network-quality-panel compact-network-panel">
+            <div className="network-quality-heading">
+              <div><small>NETWORK QUALITY</small><h3>通信品質</h3></div>
+              <span>{device.networkMeasuredAt === "" || !Number.isFinite(networkMeasuredAt) ? "下り速度を測定中" : `速度測定 ${formatAge(networkMeasuredAt, now)}`}</span>
+            </div>
+            <div className="network-chart-grid">
+              <MetricChart label="FIREBASE RESPONSE" unit="ms" values={latencyHistory} color="#7a58d6" />
+              <MetricChart label="DOWNLOAD SPEED" unit="Mbps" values={downloadHistory} color="#137f75" />
+            </div>
+            <p className="network-quality-note">Firebase応答は5秒ごと、下りMbpsは30秒ごとに測定します。</p>
+          </article>
         </div>
       </div>
-
-      <article className="network-quality-panel">
-        <div className="network-quality-heading">
-          <div><small>NETWORK QUALITY</small><h3>受付端末の通信品質</h3></div>
-          <span>{device.networkMeasuredAt === "" || !Number.isFinite(networkMeasuredAt) ? "下り速度を測定中" : `速度測定 ${formatAge(networkMeasuredAt, now)}`}</span>
-        </div>
-        <div className="network-chart-grid">
-          <MetricChart label="FIREBASE RESPONSE" unit="ms" values={latencyHistory} color="#7a58d6" />
-          <MetricChart label="DOWNLOAD SPEED" unit="Mbps" values={downloadHistory} color="#137f75" />
-        </div>
-        <p className="network-quality-note">Firebase応答は5秒ごと、下りMbpsは受付への負荷を抑えるため256KBのデータで30秒ごとに測定します。グラフは管制を開いてから直近約5分です。</p>
-      </article>
 
       <article className="command-history-panel">
         <div className="command-history-heading"><div><small>COMMAND HISTORY</small><h3>遠隔操作の実行状況</h3></div><span>{commands.length}件</span></div>
