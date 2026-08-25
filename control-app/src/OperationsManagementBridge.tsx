@@ -6,6 +6,44 @@ function findOverviewButton() {
     .find((button) => (button.textContent ?? "").includes("ライブ運行")) ?? null;
 }
 
+const MANAGEMENT_GUIDES = [
+  {
+    number: "1",
+    title: "現在の状況",
+    description: "イベント・チケット・部員を確認",
+    selector: ".admin-ops-heading",
+  },
+  {
+    number: "2",
+    title: "チケット照会",
+    description: "番号から状態確認・修正",
+    selector: ".ticket-control-panel",
+  },
+  {
+    number: "3",
+    title: "部員照会",
+    description: "名前から入退室状態を確認",
+    selector: ".member-control-panel",
+  },
+  {
+    number: "4",
+    title: "チケット予測",
+    description: "残数と今後の消費を確認",
+    selector: ".ticket-forecast-panel",
+  },
+] as const;
+
+function scrollToManagementSection(selector: string) {
+  const target = document.querySelector(selector);
+  if (!(target instanceof HTMLElement)) return;
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
+  target.classList.remove("management-section-highlight");
+  window.requestAnimationFrame(() => {
+    target.classList.add("management-section-highlight");
+    window.setTimeout(() => target.classList.remove("management-section-highlight"), 900);
+  });
+}
+
 export default function OperationsManagementBridge() {
   const [navTarget, setNavTarget] = useState<Element | null>(null);
   const [mainTarget, setMainTarget] = useState<Element | null>(null);
@@ -84,12 +122,31 @@ export default function OperationsManagementBridge() {
 
       {open && createPortal(
         <section className="operations-management-page-heading" aria-labelledby="operations-management-title">
-          <div>
-            <small>OPERATIONS MANAGEMENT</small>
-            <h2 id="operations-management-title">運用管理</h2>
-            <p>イベント情報、チケット・部員の照会、チケット在庫予測をここにまとめています。</p>
+          <div className="operations-management-title-row">
+            <div>
+              <small>OPERATIONS MANAGEMENT</small>
+              <h2 id="operations-management-title">運用管理</h2>
+              <p>確認したい内容を選ぶと、その場所まですぐ移動できます。</p>
+            </div>
+            <span>運用・照会</span>
           </div>
-          <span>運用・照会</span>
+
+          <nav className="operations-management-guide" aria-label="運用管理の内容">
+            {MANAGEMENT_GUIDES.map((guide) => (
+              <button
+                key={guide.selector}
+                type="button"
+                onClick={() => scrollToManagementSection(guide.selector)}
+              >
+                <span aria-hidden="true">{guide.number}</span>
+                <div>
+                  <strong>{guide.title}</strong>
+                  <small>{guide.description}</small>
+                </div>
+                <b aria-hidden="true">→</b>
+              </button>
+            ))}
+          </nav>
         </section>,
         mainTarget
       )}
