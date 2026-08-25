@@ -5,12 +5,17 @@ import {
   useEffect,
   useMemo,
   useState,
+  type CSSProperties,
 } from "react";
 import {
   collection,
   doc,
   getDocFromServer,
+  limit,
   onSnapshot,
+  orderBy,
+  query,
+  updateDoc,
   type DocumentData,
   type Firestore,
 } from "firebase/firestore";
@@ -18,6 +23,7 @@ import type {
   AnalyticsSummary,
   EventData,
   HealthSeverity,
+  LiveActivity,
   ReceptionDevice,
   ReceptionMode,
   SystemAlert,
@@ -38,6 +44,8 @@ const CONTROL_VERSION = "1.0.0";
 const EXPECTED_RECEPTION_VERSION = "2.8.0";
 const WARNING_AFTER = 15_000;
 const CRITICAL_AFTER = 45_000;
+const DEFAULT_CAPACITY = 200;
+const ACTIVITY_HISTORY_LIMIT = 240;
 
 type View = "overview" | "analysis" | "past-data" | "devices" | "incidents" | "diagnostics";
 type FirestoreHealth = "checking" | "online" | "error";
@@ -46,6 +54,26 @@ type NetworkQualitySample = {
   firebaseLatencyMs: number;
   downloadMbps: number;
   networkMeasuredAt: string;
+};
+type OccupancyPoint = {
+  label: string;
+  value: number;
+  predicted: boolean;
+};
+type MinuteFlow = {
+  label: string;
+  entries: number;
+  exits: number;
+};
+type AutopilotSuggestion = {
+  id: string;
+  severity: HealthSeverity;
+  title: string;
+  detail: string;
+  buttonLabel: string;
+  device?: ReceptionDevice;
+  command?: ReceptionRemoteCommandType;
+  destination?: "devices" | "forecast";
 };
 
 function timestampToMilliseconds(value: unknown) {
@@ -98,7 +126,23 @@ function readEvent(id: string, data: DocumentData): EventData | null {
       typeof data.dataDocumentId === "string" && data.dataDocumentId !== ""
         ? data.dataDocumentId
         : encodeURIComponent(data.name.trim() || "event-not-set"),
+    capacity: readNumber(data.capacity) || DEFAULT_CAPACITY,
   };
+}
+
+function readLiveActivity(id: string, data: DocumentData): LiveActivity | null {
+  if (
+    data.type !== "ticket-entry" &&
+    data.type !== "ticket-exit" &&
+    data.type !== "member-entry" &&
+    data.type !== "member-exit"
+  ) return null;
+
+  if (typeof data.timestamp !== "string") return null;
+  const timestamp = new Date(data.timestamp).getTime();
+  if (!Number.isFinite(timestamp)) return null;
+
+  return { id, type: data.type, timestamp };
 }
 
 function readAnalytics(data: DocumentData): AnalyticsSummary {
@@ -170,6 +214,72 @@ function formatAge(milliseconds: number, now: number) {
   if (seconds < 60) return `${seconds}秒前`;
   const minutes = Math.floor(seconds / 60);
   return `${minutes}分前`;
+}
+
+function isEntryActivity(activity: LiveActivity) {
+  return activity.type === "ticket-entry" || activity.type === "member-entry";
+}
+
+function activityRate(
+  activities: LiveActivity[],
+  now: number,
+  startMinutesAgo: number,
+  endMinutesAgo: number,
+  predicate: (activity: LiveActivity) => boolean
+) {
+  const start = now - startMinutesAgo * 60_000;
+  const end = now - endMinutesAgo * 60_000;
+  const minutes = Math.max(1, startMinutesAgo - endMinutesAgo);
+  return activities.filter((activity) => (
+    activity.timestamp > start && activity.timestamp <= end && predicate(activity)
+  )).length / minutes;
+}
+
+function predictOccupancy(current: number, netRate: number, minutes: number) {
+  return Math.max(0, Math.round(current + netRate * minutes));
+}
+
+function buildOccupancyPoints(
+  activities: LiveActivity[],
+  current: number,
+  netRate: number,
+  now: number
+): OccupancyPoint[] {
+  const history = [30, 25, 20, 15, 10, 5, 0].map((minutesAgo) => {
+    const cutoff = now - minutesAgo * 60_000;
+    const netAfter = activities
+      .filter((activity) => activity.timestamp > cutoff && activity.timestamp <= now)
+      .reduce((total, activity) => total + (isEntryActivity(activity) ? 1 : -1), 0);
+
+    return {
+      label: minutesAgo === 0 ? "現在" : `${minutesAgo}分前`,
+      value: Math.max(0, current - netAfter),
+      predicted: false,
+    };
+  });
+
+  return [
+    ...history,
+    ...[5, 10, 15].map((minutes) => ({
+      label: `+${minutes}分`,
+      value: predictOccupancy(current, netRate, minutes),
+      predicted: true,
+    })),
+  ];
+}
+
+function buildMinuteFlow(activities: LiveActivity[], now: number): MinuteFlow[] {
+  return Array.from({ length: 10 }, (_, index) => {
+    const start = now - (10 - index) * 60_000;
+    const end = start + 60_000;
+    const bucket = activities.filter((activity) => activity.timestamp > start && activity.timestamp <= end);
+
+    return {
+      label: `${10 - index}分前`,
+      entries: bucket.filter(isEntryActivity).length,
+      exits: bucket.filter((activity) => !isEntryActivity(activity)).length,
+    };
+  });
 }
 
 function deviceSeverity(device: ReceptionDevice, now: number): HealthSeverity {
@@ -360,6 +470,93 @@ function MetricChart({ label, unit, values, color }: {
   );
 }
 
+function LiveTerminalNode({ device, mode, now, onOpen }: {
+  device: ReceptionDevice | null;
+  mode: ReceptionMode;
+  now: number;
+  onOpen?: () => void;
+}) {
+  const label = mode === "entry" ? "入口端末" : "出口端末";
+
+  if (device === null) {
+    return (
+      <article className="live-terminal-node missing">
+        <small>{mode === "entry" ? "ENTRY" : "EXIT"}</small>
+        <strong>{label}</strong>
+        <span className="live-node-status critical">通信なし</span>
+        <p>端末が見つかりません</p>
+      </article>
+    );
+  }
+
+  const status = receptionOperatingStatus(device, now);
+  return (
+    <button type="button" className={`live-terminal-node ${status.severity}`} onClick={onOpen}>
+      <small>{mode === "entry" ? "ENTRY" : "EXIT"}</small>
+      <strong>{device.deviceName}</strong>
+      <span className={`live-node-status ${status.severity}`}>{status.label}</span>
+      <dl>
+        <div><dt>応答</dt><dd>{device.firebaseLatencyMs > 0 ? `${device.firebaseLatencyMs}ms` : "測定中"}</dd></div>
+        <div><dt>下り</dt><dd>{device.downloadMbps > 0 ? `${device.downloadMbps.toFixed(1)}Mbps` : "測定中"}</dd></div>
+      </dl>
+      <p>タップして遠隔操作</p>
+    </button>
+  );
+}
+
+function ForecastChart({ points, capacity }: { points: OccupancyPoint[]; capacity: number }) {
+  const maximum = Math.max(capacity, ...points.map((point) => point.value), 1);
+  const chartPoints = points.map((point, index) => ({
+    ...point,
+    x: 42 + index / Math.max(1, points.length - 1) * 616,
+    y: 174 - point.value / maximum * 132,
+  }));
+  const actual = chartPoints.filter((point) => !point.predicted);
+  const forecast = chartPoints.slice(Math.max(0, actual.length - 1));
+  const actualLine = actual.map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const forecastLine = forecast.map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const capacityY = 174 - capacity / maximum * 132;
+
+  return (
+    <div className="forecast-chart" aria-label="室内人数の推移と15分予測">
+      <svg viewBox="0 0 700 220" role="img">
+        {[42, 86, 130, 174].map((y) => <line key={y} x1="42" y1={y} x2="658" y2={y} className="forecast-grid-line" />)}
+        <line x1="42" y1={capacityY} x2="658" y2={capacityY} className="capacity-line" />
+        <text x="48" y={Math.max(13, capacityY - 6)} className="capacity-label">定員 {capacity}人</text>
+        {actualLine !== "" && <polyline points={actualLine} className="actual-line" />}
+        {forecastLine !== "" && <polyline points={forecastLine} className="prediction-line" />}
+        {chartPoints.map((point) => (
+          <g key={point.label}>
+            <circle cx={point.x} cy={point.y} r="5" className={point.predicted ? "prediction-dot" : "actual-dot"} />
+            <text x={point.x} y="205" textAnchor="middle" className="forecast-axis-label">{point.label}</text>
+          </g>
+        ))}
+      </svg>
+      <div className="forecast-legend"><span className="actual">実績</span><span className="prediction">予測</span></div>
+    </div>
+  );
+}
+
+function MinuteFlowChart({ values }: { values: MinuteFlow[] }) {
+  const maximum = Math.max(1, ...values.flatMap((value) => [value.entries, value.exits]));
+  return (
+    <div className="minute-flow-chart" aria-label="直近10分の入退場数">
+      <div className="flow-bars">
+        {values.map((value) => (
+          <div className="flow-bar-column" key={value.label} title={`${value.label}: 入場${value.entries}人・退場${value.exits}人`}>
+            <div className="flow-bar-stack">
+              <span className="entry" style={{ height: `${Math.max(value.entries > 0 ? 5 : 0, value.entries / maximum * 100)}%` }} />
+              <span className="exit" style={{ height: `${Math.max(value.exits > 0 ? 5 : 0, value.exits / maximum * 100)}%` }} />
+            </div>
+            <small>{value.label === "10分前" || value.label === "5分前" || value.label === "1分前" ? value.label.replace("分前", "") : ""}</small>
+          </div>
+        ))}
+      </div>
+      <div className="flow-legend"><span className="entry">入場</span><span className="exit">退場</span></div>
+    </div>
+  );
+}
+
 function DeviceDetail({ eventDataId, device, networkSamples, now, onClose }: {
   eventDataId: string;
   device: ReceptionDevice;
@@ -528,6 +725,7 @@ export default function App({ database, onReturn }: AppProps) {
   const [events, setEvents] = useState<EventData[]>([]);
   const [currentEventId, setCurrentEventId] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
+  const [activities, setActivities] = useState<LiveActivity[]>([]);
   const [devices, setDevices] = useState<ReceptionDevice[]>([]);
   const [networkHistory, setNetworkHistory] = useState<Record<string, NetworkQualitySample[]>>({});
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
@@ -537,6 +735,9 @@ export default function App({ database, onReturn }: AppProps) {
   const [firestoreHealth, setFirestoreHealth] = useState<FirestoreHealth>("checking");
   const [lastHealthCheck, setLastHealthCheck] = useState(0);
   const [streamError, setStreamError] = useState("");
+  const [capacitySaving, setCapacitySaving] = useState(false);
+  const [autopilotSending, setAutopilotSending] = useState<string | null>(null);
+  const [autopilotFeedback, setAutopilotFeedback] = useState("");
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -618,9 +819,24 @@ export default function App({ database, onReturn }: AppProps) {
       setStreamError("受付端末情報を取得できませんでした");
     });
 
+    const activityQuery = query(
+      collection(database, ...basePath, "activity"),
+      orderBy("timestamp", "desc"),
+      limit(ACTIVITY_HISTORY_LIMIT)
+    );
+    const unsubscribeActivities = onSnapshot(activityQuery, (snapshot) => {
+      setActivities(snapshot.docs
+        .map((item) => readLiveActivity(item.id, item.data()))
+        .filter((activity): activity is LiveActivity => activity !== null));
+    }, (error) => {
+      console.error("入退場履歴を取得できませんでした。", error);
+      setStreamError("入退場履歴を取得できませんでした");
+    });
+
     return () => {
       unsubscribeAnalytics();
       unsubscribeDevices();
+      unsubscribeActivities();
     };
   }, [currentEvent, database]);
 
@@ -664,6 +880,11 @@ export default function App({ database, onReturn }: AppProps) {
       [currentEvent, devices]
     );
 
+  const observedActivities = useMemo(
+    () => currentEvent === null ? [] : activities,
+    [activities, currentEvent]
+  );
+
   const activeDevices = useMemo(
     () => observedDevices.filter((device) => now - device.lastSeenAt <= CRITICAL_AFTER),
     [observedDevices, now]
@@ -685,6 +906,24 @@ export default function App({ database, onReturn }: AppProps) {
   const entryDevice = latestDevice("entry");
   const exitDevice = latestDevice("exit");
   const totalPending = activeDevices.reduce((total, device) => total + device.pendingCount, 0);
+  const currentOccupancy = (observedAnalytics?.currentInside ?? 0) + (observedAnalytics?.currentMembersInside ?? 0);
+  const capacity = currentEvent?.capacity ?? DEFAULT_CAPACITY;
+  const entryRate = activityRate(observedActivities, now, 5, 0, isEntryActivity);
+  const exitRate = activityRate(observedActivities, now, 5, 0, (activity) => !isEntryActivity(activity));
+  const previousEntryRate = activityRate(observedActivities, now, 10, 5, isEntryActivity);
+  const netRate = entryRate - exitRate;
+  const predicted5 = predictOccupancy(currentOccupancy, netRate, 5);
+  const predicted10 = predictOccupancy(currentOccupancy, netRate, 10);
+  const predicted15 = predictOccupancy(currentOccupancy, netRate, 15);
+  const occupancyRate = capacity > 0 ? Math.round(currentOccupancy / capacity * 100) : 0;
+  const occupancyPoints = useMemo(
+    () => buildOccupancyPoints(observedActivities, currentOccupancy, netRate, now),
+    [currentOccupancy, netRate, now, observedActivities]
+  );
+  const minuteFlow = useMemo(
+    () => buildMinuteFlow(observedActivities, now),
+    [now, observedActivities]
+  );
 
   const alerts = useMemo<SystemAlert[]>(() => {
     const result: SystemAlert[] = [];
@@ -715,8 +954,170 @@ export default function App({ database, onReturn }: AppProps) {
     ? "critical"
     : alerts.length > 0 ? "warning" : "normal";
 
-  const chartValues = Object.entries(observedAnalytics?.hourlyEntryCounts ?? {}).sort(([a], [b]) => a.localeCompare(b)).slice(-10);
-  const chartMax = Math.max(1, ...chartValues.map(([, value]) => value));
+  const autopilotSuggestions = useMemo<AutopilotSuggestion[]>(() => {
+    const suggestions: AutopilotSuggestion[] = [];
+    const forecastRatio = capacity > 0 ? predicted15 / capacity : 0;
+
+    if (forecastRatio >= 1 && entryDevice !== null) {
+      suggestions.push({
+        id: "forecast-capacity",
+        severity: "critical",
+        title: "15分以内に定員へ達する予測です",
+        detail: `${predicted15}人まで増える予測です。入口受付の一時停止を提案します。`,
+        buttonLabel: "入口を一時停止",
+        device: entryDevice,
+        command: "pause-reception",
+      });
+    } else if (forecastRatio >= 0.8) {
+      suggestions.push({
+        id: "forecast-warning",
+        severity: "warning",
+        title: "会場が混雑する見込みです",
+        detail: `15分後は定員の${Math.round(forecastRatio * 100)}%になる予測です。`,
+        buttonLabel: "予測を確認",
+        destination: "forecast",
+      });
+    }
+
+    for (const device of [entryDevice, exitDevice]) {
+      if (device === null) continue;
+      const label = device.mode === "entry" ? "入口端末" : "出口端末";
+
+      if (device.cameraState === "error") {
+        suggestions.push({
+          id: `${device.id}-camera`,
+          severity: "critical",
+          title: `${label}のカメラに異常があります`,
+          detail: "カメラ部分だけを安全に再起動できます。",
+          buttonLabel: "カメラを再起動",
+          device,
+          command: "restart-camera",
+        });
+      } else if (device.receptionPaused) {
+        suggestions.push({
+          id: `${device.id}-paused`,
+          severity: "warning",
+          title: `${label}が一時停止中です`,
+          detail: "意図した停止でなければ、受付を遠隔で再開できます。",
+          buttonLabel: "受付を再開",
+          device,
+          command: "resume-reception",
+        });
+      }
+
+      if (device.pendingCount > 0) {
+        suggestions.push({
+          id: `${device.id}-pending`,
+          severity: "warning",
+          title: `${label}に同期待ちがあります`,
+          detail: `${device.pendingCount}件のデータをもう一度送信できます。`,
+          buttonLabel: "再同期する",
+          device,
+          command: "sync-pending",
+        });
+      }
+
+      if (device.firebaseLatencyMs > 1_000 || (device.downloadMbps > 0 && device.downloadMbps < 1)) {
+        suggestions.push({
+          id: `${device.id}-network`,
+          severity: "warning",
+          title: `${label}の通信が不安定です`,
+          detail: `応答 ${device.firebaseLatencyMs || "—"}ms／下り ${device.downloadMbps > 0 ? device.downloadMbps.toFixed(1) : "—"}Mbpsです。`,
+          buttonLabel: "端末を確認",
+          device,
+          destination: "devices",
+        });
+      }
+    }
+
+    if (entryDevice === null || exitDevice === null) {
+      suggestions.push({
+        id: "terminal-missing",
+        severity: "critical",
+        title: "通信中の受付端末が不足しています",
+        detail: `${entryDevice === null ? "入口" : "出口"}端末が見つかりません。`,
+        buttonLabel: "端末一覧を確認",
+        destination: "devices",
+      });
+    }
+
+    if (entryRate >= 2 && entryRate >= Math.max(1, previousEntryRate * 1.5)) {
+      suggestions.push({
+        id: "entry-spike",
+        severity: "warning",
+        title: "入場ペースが急に上がっています",
+        detail: `直近5分は毎分${entryRate.toFixed(1)}人です。混雑予測を確認してください。`,
+        buttonLabel: "予測を確認",
+        destination: "forecast",
+      });
+    }
+
+    const severityOrder: Record<HealthSeverity, number> = { critical: 0, warning: 1, normal: 2 };
+    return suggestions
+      .sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity])
+      .slice(0, 3);
+  }, [capacity, entryDevice, entryRate, exitDevice, predicted15, previousEntryRate]);
+
+  const changeCapacity = async () => {
+    if (currentEvent === null || capacitySaving) return;
+    const value = window.prompt("会場の定員を入力してください", String(capacity));
+    if (value === null) return;
+    const nextCapacity = Number(value);
+
+    if (!Number.isInteger(nextCapacity) || nextCapacity < 1 || nextCapacity > 5_000) {
+      setAutopilotFeedback("定員は1〜5000人の整数で入力してください。");
+      return;
+    }
+
+    setCapacitySaving(true);
+    setAutopilotFeedback("");
+    try {
+      await updateDoc(doc(database, "events", currentEvent.id), { capacity: nextCapacity });
+      setAutopilotFeedback(`定員を${nextCapacity}人に更新しました。`);
+    } catch (error) {
+      console.error("定員を更新できませんでした。", error);
+      setAutopilotFeedback("定員を更新できませんでした。端末権限と通信を確認してください。");
+    } finally {
+      setCapacitySaving(false);
+    }
+  };
+
+  const executeAutopilotSuggestion = async (suggestion: AutopilotSuggestion) => {
+    if (autopilotSending !== null) return;
+
+    if (suggestion.destination === "forecast") {
+      document.getElementById("live-prediction-panel")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    if (suggestion.destination === "devices" && suggestion.command === undefined) {
+      if (suggestion.device !== undefined) {
+        openDevice(suggestion.device);
+      } else {
+        setSelectedDeviceId(null);
+        setView("devices");
+      }
+      return;
+    }
+
+    if (suggestion.device === undefined || suggestion.command === undefined || currentEvent === null) return;
+    if (
+      suggestion.command === "pause-reception" &&
+      !window.confirm(`${suggestion.device.deviceName}の受付を一時停止しますか？`)
+    ) return;
+
+    setAutopilotSending(suggestion.id);
+    setAutopilotFeedback("");
+    try {
+      await sendReceptionRemoteCommand(currentEvent.dataDocumentId, suggestion.device.id, suggestion.command);
+      setAutopilotFeedback(`${suggestion.device.deviceName}へ「${remoteCommandLabel(suggestion.command)}」を送信しました。`);
+    } catch (error) {
+      console.error("オートパイロット提案を実行できませんでした。", error);
+      setAutopilotFeedback("操作を送信できませんでした。端末の通信状態を確認してください。");
+    } finally {
+      setAutopilotSending(null);
+    }
+  };
 
   const handleAnalysisNavigation = (page: string) => {
     if (page === "past-data") {
@@ -774,7 +1175,7 @@ export default function App({ database, onReturn }: AppProps) {
               if (item !== "devices") setSelectedDeviceId(null);
             }}>
               <NavIcon kind={item} />
-              {item === "overview" ? "概要" : item === "analysis" ? "分析" : item === "devices" ? "端末" : item === "incidents" ? "障害履歴" : "診断"}
+              {item === "overview" ? "ライブ運行" : item === "analysis" ? "分析" : item === "devices" ? "端末" : item === "incidents" ? "障害履歴" : "診断"}
               {item === "incidents" && alerts.length > 0 && <b>{alerts.length}</b>}
             </button>
           ))}
@@ -803,39 +1204,65 @@ export default function App({ database, onReturn }: AppProps) {
           {view === "overview" && (
             <>
               <section className="summary-grid" aria-label="現在の集計">
-                <article><span className="summary-icon green">人</span><div><small>現在の室内人数</small><strong>{observedAnalytics?.currentInside ?? 0}<em>人</em></strong></div></article>
-                <article><span className="summary-icon blue">計</span><div><small>総来場者数</small><strong>{observedAnalytics?.totalVisitors ?? 0}<em>人</em></strong></div></article>
-                <article><span className="summary-icon amber">↻</span><div><small>同期待ち</small><strong>{totalPending}<em>件</em></strong></div></article>
-                <article><span className="summary-icon violet">端</span><div><small>稼働端末</small><strong>{activeDevices.length}<em>台</em></strong></div></article>
+                <article><span className="summary-icon green">人</span><div><small>現在の会場内</small><strong>{currentOccupancy}<em>人</em></strong></div></article>
+                <article><span className="summary-icon blue">予</span><div><small>5分後の予測</small><strong>{predicted5}<em>人</em></strong></div></article>
+                <article><span className="summary-icon amber">%</span><div><small>現在の混雑度</small><strong>{occupancyRate}<em>%</em></strong></div></article>
+                <article><span className="summary-icon violet">端</span><div><small>稼働端末</small><strong>{activeDevices.length}<em>/ 2台</em></strong></div></article>
               </section>
 
-              <section className="device-grid">
-                <DeviceCard device={entryDevice} mode="entry" now={now} onOpen={entryDevice === null ? undefined : () => openDevice(entryDevice)} />
-                <DeviceCard device={exitDevice} mode="exit" now={now} onOpen={exitDevice === null ? undefined : () => openDevice(exitDevice)} />
-              </section>
-
-              {alerts.length > 0 ? (
-                <section className={`primary-alert ${alerts[0].severity}`}><span>!</span><div><strong>{alerts[0].title}</strong><p>{alerts[0].detail}</p></div><button onClick={() => setView("incidents")}>すべて確認</button></section>
-              ) : (
-                <section className="primary-alert normal"><span>✓</span><div><strong>すべてのシステムが正常です</strong><p>入口・出口端末とFirebaseの通信を確認できています</p></div></section>
-              )}
-
-              <section className="lower-grid">
-                <article className="panel recent-panel"><div className="panel-heading"><div><small>LIVE STATUS</small><h2>現在の状況</h2></div><span className={`firebase-chip ${firestoreHealth}`}>Firebase {firestoreHealth === "online" ? "接続中" : firestoreHealth === "checking" ? "確認中" : "接続不可"}</span></div>
-                  <ul className="status-list">
-                    <li><span className={entryDevice !== null && deviceSeverity(entryDevice, now) === "normal" ? "dot normal" : "dot warning"} /><strong>入口受付</strong><p>{entryDevice === null ? "通信なし" : `最終通信 ${formatAge(entryDevice.lastSeenAt, now)}`}</p></li>
-                    <li><span className={exitDevice !== null && deviceSeverity(exitDevice, now) === "normal" ? "dot normal" : "dot warning"} /><strong>出口受付</strong><p>{exitDevice === null ? "通信なし" : `最終通信 ${formatAge(exitDevice.lastSeenAt, now)}`}</p></li>
-                    <li><span className={firestoreHealth === "online" ? "dot normal" : "dot critical"} /><strong>Firebase実通信</strong><p>{lastHealthCheck === 0 ? "確認中" : `${formatTime(lastHealthCheck)}に確認`}</p></li>
-                    <li><span className={totalPending === 0 ? "dot normal" : "dot warning"} /><strong>オフライン同期</strong><p>{totalPending === 0 ? "同期待ちなし" : `${totalPending}件が端末内で待機中`}</p></li>
-                  </ul>
+              <section className="live-operations-grid">
+                <article className="live-map-panel">
+                  <div className="live-panel-heading">
+                    <div><small>LIVE VENUE MAP</small><h2>会場ライブ運行</h2></div>
+                    <span className={`firebase-chip ${firestoreHealth}`}>Firebase {firestoreHealth === "online" ? "接続中" : firestoreHealth === "checking" ? "確認中" : "接続不可"}</span>
+                  </div>
+                  <div className="live-route">
+                    <LiveTerminalNode device={entryDevice} mode="entry" now={now} onOpen={entryDevice === null ? undefined : () => openDevice(entryDevice)} />
+                    <div className="live-flow-lane entry"><span>→</span><strong>{entryRate.toFixed(1)}人/分</strong><small>入場ペース</small></div>
+                    <article className="venue-core">
+                      <div className="venue-crowd" aria-hidden="true"><span /><span /><span /><span /><span /><span /><span /></div>
+                      <small>EXHIBITION ROOM</small>
+                      <h3>展示会場</h3>
+                      <div className="occupancy-gauge" style={{ "--occupancy": `${Math.min(100, occupancyRate)}%` } as CSSProperties}>
+                        <strong>{currentOccupancy}</strong><span>/ {capacity}人</span>
+                      </div>
+                      <button type="button" onClick={() => void changeCapacity()} disabled={capacitySaving}>{capacitySaving ? "保存中" : "定員を変更"}</button>
+                    </article>
+                    <div className="live-flow-lane exit"><span>→</span><strong>{exitRate.toFixed(1)}人/分</strong><small>退場ペース</small></div>
+                    <LiveTerminalNode device={exitDevice} mode="exit" now={now} onOpen={exitDevice === null ? undefined : () => openDevice(exitDevice)} />
+                  </div>
+                  <div className="live-map-footer"><span>現在の増減 <strong className={netRate > 0 ? "warning-text" : "ok-text"}>{netRate >= 0 ? "+" : ""}{netRate.toFixed(1)}人/分</strong></span><span>同期待ち <strong className={totalPending > 0 ? "warning-text" : "ok-text"}>{totalPending}件</strong></span><span>最終診断 <strong>{lastHealthCheck === 0 ? "確認中" : formatTime(lastHealthCheck)}</strong></span></div>
                 </article>
 
-                <article className="panel chart-panel"><div className="panel-heading"><div><small>VISITOR TREND</small><h2>時間帯別入場者</h2></div><b>現在 {observedAnalytics?.currentInside ?? 0}人</b></div>
-                  <div className="bar-chart" aria-label="時間帯別入場者グラフ">
-                    {chartValues.length === 0 ? <p className="empty-chart">集計データを待っています</p> : chartValues.map(([key, value]) => (
-                      <div key={key} className="bar-column"><span style={{ height: `${Math.max(6, value / chartMax * 100)}%` }} title={`${value}人`} /><small>{key.slice(-2)}時</small></div>
+                <aside className="autopilot-panel">
+                  <div className="autopilot-heading"><div><small>OPERATIONS AUTOPILOT</small><h2>運用オートパイロット</h2></div><span>提案モード</span></div>
+                  <p className="autopilot-intro">状況を監視し、必要な操作だけを提案します。操作は承認後に実行されます。</p>
+                  <div className="autopilot-list">
+                    {autopilotSuggestions.length === 0 ? (
+                      <article className="autopilot-clear"><span>✓</span><div><strong>対応が必要な項目はありません</strong><p>端末と会場の流れは安定しています。</p></div></article>
+                    ) : autopilotSuggestions.map((suggestion) => (
+                      <article key={suggestion.id} className={suggestion.severity}>
+                        <span>{suggestion.severity === "critical" ? "!" : "△"}</span>
+                        <div><strong>{suggestion.title}</strong><p>{suggestion.detail}</p></div>
+                        <button type="button" onClick={() => void executeAutopilotSuggestion(suggestion)} disabled={autopilotSending !== null}>
+                          {autopilotSending === suggestion.id ? "送信中…" : suggestion.buttonLabel}
+                        </button>
+                      </article>
                     ))}
                   </div>
+                  {autopilotFeedback !== "" && <p className="autopilot-feedback" role="status">{autopilotFeedback}</p>}
+                  <button type="button" className="autopilot-incidents" onClick={() => setView("incidents")}>異常・注意をすべて確認</button>
+                </aside>
+              </section>
+
+              <section className="live-forecast-grid" id="live-prediction-panel">
+                <article className="panel forecast-panel">
+                  <div className="live-panel-heading"><div><small>OCCUPANCY FORECAST</small><h2>会場人数・15分予測</h2></div><div className="forecast-values"><span>+5分 <strong>{predicted5}人</strong></span><span>+10分 <strong>{predicted10}人</strong></span><span>+15分 <strong>{predicted15}人</strong></span></div></div>
+                  <ForecastChart points={occupancyPoints} capacity={capacity} />
+                </article>
+                <article className="panel flow-panel">
+                  <div className="live-panel-heading"><div><small>LIVE FLOW</small><h2>直近10分の入退場</h2></div><b className={netRate > 0 ? "warning-text" : "ok-text"}>{netRate >= 0 ? "+" : ""}{netRate.toFixed(1)}人/分</b></div>
+                  <MinuteFlowChart values={minuteFlow} />
                 </article>
               </section>
             </>
