@@ -29,13 +29,6 @@ export type AnalyticsSummary = {
 
 export type CameraState = "starting" | "ready" | "error";
 export type ReceptionMode = "entry" | "exit";
-export type ReceptionViewState =
-  | "waiting"
-  | "processing"
-  | "success-animation"
-  | "ticket-success"
-  | "member-success"
-  | "error";
 
 export type ReceptionDevice = {
   id: string;
@@ -54,7 +47,6 @@ export type ReceptionDevice = {
   downloadMbps: number;
   networkMeasuredAt: string;
   screen: string;
-  viewState: ReceptionViewState;
   sessionStartedAt: string;
   lastScanAt: string;
 };
