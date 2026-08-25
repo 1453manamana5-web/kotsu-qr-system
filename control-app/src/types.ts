@@ -35,6 +35,7 @@ export type ReceptionDevice = {
   lastSuccessfulSyncAt: number;
   pendingCount: number;
   cameraState: CameraState;
+  receptionPaused: boolean;
   screen: string;
   sessionStartedAt: string;
   lastScanAt: string;

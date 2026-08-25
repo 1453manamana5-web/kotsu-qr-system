@@ -249,7 +249,7 @@ service cloud.firestore {
       return request.resource.data.keys().hasOnly([
           'deviceId', 'registeredDeviceId', 'deviceName', 'deviceType',
           'role', 'mode', 'appVersion', 'lastSeenAt', 'lastSuccessfulSyncAt',
-          'pendingCount', 'cameraState', 'screen', 'sessionStartedAt',
+          'pendingCount', 'cameraState', 'receptionPaused', 'screen', 'sessionStartedAt',
           'lastScanAt', 'updatedAt'
         ])
         && request.resource.data.keys().hasAll([
@@ -276,12 +276,87 @@ service cloud.firestore {
         && request.resource.data.pendingCount is int
         && request.resource.data.pendingCount >= 0
         && request.resource.data.cameraState in ['starting', 'ready', 'error']
+        && (!('receptionPaused' in request.resource.data)
+          || request.resource.data.receptionPaused is bool)
         && request.resource.data.screen in ['entry-reception', 'exit-reception']
         && request.resource.data.sessionStartedAt is string
         && request.resource.data.sessionStartedAt.size() <= 60
         && request.resource.data.lastScanAt is string
         && request.resource.data.lastScanAt.size() <= 60
         && request.resource.data.updatedAt == request.time;
+    }
+
+    function validRemoteCommandType(value) {
+      return value in [
+        'pause-reception', 'resume-reception', 'restart-camera',
+        'sync-pending', 'play-sound', 'reload-app'
+      ];
+    }
+
+    function validRemoteCommandCreate(data) {
+      return data.keys().hasOnly([
+          'type', 'status', 'issuedByUid', 'issuedByName', 'createdAt',
+          'expiresAt', 'receivedAt', 'completedAt', 'updatedAt', 'errorMessage'
+        ])
+        && data.keys().hasAll([
+          'type', 'status', 'issuedByUid', 'issuedByName', 'createdAt',
+          'expiresAt', 'receivedAt', 'completedAt', 'updatedAt', 'errorMessage'
+        ])
+        && validRemoteCommandType(data.type)
+        && data.status == 'pending'
+        && data.issuedByUid == currentUid()
+        && shortText(data.issuedByName)
+        && data.createdAt == request.time
+        && data.expiresAt is timestamp
+        && data.expiresAt > request.time
+        && data.expiresAt <= request.time + duration.value(1, 'm')
+        && data.receivedAt == null
+        && data.completedAt == null
+        && data.updatedAt == request.time
+        && data.errorMessage == '';
+    }
+
+    function ownsReceptionPresence(eventId, deviceId) {
+      return activeDevice()
+        && exists(/databases/$(database)/documents/event-data/$(eventId)/reception-devices/$(deviceId))
+        && get(/databases/$(database)/documents/event-data/$(eventId)/reception-devices/$(deviceId)).data.registeredDeviceId == currentUid();
+    }
+
+    function validRemoteCommandUpdate(data) {
+      return data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'receivedAt', 'completedAt', 'updatedAt', 'errorMessage'
+        ])
+        && data.type == resource.data.type
+        && data.issuedByUid == resource.data.issuedByUid
+        && data.issuedByName == resource.data.issuedByName
+        && data.createdAt == resource.data.createdAt
+        && data.expiresAt == resource.data.expiresAt
+        && data.updatedAt == request.time
+        && data.errorMessage is string
+        && data.errorMessage.size() <= 160
+        && (
+          (
+            resource.data.status == 'pending'
+            && data.status == 'received'
+            && data.receivedAt == request.time
+            && data.completedAt == null
+            && data.errorMessage == ''
+          )
+          ||
+          (
+            resource.data.status == 'pending'
+            && data.status == 'failed'
+            && data.receivedAt == null
+            && data.completedAt == request.time
+          )
+          ||
+          (
+            resource.data.status == 'received'
+            && data.status in ['completed', 'failed']
+            && data.receivedAt == resource.data.receivedAt
+            && data.completedAt == request.time
+          )
+        );
     }
 
     match /authorized-users/{document=**} {
@@ -458,6 +533,16 @@ service cloud.firestore {
         allow create, update: if (memberDevice() || receptionDevice())
           && validReceptionPresence(deviceId);
         allow delete: if memberDevice() || receptionDevice();
+
+        match /commands/{commandId} {
+          allow read: if memberDevice()
+            || ownsReceptionPresence(eventId, deviceId);
+          allow create: if memberDevice()
+            && validRemoteCommandCreate(request.resource.data);
+          allow update: if ownsReceptionPresence(eventId, deviceId)
+            && validRemoteCommandUpdate(request.resource.data);
+          allow delete: if false;
+        }
       }
     }
 

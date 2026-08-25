@@ -23,6 +23,14 @@ import type {
   SystemAlert,
 } from "./types";
 
+import {
+  sendReceptionRemoteCommand,
+  subscribeToReceptionRemoteCommands,
+  type ReceptionRemoteCommand,
+  type ReceptionRemoteCommandStatus,
+  type ReceptionRemoteCommandType,
+} from "../../src/receptionRemoteControlFirestore";
+
 const AnalysisPage = lazy(() => import("../../src/pages/AnalysisPage"));
 const PastDataPage = lazy(() => import("../../src/pages/PastDataPage"));
 
@@ -124,6 +132,7 @@ function readReceptionDevice(id: string, data: DocumentData): ReceptionDevice | 
     lastSuccessfulSyncAt: timestampToMilliseconds(data.lastSuccessfulSyncAt),
     pendingCount: readNumber(data.pendingCount),
     cameraState,
+    receptionPaused: data.receptionPaused === true,
     screen: typeof data.screen === "string" ? data.screen : "",
     sessionStartedAt: typeof data.sessionStartedAt === "string" ? data.sessionStartedAt : "",
     lastScanAt: typeof data.lastScanAt === "string" ? data.lastScanAt : "",
@@ -155,6 +164,7 @@ function deviceSeverity(device: ReceptionDevice, now: number): HealthSeverity {
     age > WARNING_AFTER ||
     device.pendingCount > 0 ||
     device.cameraState !== "ready" ||
+    device.receptionPaused ||
     device.appVersion !== EXPECTED_RECEPTION_VERSION
   ) return "warning";
   return "normal";
@@ -188,10 +198,11 @@ function AnalysisLoading({ label }: { label: string }) {
   );
 }
 
-function DeviceCard({ device, mode, now }: {
+function DeviceCard({ device, mode, now, onOpen }: {
   device: ReceptionDevice | null;
   mode: ReceptionMode;
   now: number;
+  onOpen?: () => void;
 }) {
   const label = mode === "entry" ? "入口受付" : "出口受付";
 
@@ -210,7 +221,21 @@ function DeviceCard({ device, mode, now }: {
   const severity = deviceSeverity(device, now);
 
   return (
-    <article className={`device-card is-${severity}`}>
+    <article
+      className={`device-card is-${severity} ${onOpen !== undefined ? "is-actionable" : ""}`}
+      role={onOpen !== undefined ? "button" : undefined}
+      tabIndex={onOpen !== undefined ? 0 : undefined}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (
+          onOpen !== undefined &&
+          (event.key === "Enter" || event.key === " ")
+        ) {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+    >
       <div className="device-card-header">
         <div>
           <small>{mode === "entry" ? "ENTRY TERMINAL" : "EXIT TERMINAL"}</small>
@@ -224,13 +249,166 @@ function DeviceCard({ device, mode, now }: {
           <div><dt>最終通信</dt><dd>{formatAge(device.lastSeenAt, now)}</dd></div>
           <div><dt>Firebase</dt><dd className={device.lastSuccessfulSyncAt > 0 ? "ok-text" : "muted-text"}>{device.lastSuccessfulSyncAt > 0 ? "接続確認済み" : "記録なし"}</dd></div>
           <div><dt>カメラ</dt><dd className={device.cameraState === "error" ? "error-text" : "ok-text"}>{device.cameraState === "ready" ? "正常" : device.cameraState === "error" ? "エラー" : "準備中"}</dd></div>
+          <div><dt>受付状態</dt><dd className={device.receptionPaused ? "warning-text" : "ok-text"}>{device.receptionPaused ? "一時停止中" : "受付中"}</dd></div>
           <div><dt>バージョン</dt><dd className={device.appVersion !== EXPECTED_RECEPTION_VERSION ? "warning-text" : ""}>{device.appVersion}</dd></div>
           <div><dt>同期待ち</dt><dd className={device.pendingCount > 0 ? "warning-text strong" : ""}>{device.pendingCount}件</dd></div>
           <div><dt>最終読取</dt><dd>{device.lastScanAt === "" ? "記録なし" : formatTime(device.lastScanAt)}</dd></div>
           <div><dt>端末種別</dt><dd>{device.deviceType}</dd></div>
         </dl>
       </div>
+      {onOpen !== undefined && <div className="device-card-open">タップして端末を操作 <span aria-hidden="true">→</span></div>}
     </article>
+  );
+}
+
+function remoteCommandLabel(type: ReceptionRemoteCommandType) {
+  if (type === "pause-reception") return "受付を一時停止";
+  if (type === "resume-reception") return "受付を再開";
+  if (type === "restart-camera") return "カメラを再起動";
+  if (type === "sync-pending") return "未送信データを再同期";
+  if (type === "play-sound") return "確認音を鳴らす";
+  return "受付アプリを再読み込み";
+}
+
+function remoteCommandStatusLabel(status: ReceptionRemoteCommandStatus) {
+  if (status === "pending") return "送信中";
+  if (status === "received") return "端末が実行中";
+  if (status === "completed") return "完了";
+  return "失敗";
+}
+
+function DeviceDetail({ eventDataId, device, now, onClose }: {
+  eventDataId: string;
+  device: ReceptionDevice;
+  now: number;
+  onClose: () => void;
+}) {
+  const [commands, setCommands] = useState<ReceptionRemoteCommand[]>([]);
+  const [sending, setSending] = useState<ReceptionRemoteCommandType | null>(null);
+  const [commandError, setCommandError] = useState("");
+  const online = now - device.lastSeenAt <= CRITICAL_AFTER;
+
+  useEffect(() => {
+    return subscribeToReceptionRemoteCommands(
+      eventDataId,
+      device.id,
+      setCommands,
+      () => setCommandError("遠隔操作履歴を読み込めませんでした。")
+    );
+  }, [device.id, eventDataId]);
+
+  const sendCommand = async (type: ReceptionRemoteCommandType) => {
+    if (!online || sending !== null) return;
+
+    if (
+      type === "reload-app" &&
+      !window.confirm(`${device.deviceName}の受付アプリを再読み込みしますか？`)
+    ) {
+      return;
+    }
+
+    setSending(type);
+    setCommandError("");
+
+    try {
+      await sendReceptionRemoteCommand(eventDataId, device.id, type);
+    } catch (error) {
+      console.error("受付端末へ遠隔操作を送信できませんでした。", error);
+      setCommandError("遠隔操作を送信できませんでした。通信状態と端末権限を確認してください。");
+    } finally {
+      setSending(null);
+    }
+  };
+
+  const actions: Array<{
+    type: ReceptionRemoteCommandType;
+    icon: string;
+    description: string;
+    danger?: boolean;
+    disabled?: boolean;
+  }> = [
+    device.receptionPaused
+      ? { type: "resume-reception", icon: "▶", description: "停止中のQR読み取りを再開します" }
+      : { type: "pause-reception", icon: "Ⅱ", description: "QR読み取りを安全に一時停止します" },
+    { type: "restart-camera", icon: "◉", description: "カメラ部分だけを再起動します", disabled: device.receptionPaused },
+    { type: "sync-pending", icon: "↻", description: `端末内の同期待ち ${device.pendingCount}件を再送します` },
+    { type: "play-sound", icon: "♪", description: "対象端末から確認音を鳴らします" },
+    { type: "reload-app", icon: "⟳", description: "画面全体を再読み込みします", danger: true },
+  ];
+
+  return (
+    <section className="page-panel device-detail-panel">
+      <div className="device-detail-heading">
+        <button type="button" className="device-detail-back" onClick={onClose}>← 端末一覧</button>
+        <div>
+          <small>{device.mode === "entry" ? "ENTRY TERMINAL" : "EXIT TERMINAL"}</small>
+          <h2>{device.deviceName}</h2>
+        </div>
+        <span className={`status-badge ${online ? device.receptionPaused ? "warning" : "normal" : "critical"}`}>
+          {online ? device.receptionPaused ? "一時停止中" : "オンライン" : "通信なし"}
+        </span>
+      </div>
+
+      <div className="device-detail-layout">
+        <article className="device-live-panel">
+          <div className="device-live-title"><span className={`mode-icon ${device.mode}`}>{device.mode === "entry" ? "→" : "←"}</span><div><small>LIVE STATUS</small><strong>端末の現在状態</strong></div></div>
+          <dl>
+            <div><dt>最終通信</dt><dd>{formatAge(device.lastSeenAt, now)}</dd></div>
+            <div><dt>受付モード</dt><dd>{device.mode === "entry" ? "入口受付" : "出口受付"}</dd></div>
+            <div><dt>カメラ</dt><dd className={device.cameraState === "error" ? "error-text" : "ok-text"}>{device.cameraState === "ready" ? "正常" : device.cameraState === "error" ? "エラー" : "準備中"}</dd></div>
+            <div><dt>Firebase</dt><dd className={device.lastSuccessfulSyncAt > 0 ? "ok-text" : "muted-text"}>{device.lastSuccessfulSyncAt > 0 ? "接続確認済み" : "記録なし"}</dd></div>
+            <div><dt>同期待ち</dt><dd className={device.pendingCount > 0 ? "warning-text" : "ok-text"}>{device.pendingCount}件</dd></div>
+            <div><dt>最終読取</dt><dd>{device.lastScanAt === "" ? "記録なし" : formatTime(device.lastScanAt)}</dd></div>
+            <div><dt>バージョン</dt><dd>{device.appVersion}</dd></div>
+            <div><dt>端末種別</dt><dd>{device.deviceType}</dd></div>
+          </dl>
+        </article>
+
+        <article className="remote-control-panel">
+          <div className="remote-control-heading"><div><small>REMOTE CONTROL</small><h3>遠隔操作</h3></div><span>{online ? "操作可能" : "端末オフライン"}</span></div>
+          <div className="remote-action-grid">
+            {actions.map((action) => (
+              <button
+                type="button"
+                key={action.type}
+                className={action.danger ? "remote-action danger" : "remote-action"}
+                disabled={!online || sending !== null || action.disabled === true}
+                onClick={() => void sendCommand(action.type)}
+              >
+                <span aria-hidden="true">{action.icon}</span>
+                <strong>{sending === action.type ? "送信しています…" : remoteCommandLabel(action.type)}</strong>
+                <small>{action.description}</small>
+              </button>
+            ))}
+          </div>
+          {!online && <p className="remote-control-note">通信が復旧すると操作できるようになります。古い命令の誤実行を防ぐため、オフライン中は予約送信しません。</p>}
+          {commandError !== "" && <p className="remote-control-error" role="alert">{commandError}</p>}
+        </article>
+      </div>
+
+      <article className="command-history-panel">
+        <div className="command-history-heading"><div><small>COMMAND HISTORY</small><h3>遠隔操作の実行状況</h3></div><span>{commands.length}件</span></div>
+        {commands.length === 0 ? (
+          <p className="command-history-empty">この端末への遠隔操作はまだありません</p>
+        ) : (
+          <ul>
+            {commands.map((command) => {
+              const expired = command.status === "pending" && command.expiresAt > 0 && command.expiresAt < now;
+              const displayStatus = expired ? "failed" : command.status;
+
+              return (
+                <li key={command.id}>
+                  <span className={`command-state ${displayStatus}`} aria-hidden="true" />
+                  <div><strong>{remoteCommandLabel(command.type)}</strong><small>{command.createdAt === 0 ? "送信時刻を確認中" : formatTime(command.createdAt)}</small></div>
+                  <b className={displayStatus}>{expired ? "期限切れ" : remoteCommandStatusLabel(command.status)}</b>
+                  {command.errorMessage !== "" && <p>{command.errorMessage}</p>}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </article>
+    </section>
   );
 }
 
@@ -245,6 +423,7 @@ export default function App({ database, onReturn }: AppProps) {
   const [currentEventId, setCurrentEventId] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [devices, setDevices] = useState<ReceptionDevice[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [now, setNow] = useState(
     () => Date.now()
   );
@@ -356,6 +535,16 @@ export default function App({ database, onReturn }: AppProps) {
     [observedDevices, now]
   );
 
+  const selectedDevice = useMemo(
+    () => observedDevices.find((device) => device.id === selectedDeviceId) ?? null,
+    [observedDevices, selectedDeviceId]
+  );
+
+  const openDevice = (device: ReceptionDevice) => {
+    setSelectedDeviceId(device.id);
+    setView("devices");
+  };
+
   const latestDevice = (mode: ReceptionMode) =>
     observedDevices.filter((device) => device.mode === mode).sort((a, b) => b.lastSeenAt - a.lastSeenAt)[0] ?? null;
 
@@ -379,6 +568,7 @@ export default function App({ database, onReturn }: AppProps) {
       if (now - device.lastSeenAt > WARNING_AFTER) result.push({ id: `${mode}-slow`, severity: "warning", title: `${label}端末の通信が遅れています`, detail: `最終通信は${formatAge(device.lastSeenAt, now)}です` });
       if (device.pendingCount > 0) result.push({ id: `${mode}-pending`, severity: "warning", title: `${label}端末に同期待ちが${device.pendingCount}件あります`, detail: "通信復旧後に受付順で自動送信されます" });
       if (device.cameraState === "error") result.push({ id: `${mode}-camera`, severity: "critical", title: `${label}端末のカメラでエラーが発生しています`, detail: "カメラ権限と受付画面を確認してください" });
+      if (device.receptionPaused) result.push({ id: `${mode}-paused`, severity: "warning", title: `${label}端末の受付が一時停止中です`, detail: "受付端末画面から再開できます" });
       if (device.appVersion !== EXPECTED_RECEPTION_VERSION) result.push({ id: `${mode}-version`, severity: "warning", title: `${label}端末のバージョンが一致しません`, detail: `現在 ${device.appVersion}／推奨 ${EXPECTED_RECEPTION_VERSION}` });
     }
 
@@ -445,7 +635,10 @@ export default function App({ database, onReturn }: AppProps) {
         <div className="brand"><span>QR</span><strong>管制</strong></div>
         <nav aria-label="管制メニュー">
           {(["overview", "analysis", "devices", "incidents", "diagnostics"] as const).map((item) => (
-            <button key={item} className={view === item ? "active" : ""} onClick={() => setView(item)}>
+            <button key={item} className={view === item ? "active" : ""} onClick={() => {
+              setView(item);
+              if (item !== "devices") setSelectedDeviceId(null);
+            }}>
               <NavIcon kind={item} />
               {item === "overview" ? "概要" : item === "analysis" ? "分析" : item === "devices" ? "端末" : item === "incidents" ? "障害履歴" : "診断"}
               {item === "incidents" && alerts.length > 0 && <b>{alerts.length}</b>}
@@ -483,8 +676,8 @@ export default function App({ database, onReturn }: AppProps) {
               </section>
 
               <section className="device-grid">
-                <DeviceCard device={entryDevice} mode="entry" now={now} />
-                <DeviceCard device={exitDevice} mode="exit" now={now} />
+                <DeviceCard device={entryDevice} mode="entry" now={now} onOpen={entryDevice === null ? undefined : () => openDevice(entryDevice)} />
+                <DeviceCard device={exitDevice} mode="exit" now={now} onOpen={exitDevice === null ? undefined : () => openDevice(exitDevice)} />
               </section>
 
               {alerts.length > 0 ? (
@@ -514,7 +707,16 @@ export default function App({ database, onReturn }: AppProps) {
             </>
           )}
 
-          {view === "devices" && <section className="page-panel"><div className="page-heading"><div><small>TERMINALS</small><h2>受付端末一覧</h2></div><span>{observedDevices.length}台を記録</span></div><div className="all-device-grid">{observedDevices.length === 0 ? <p className="empty-state">受付端末の生存通知を待っています</p> : [...observedDevices].sort((a, b) => b.lastSeenAt - a.lastSeenAt).map((device) => <DeviceCard key={device.id} device={device} mode={device.mode} now={now} />)}</div></section>}
+          {view === "devices" && selectedDevice !== null && currentEvent !== null && (
+            <DeviceDetail
+              eventDataId={currentEvent.dataDocumentId}
+              device={selectedDevice}
+              now={now}
+              onClose={() => setSelectedDeviceId(null)}
+            />
+          )}
+
+          {view === "devices" && selectedDevice === null && <section className="page-panel"><div className="page-heading"><div><small>TERMINALS</small><h2>受付端末一覧</h2></div><span>{observedDevices.length}台を記録</span></div><div className="all-device-grid">{observedDevices.length === 0 ? <p className="empty-state">受付端末の生存通知を待っています</p> : [...observedDevices].sort((a, b) => b.lastSeenAt - a.lastSeenAt).map((device) => <DeviceCard key={device.id} device={device} mode={device.mode} now={now} onOpen={() => openDevice(device)} />)}</div></section>}
 
           {view === "incidents" && <section className="page-panel"><div className="page-heading"><div><small>INCIDENTS</small><h2>現在の異常・注意</h2></div><span>{alerts.length}件</span></div><div className="alert-list">{alerts.length === 0 ? <div className="empty-state success">現在、異常はありません</div> : alerts.map((alert) => <article key={alert.id} className={alert.severity}><span>!</span><div><strong>{alert.title}</strong><p>{alert.detail}</p></div></article>)}</div></section>}
 
