@@ -73,27 +73,15 @@ async function deleteCollectionDocuments(
 }
 
 async function deleteReceptionDevices(eventDataId: string) {
-  const deviceCollection = collection(
-    db,
-    "event-data",
-    eventDataId,
-    "reception-devices"
+  const deviceSnapshot = await getDocs(
+    collection(db, "event-data", eventDataId, "reception-devices")
   );
-  const deviceSnapshot = await getDocs(deviceCollection);
 
-  for (const device of deviceSnapshot.docs) {
-    await deleteCollectionDocuments(
-      collection(
-        db,
-        "event-data",
-        eventDataId,
-        "reception-devices",
-        device.id,
-        "commands"
-      )
-    );
-  }
-
+  /*
+    commands サブコレクションは現在のセキュリティルールで削除禁止です。
+    ここで削除を試すとイベント本体の掃除まで止まるため、まず端末本体を削除します。
+    コマンド履歴は削除済みイベントから参照されず、イベントIDも再利用しません。
+  */
   await deleteDocumentReferences(deviceSnapshot.docs.map((item) => item.ref));
 }
 
