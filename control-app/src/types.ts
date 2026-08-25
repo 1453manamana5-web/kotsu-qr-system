@@ -36,6 +36,9 @@ export type ReceptionDevice = {
   pendingCount: number;
   cameraState: CameraState;
   receptionPaused: boolean;
+  firebaseLatencyMs: number;
+  downloadMbps: number;
+  networkMeasuredAt: string;
   screen: string;
   sessionStartedAt: string;
   lastScanAt: string;
