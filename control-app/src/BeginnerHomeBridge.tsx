@@ -38,6 +38,10 @@ function findSidebarButton(label: string) {
     .find((button) => textOf(button).includes(label)) ?? null;
 }
 
+function findOverviewButton() {
+  return findSidebarButton("ライブ運行");
+}
+
 function readSummaryValue(index: number) {
   const cards = document.querySelectorAll(".summary-grid article");
   const card = cards.item(index);
@@ -103,27 +107,11 @@ function ensureHomeHost() {
   return host;
 }
 
-function ensureDetailGuideHost() {
-  const details = document.querySelector(".live-operations-grid");
-  if (details === null || details.parentElement === null) return null;
-
-  let host = document.getElementById("beginner-detail-guide-host");
-  if (host === null) {
-    host = document.createElement("div");
-    host.id = "beginner-detail-guide-host";
-  }
-
-  if (host.parentElement !== details.parentElement || host.nextElementSibling !== details) {
-    details.parentElement.insertBefore(host, details);
-  }
-
-  return host;
-}
-
 export default function BeginnerHomeBridge() {
+  const [navTarget, setNavTarget] = useState<Element | null>(null);
   const [homeHost, setHomeHost] = useState<HTMLElement | null>(null);
-  const [detailHost, setDetailHost] = useState<HTMLElement | null>(null);
   const [snapshot, setSnapshot] = useState<HomeSnapshot>(EMPTY_SNAPSHOT);
+  const [open, setOpen] = useState(true);
 
   useEffect(() => {
     let refreshQueued = false;
@@ -132,8 +120,11 @@ export default function BeginnerHomeBridge() {
       refreshQueued = true;
       queueMicrotask(() => {
         refreshQueued = false;
+        setNavTarget((current) => {
+          const next = document.querySelector(".sidebar nav");
+          return current === next ? current : next;
+        });
         setHomeHost(ensureHomeHost());
-        setDetailHost(ensureDetailGuideHost());
         if (document.querySelector(".summary-grid") !== null) {
           setSnapshot(readSnapshot());
         }
@@ -157,6 +148,38 @@ export default function BeginnerHomeBridge() {
     };
   }, []);
 
+  useEffect(() => {
+    const shell = document.querySelector(".control-shell");
+    if (!(shell instanceof HTMLElement)) return undefined;
+    shell.classList.toggle("beginner-home-view-open", open);
+    return () => shell.classList.remove("beginner-home-view-open");
+  }, [open]);
+
+  useEffect(() => {
+    if (navTarget === null) return undefined;
+
+    const closeWhenAnotherViewOpens = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const button = target.closest("button");
+      if (button === null || button.classList.contains("beginner-home-nav-button")) return;
+      setOpen(false);
+    };
+
+    navTarget.addEventListener("click", closeWhenAnotherViewOpens);
+    return () => navTarget.removeEventListener("click", closeWhenAnotherViewOpens);
+  }, [navTarget]);
+
+  const openHome = useCallback(() => {
+    const overviewButton = findOverviewButton();
+    if (overviewButton !== null && !overviewButton.classList.contains("active")) {
+      overviewButton.click();
+      window.setTimeout(() => setOpen(true), 0);
+      return;
+    }
+    setOpen(true);
+  }, []);
+
   const navigate = useCallback((label: string) => {
     findSidebarButton(label)?.click();
   }, []);
@@ -170,11 +193,24 @@ export default function BeginnerHomeBridge() {
 
   return (
     <>
-      {homeHost !== null && createPortal(
-        <section className={`beginner-home-card ${snapshot.severity}`} aria-label="初めて使う人向けの現在状況">
+      {navTarget !== null && createPortal(
+        <button
+          type="button"
+          className={`beginner-home-nav-button${open ? " active" : ""}`}
+          onClick={openHome}
+          aria-pressed={open}
+        >
+          <span aria-hidden="true">⌂</span>
+          ホーム
+        </button>,
+        navTarget
+      )}
+
+      {open && homeHost !== null && createPortal(
+        <section className={`beginner-home-card ${snapshot.severity}`} aria-label="ホーム・現在状況">
           <div className="beginner-home-hero">
             <div className="beginner-home-copy">
-              <small>FIRST LOOK · まずここを確認</small>
+              <small>CONTROL HOME · まずここを確認</small>
               <div className="beginner-home-title-row">
                 <h2>{snapshot.guidanceTitle}</h2>
                 <span className={`beginner-home-status ${snapshot.severity}`}>{snapshot.statusLabel}</span>
@@ -214,14 +250,6 @@ export default function BeginnerHomeBridge() {
           </div>
         </section>,
         homeHost
-      )}
-
-      {detailHost !== null && createPortal(
-        <div className="beginner-detail-guide">
-          <div><small>DETAILS</small><strong>ここから下は詳しい運行情報</strong></div>
-          <p>会場の流れや予測を詳しく確認したい時に見ればOKです。</p>
-        </div>,
-        detailHost
       )}
     </>
   );
