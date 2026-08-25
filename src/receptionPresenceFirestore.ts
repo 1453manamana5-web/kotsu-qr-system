@@ -46,6 +46,7 @@ export type ReceptionDevice = {
   downloadMbps: number;
   networkMeasuredAt: string;
   screen: ReceptionScreen;
+  viewState: ReceptionViewState;
   sessionStartedAt: string;
   lastScanAt: string;
 };
@@ -58,6 +59,14 @@ export type ReceptionCameraState =
 export type ReceptionScreen =
   | "entry-reception"
   | "exit-reception";
+
+export type ReceptionViewState =
+  | "waiting"
+  | "processing"
+  | "success-animation"
+  | "ticket-success"
+  | "member-success"
+  | "error";
 
 export type ReceptionHeartbeat = {
   registeredDeviceId: string;
@@ -73,6 +82,7 @@ export type ReceptionHeartbeat = {
   downloadMbps: number;
   networkMeasuredAt: string;
   screen: ReceptionScreen;
+  viewState: ReceptionViewState;
   sessionStartedAt: string;
   lastScanAt: string;
 };
@@ -217,6 +227,15 @@ function convertReceptionDevice(
       data.screen === "exit-reception"
         ? "exit-reception"
         : "entry-reception",
+
+    viewState:
+      data.viewState === "processing" ||
+      data.viewState === "success-animation" ||
+      data.viewState === "ticket-success" ||
+      data.viewState === "member-success" ||
+      data.viewState === "error"
+        ? data.viewState
+        : "waiting",
 
     sessionStartedAt:
       typeof data.sessionStartedAt ===
@@ -371,6 +390,9 @@ export async function sendReceptionHeartbeat(
 
       screen:
         heartbeat.screen,
+
+      viewState:
+        heartbeat.viewState,
 
       sessionStartedAt:
         heartbeat.sessionStartedAt,
