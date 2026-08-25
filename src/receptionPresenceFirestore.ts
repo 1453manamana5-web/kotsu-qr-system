@@ -41,6 +41,7 @@ export type ReceptionDevice = {
   lastSuccessfulSyncAt: string;
   pendingCount: number;
   cameraState: ReceptionCameraState;
+  receptionPaused: boolean;
   screen: ReceptionScreen;
   sessionStartedAt: string;
   lastScanAt: string;
@@ -64,6 +65,7 @@ export type ReceptionHeartbeat = {
   appVersion: string;
   pendingCount: number;
   cameraState: ReceptionCameraState;
+  receptionPaused: boolean;
   screen: ReceptionScreen;
   sessionStartedAt: string;
   lastScanAt: string;
@@ -173,6 +175,9 @@ function convertReceptionDevice(
       data.cameraState === "error"
         ? data.cameraState
         : "starting",
+
+    receptionPaused:
+      data.receptionPaused === true,
 
     screen:
       data.screen === "exit-reception"
@@ -314,6 +319,9 @@ export async function sendReceptionHeartbeat(
 
       cameraState:
         heartbeat.cameraState,
+
+      receptionPaused:
+        heartbeat.receptionPaused,
 
       screen:
         heartbeat.screen,
