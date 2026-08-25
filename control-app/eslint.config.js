@@ -30,5 +30,11 @@ export default tseslint.config(
     rules: {
       "react-hooks/purity": "off",
     },
+  },
+  {
+    files: ["src/PredictiveChatBridge.tsx"],
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
+    },
   }
 );
