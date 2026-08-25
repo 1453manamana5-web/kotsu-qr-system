@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import DeviceAccessGate from "./DeviceAccessGate";
 import PredictiveOpsOverlay from "./PredictiveOpsOverlay";
+import CopilotLanguageExpansionBridge from "./CopilotLanguageExpansionBridge";
 import CopilotCapabilityBridge from "./CopilotCapabilityBridge";
 import PredictiveCorrelationMemory from "./PredictiveCorrelationMemory";
 import PredictiveChatBridge from "./PredictiveChatBridge";
@@ -19,6 +20,7 @@ createRoot(document.getElementById("root")!).render(
       <>
         <App database={db} />
         <PredictiveOpsOverlay database={db} />
+        <CopilotLanguageExpansionBridge />
         <CopilotCapabilityBridge database={db} />
         <PredictiveCorrelationMemory database={db} />
         <PredictiveChatBridge database={db} />
