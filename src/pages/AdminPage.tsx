@@ -319,47 +319,6 @@ function ExitDeviceIcon() {
   );
 }
 
-function AnalysisIcon() {
-  return (
-    <svg
-      viewBox="0 0 64 64"
-      aria-hidden="true"
-    >
-      <path
-        d="M11 53V11"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-
-      <path
-        d="M11 53H55"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-
-      <path
-        d="M18 44L28 33L37 39L52 20"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      <circle
-        cx="52"
-        cy="20"
-        r="4"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
 function MemberManagementIcon() {
   return (
     <svg
@@ -1240,20 +1199,6 @@ function AdminPage({
           </div>
 
           <div className="admin-menu-grid">
-            <MenuCard
-              className="admin-analysis-card"
-              icon={
-                <AnalysisIcon />
-              }
-              title="分析"
-              description="来場者数や時間帯別の状況を確認"
-              onClick={() =>
-                setPage(
-                  "analysis"
-                )
-              }
-            />
-
             <MenuCard
               className="admin-events-card"
               icon={

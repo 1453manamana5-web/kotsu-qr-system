@@ -1,4 +1,6 @@
 import {
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -21,12 +23,15 @@ import type {
   SystemAlert,
 } from "./types";
 
+const AnalysisPage = lazy(() => import("../../src/pages/AnalysisPage"));
+const PastDataPage = lazy(() => import("../../src/pages/PastDataPage"));
+
 const CONTROL_VERSION = "1.0.0";
 const EXPECTED_RECEPTION_VERSION = "2.8.0";
 const WARNING_AFTER = 15_000;
 const CRITICAL_AFTER = 45_000;
 
-type View = "overview" | "devices" | "incidents" | "diagnostics";
+type View = "overview" | "analysis" | "past-data" | "devices" | "incidents" | "diagnostics";
 type FirestoreHealth = "checking" | "online" | "error";
 
 function timestampToMilliseconds(value: unknown) {
@@ -162,8 +167,25 @@ function severityLabel(severity: HealthSeverity) {
 }
 
 function NavIcon({ kind }: { kind: View }) {
-  const symbol = kind === "overview" ? "▦" : kind === "devices" ? "▣" : kind === "incidents" ? "△" : "⌁";
+  const symbol = kind === "overview"
+    ? "▦"
+    : kind === "analysis" || kind === "past-data"
+      ? "▥"
+      : kind === "devices"
+        ? "▣"
+        : kind === "incidents"
+          ? "△"
+          : "⌁";
   return <span aria-hidden="true">{symbol}</span>;
+}
+
+function AnalysisLoading({ label }: { label: string }) {
+  return (
+    <main className="control-analysis-loading" aria-live="polite">
+      <span className="access-spinner" aria-hidden="true" />
+      <strong>{label}</strong>
+    </main>
+  );
 }
 
 function DeviceCard({ device, mode, now }: {
@@ -372,15 +394,60 @@ export default function App({ database, onReturn }: AppProps) {
   const chartValues = Object.entries(observedAnalytics?.hourlyEntryCounts ?? {}).sort(([a], [b]) => a.localeCompare(b)).slice(-10);
   const chartMax = Math.max(1, ...chartValues.map(([, value]) => value));
 
+  const handleAnalysisNavigation = (page: string) => {
+    if (page === "past-data") {
+      setView("past-data");
+      return;
+    }
+
+    if (page === "analysis") {
+      setView("analysis");
+      return;
+    }
+
+    if (page === "events") {
+      if (onReturn !== undefined) {
+        onReturn();
+      } else {
+        window.location.assign("/qr-system/");
+      }
+      return;
+    }
+
+    setView("overview");
+  };
+
+  if (view === "analysis") {
+    return (
+      <Suspense fallback={<AnalysisLoading label="分析画面を読み込んでいます" />}>
+        <AnalysisPage
+          setPage={handleAnalysisNavigation}
+          eventData={currentEvent}
+        />
+      </Suspense>
+    );
+  }
+
+  if (view === "past-data") {
+    return (
+      <Suspense fallback={<AnalysisLoading label="過去データを読み込んでいます" />}>
+        <PastDataPage
+          setPage={handleAnalysisNavigation}
+          events={events}
+        />
+      </Suspense>
+    );
+  }
+
   return (
     <div className="control-shell">
       <aside className="sidebar">
         <div className="brand"><span>QR</span><strong>管制</strong></div>
         <nav aria-label="管制メニュー">
-          {(["overview", "devices", "incidents", "diagnostics"] as const).map((item) => (
+          {(["overview", "analysis", "devices", "incidents", "diagnostics"] as const).map((item) => (
             <button key={item} className={view === item ? "active" : ""} onClick={() => setView(item)}>
               <NavIcon kind={item} />
-              {item === "overview" ? "概要" : item === "devices" ? "端末" : item === "incidents" ? "障害履歴" : "診断"}
+              {item === "overview" ? "概要" : item === "analysis" ? "分析" : item === "devices" ? "端末" : item === "incidents" ? "障害履歴" : "診断"}
               {item === "incidents" && alerts.length > 0 && <b>{alerts.length}</b>}
             </button>
           ))}

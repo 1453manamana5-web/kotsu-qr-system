@@ -4,6 +4,9 @@ import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   base: "/qr-system/control/",
+  resolve: {
+    dedupe: ["react", "react-dom", "firebase"],
+  },
   build: {
     rolldownOptions: {
       output: {
@@ -66,6 +69,11 @@ export default defineConfig({
       workbox: {
         cleanupOutdatedCaches: true,
         navigateFallback: "/qr-system/control/index.html",
+        globIgnores: [
+          "**/html2canvas-*.js",
+          "**/jspdf.es.min-*.js",
+          "**/purify.es-*.js",
+        ],
       },
     }),
   ],
