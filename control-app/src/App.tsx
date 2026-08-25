@@ -170,6 +170,31 @@ function deviceSeverity(device: ReceptionDevice, now: number): HealthSeverity {
   return "normal";
 }
 
+function receptionOperatingStatus(device: ReceptionDevice, now: number): {
+  label: string;
+  severity: HealthSeverity;
+} {
+  const age = now - device.lastSeenAt;
+
+  if (device.lastSeenAt <= 0 || age > CRITICAL_AFTER) {
+    return { label: "通信なし", severity: "critical" };
+  }
+
+  if (device.cameraState === "error") {
+    return { label: "カメラエラー", severity: "critical" };
+  }
+
+  if (device.receptionPaused) {
+    return { label: "一時停止中", severity: "warning" };
+  }
+
+  if (age > WARNING_AFTER) {
+    return { label: "状態確認中", severity: "warning" };
+  }
+
+  return { label: "受付中", severity: "normal" };
+}
+
 function severityLabel(severity: HealthSeverity) {
   if (severity === "normal") return "正常";
   if (severity === "warning") return "注意";
@@ -219,6 +244,7 @@ function DeviceCard({ device, mode, now, onOpen }: {
   }
 
   const severity = deviceSeverity(device, now);
+  const operatingStatus = receptionOperatingStatus(device, now);
 
   return (
     <article
@@ -249,7 +275,7 @@ function DeviceCard({ device, mode, now, onOpen }: {
           <div><dt>最終通信</dt><dd>{formatAge(device.lastSeenAt, now)}</dd></div>
           <div><dt>Firebase</dt><dd className={device.lastSuccessfulSyncAt > 0 ? "ok-text" : "muted-text"}>{device.lastSuccessfulSyncAt > 0 ? "接続確認済み" : "記録なし"}</dd></div>
           <div><dt>カメラ</dt><dd className={device.cameraState === "error" ? "error-text" : "ok-text"}>{device.cameraState === "ready" ? "正常" : device.cameraState === "error" ? "エラー" : "準備中"}</dd></div>
-          <div><dt>受付状態</dt><dd className={device.receptionPaused ? "warning-text" : "ok-text"}>{device.receptionPaused ? "一時停止中" : "受付中"}</dd></div>
+          <div><dt>受付状態</dt><dd className={operatingStatus.severity === "critical" ? "error-text" : operatingStatus.severity === "warning" ? "warning-text" : "ok-text"}>{operatingStatus.label}</dd></div>
           <div><dt>バージョン</dt><dd className={device.appVersion !== EXPECTED_RECEPTION_VERSION ? "warning-text" : ""}>{device.appVersion}</dd></div>
           <div><dt>同期待ち</dt><dd className={device.pendingCount > 0 ? "warning-text strong" : ""}>{device.pendingCount}件</dd></div>
           <div><dt>最終読取</dt><dd>{device.lastScanAt === "" ? "記録なし" : formatTime(device.lastScanAt)}</dd></div>
@@ -287,6 +313,7 @@ function DeviceDetail({ eventDataId, device, now, onClose }: {
   const [sending, setSending] = useState<ReceptionRemoteCommandType | null>(null);
   const [commandError, setCommandError] = useState("");
   const online = now - device.lastSeenAt <= CRITICAL_AFTER;
+  const operatingStatus = receptionOperatingStatus(device, now);
 
   useEffect(() => {
     return subscribeToReceptionRemoteCommands(
@@ -344,8 +371,8 @@ function DeviceDetail({ eventDataId, device, now, onClose }: {
           <small>{device.mode === "entry" ? "ENTRY TERMINAL" : "EXIT TERMINAL"}</small>
           <h2>{device.deviceName}</h2>
         </div>
-        <span className={`status-badge ${online ? device.receptionPaused ? "warning" : "normal" : "critical"}`}>
-          {online ? device.receptionPaused ? "一時停止中" : "オンライン" : "通信なし"}
+        <span className={`status-badge ${operatingStatus.severity}`}>
+          {operatingStatus.label}
         </span>
       </div>
 
@@ -568,7 +595,7 @@ export default function App({ database, onReturn }: AppProps) {
       if (now - device.lastSeenAt > WARNING_AFTER) result.push({ id: `${mode}-slow`, severity: "warning", title: `${label}端末の通信が遅れています`, detail: `最終通信は${formatAge(device.lastSeenAt, now)}です` });
       if (device.pendingCount > 0) result.push({ id: `${mode}-pending`, severity: "warning", title: `${label}端末に同期待ちが${device.pendingCount}件あります`, detail: "通信復旧後に受付順で自動送信されます" });
       if (device.cameraState === "error") result.push({ id: `${mode}-camera`, severity: "critical", title: `${label}端末のカメラでエラーが発生しています`, detail: "カメラ権限と受付画面を確認してください" });
-      if (device.receptionPaused) result.push({ id: `${mode}-paused`, severity: "warning", title: `${label}端末の受付が一時停止中です`, detail: "受付端末画面から再開できます" });
+      if (device.receptionPaused) result.push({ id: `${mode}-paused`, severity: "warning", title: `${label}端末の受付が一時停止中です`, detail: "管制の端末画面から再開できます" });
       if (device.appVersion !== EXPECTED_RECEPTION_VERSION) result.push({ id: `${mode}-version`, severity: "warning", title: `${label}端末のバージョンが一致しません`, detail: `現在 ${device.appVersion}／推奨 ${EXPECTED_RECEPTION_VERSION}` });
     }
 
