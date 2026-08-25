@@ -4,6 +4,7 @@ import App from "./App";
 import DeviceAccessGate from "./DeviceAccessGate";
 import PredictiveOpsOverlay from "./PredictiveOpsOverlay";
 import CopilotLanguageExpansionBridge from "./CopilotLanguageExpansionBridge";
+import CopilotRemoteCommandBridge from "./CopilotRemoteCommandBridge";
 import CopilotCapabilityBridge from "./CopilotCapabilityBridge";
 import PredictiveCorrelationMemory from "./PredictiveCorrelationMemory";
 import PredictiveChatBridge from "./PredictiveChatBridge";
@@ -21,6 +22,7 @@ createRoot(document.getElementById("root")!).render(
         <App database={db} />
         <PredictiveOpsOverlay database={db} />
         <CopilotLanguageExpansionBridge />
+        <CopilotRemoteCommandBridge database={db} />
         <CopilotCapabilityBridge database={db} />
         <PredictiveCorrelationMemory database={db} />
         <PredictiveChatBridge database={db} />
