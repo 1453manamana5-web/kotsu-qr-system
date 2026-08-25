@@ -42,6 +42,11 @@ import {
 } from "../offlineReceptionSync";
 
 import {
+  DOWNLOAD_TEST_INTERVAL_MILLISECONDS,
+  measureReceptionDownloadMbps,
+} from "../receptionNetworkQuality";
+
+import {
   finishReceptionRemoteCommand,
   markReceptionRemoteCommandReceived,
   subscribeToPendingReceptionRemoteCommands,
@@ -516,6 +521,16 @@ function ReceptionPage({
     setLastScanAt,
   ] = useState("");
 
+  const networkMetricsRef =
+    useRef({
+      firebaseLatencyMs:
+        0,
+      downloadMbps:
+        0,
+      networkMeasuredAt:
+        "",
+    });
+
   const heartbeatDataRef =
     useRef({
       registeredDeviceId: uid,
@@ -531,6 +546,12 @@ function ReceptionPage({
       pendingCount,
       cameraState,
       receptionPaused,
+      firebaseLatencyMs:
+        0,
+      downloadMbps:
+        0,
+      networkMeasuredAt:
+        "",
       screen:
         `${mode}-reception` as const,
       sessionStartedAt,
@@ -557,6 +578,7 @@ function ReceptionPage({
       pendingCount,
       cameraState,
       receptionPaused,
+      ...networkMetricsRef.current,
       screen:
         `${mode}-reception` as const,
       sessionStartedAt,
@@ -610,6 +632,91 @@ function ReceptionPage({
   }, []);
 
   useEffect(() => {
+    let stopped =
+      false;
+
+    let timer:
+      number |
+      null =
+        null;
+
+    const scheduleNextTest =
+      (delay: number) => {
+        timer =
+          window.setTimeout(
+            () => {
+              void runDownloadTest();
+            },
+            delay
+          );
+      };
+
+    const runDownloadTest =
+      async () => {
+        if (
+          !navigator.onLine ||
+          document.visibilityState !==
+            "visible"
+        ) {
+          if (!stopped) {
+            scheduleNextTest(
+              DOWNLOAD_TEST_INTERVAL_MILLISECONDS
+            );
+          }
+
+          return;
+        }
+
+        try {
+          const downloadMbps =
+            await measureReceptionDownloadMbps();
+
+          if (!stopped) {
+            networkMetricsRef.current = {
+              ...networkMetricsRef.current,
+              downloadMbps,
+              networkMeasuredAt:
+                new Date().toISOString(),
+            };
+
+            heartbeatDataRef.current = {
+              ...heartbeatDataRef.current,
+              ...networkMetricsRef.current,
+            };
+          }
+        } catch (error) {
+          if (!stopped) {
+            console.warn(
+              "受付端末の下り通信速度を測定できませんでした。",
+              error
+            );
+          }
+        } finally {
+          if (!stopped) {
+            scheduleNextTest(
+              DOWNLOAD_TEST_INTERVAL_MILLISECONDS
+            );
+          }
+        }
+      };
+
+    scheduleNextTest(
+      3 * 1000
+    );
+
+    return () => {
+      stopped =
+        true;
+
+      if (timer !== null) {
+        window.clearTimeout(
+          timer
+        );
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     const eventName =
       loadCurrentEventName();
 
@@ -630,11 +737,24 @@ function ReceptionPage({
         }
 
         try {
-          await sendReceptionHeartbeat(
-            eventName,
-            receptionDeviceId,
-            heartbeatDataRef.current
-          );
+          const firebaseLatencyMs =
+            await sendReceptionHeartbeat(
+              eventName,
+              receptionDeviceId,
+              heartbeatDataRef.current
+            );
+
+          if (!stopped) {
+            networkMetricsRef.current = {
+              ...networkMetricsRef.current,
+              firebaseLatencyMs,
+            };
+
+            heartbeatDataRef.current = {
+              ...heartbeatDataRef.current,
+              ...networkMetricsRef.current,
+            };
+          }
         } catch (error) {
           if (
             !stopped
