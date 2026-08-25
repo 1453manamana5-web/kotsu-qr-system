@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
 } from "react";
@@ -16,6 +17,8 @@ import {
   onSnapshot,
   orderBy,
   query,
+  serverTimestamp,
+  setDoc,
   updateDoc,
   type DocumentData,
   type Firestore,
@@ -50,8 +53,9 @@ const ACTIVITY_HISTORY_LIMIT = 240;
 const HISTORICAL_EVENT_LIMIT = 5;
 const HISTORICAL_ACTIVITY_LIMIT = 2_000;
 
-type View = "overview" | "analysis" | "past-data" | "devices" | "incidents" | "diagnostics";
+type View = "overview" | "analysis" | "past-data" | "devices" | "incidents" | "diagnostics" | "lab";
 type FirestoreHealth = "checking" | "online" | "error";
+type AutopilotLevel = 0 | 1 | 2 | 3;
 type NetworkQualitySample = {
   recordedAt: number;
   firebaseLatencyMs: number;
@@ -96,6 +100,31 @@ type AutopilotSuggestion = {
   command?: ReceptionRemoteCommandType;
   destination?: "devices" | "forecast";
 };
+
+const AUTOPILOT_LEVELS: ReadonlyArray<{
+  level: AutopilotLevel;
+  label: string;
+  name: string;
+  description: string;
+}> = [
+  { level: 0, label: "OFF", name: "停止", description: "自動運転の監視・提案・操作を停止します。" },
+  { level: 1, label: "Lv.1", name: "支援", description: "異常を監視し、必要な対応だけを提案します。" },
+  { level: 2, label: "Lv.2", name: "半自動", description: "提案を確認し、人が承認した操作を実行します。" },
+  { level: 3, label: "Lv.3", name: "自動", description: "安全な復旧操作を自動実行し、結果まで確認します。" },
+];
+
+function readAutopilotLevel(value: unknown): AutopilotLevel {
+  return value === 0 || value === 1 || value === 2 || value === 3 ? value : 2;
+}
+
+function autopilotLevelLabel(level: AutopilotLevel) {
+  const setting = AUTOPILOT_LEVELS.find((item) => item.level === level);
+  return setting === undefined ? "Lv.2 半自動" : `${setting.label} ${setting.name}`;
+}
+
+function isSafeAutomaticCommand(command: ReceptionRemoteCommandType | undefined) {
+  return command === "restart-camera" || command === "sync-pending";
+}
 
 function timestampToMilliseconds(value: unknown) {
   if (
@@ -428,7 +457,9 @@ function NavIcon({ kind }: { kind: View }) {
         ? "▣"
         : kind === "incidents"
           ? "△"
-          : "⌁";
+          : kind === "lab"
+            ? "⌬"
+            : "⌁";
   return <span aria-hidden="true">{symbol}</span>;
 }
 
@@ -833,6 +864,10 @@ export default function App({ database, onReturn }: AppProps) {
   const [capacitySaving, setCapacitySaving] = useState(false);
   const [autopilotSending, setAutopilotSending] = useState<string | null>(null);
   const [autopilotFeedback, setAutopilotFeedback] = useState("");
+  const [autopilotLevel, setAutopilotLevel] = useState<AutopilotLevel>(2);
+  const [autopilotLevelSaving, setAutopilotLevelSaving] = useState(false);
+  const [autopilotUpdatedAt, setAutopilotUpdatedAt] = useState(0);
+  const autoExecutedSuggestionIds = useRef(new Set<string>());
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -940,6 +975,14 @@ export default function App({ database, onReturn }: AppProps) {
     }
 
     const basePath = ["event-data", currentEvent.dataDocumentId] as const;
+    const unsubscribeControlSettings = onSnapshot(doc(database, ...basePath), (snapshot) => {
+      const data = snapshot.exists() ? snapshot.data() : {};
+      setAutopilotLevel(readAutopilotLevel(data.autopilotLevel));
+      setAutopilotUpdatedAt(timestampToMilliseconds(data.autopilotUpdatedAt));
+    }, (error) => {
+      console.error("管制ラボ設定を取得できませんでした。", error);
+      setAutopilotFeedback("管制ラボ設定を取得できませんでした。通信状態を確認してください。");
+    });
     const unsubscribeAnalytics = onSnapshot(doc(database, ...basePath, "analytics", "summary"), (snapshot) => {
       setAnalytics(snapshot.exists() ? readAnalytics(snapshot.data()) : null);
     }, (error) => {
@@ -996,6 +1039,7 @@ export default function App({ database, onReturn }: AppProps) {
     });
 
     return () => {
+      unsubscribeControlSettings();
       unsubscribeAnalytics();
       unsubscribeDevices();
       unsubscribeActivities();
@@ -1278,6 +1322,7 @@ export default function App({ database, onReturn }: AppProps) {
   const autopilotSeverity: HealthSeverity = autopilotSuggestions.some((suggestion) => suggestion.severity === "critical")
     ? "critical"
     : autopilotSuggestions.length > 0 ? "warning" : "normal";
+  const displayedAutopilotSeverity: HealthSeverity = autopilotLevel === 0 ? "normal" : autopilotSeverity;
 
   const changeCapacity = async () => {
     if (currentEvent === null || capacitySaving) return;
@@ -1303,6 +1348,31 @@ export default function App({ database, onReturn }: AppProps) {
     }
   };
 
+  const changeAutopilotLevel = async (nextLevel: AutopilotLevel) => {
+    if (currentEvent === null || autopilotLevelSaving || nextLevel === autopilotLevel) return;
+    if (
+      nextLevel === 3 &&
+      !window.confirm("Lv.3では、カメラ再起動と未送信データの再同期を自動実行します。Lv.3へ切り替えますか？")
+    ) return;
+
+    setAutopilotLevelSaving(true);
+    setAutopilotFeedback("");
+    try {
+      await setDoc(doc(database, "event-data", currentEvent.dataDocumentId), {
+        autopilotLevel: nextLevel,
+        autopilotUpdatedAt: serverTimestamp(),
+      }, { merge: true });
+      setAutopilotLevel(nextLevel);
+      if (nextLevel === 0) autoExecutedSuggestionIds.current.clear();
+      setAutopilotFeedback(`自動運転を「${autopilotLevelLabel(nextLevel)}」へ切り替えました。`);
+    } catch (error) {
+      console.error("自動運転レベルを保存できませんでした。", error);
+      setAutopilotFeedback("自動運転レベルを保存できませんでした。端末権限と通信を確認してください。");
+    } finally {
+      setAutopilotLevelSaving(false);
+    }
+  };
+
   const executeAutopilotSuggestion = async (suggestion: AutopilotSuggestion) => {
     if (autopilotSending !== null) return;
 
@@ -1325,9 +1395,15 @@ export default function App({ database, onReturn }: AppProps) {
     }
 
     if (suggestion.device === undefined || suggestion.command === undefined || currentEvent === null) return;
+    if (autopilotLevel <= 1) {
+      setAutopilotFeedback(autopilotLevel === 0
+        ? "自動運転は停止中です。管制ラボでレベルを変更してください。"
+        : "Lv.1は提案のみです。操作する場合はLv.2へ切り替えてください。");
+      return;
+    }
     if (
-      suggestion.command === "pause-reception" &&
-      !window.confirm(`${suggestion.device.deviceName}の受付を一時停止しますか？`)
+      (suggestion.command === "pause-reception" || suggestion.command === "resume-reception") &&
+      !window.confirm(`${suggestion.device.deviceName}で「${remoteCommandLabel(suggestion.command)}」を実行しますか？`)
     ) return;
 
     setAutopilotSending(suggestion.id);
@@ -1342,6 +1418,42 @@ export default function App({ database, onReturn }: AppProps) {
       setAutopilotSending(null);
     }
   };
+
+  useEffect(() => {
+    const activeSuggestionIds = new Set(autopilotSuggestions.map((suggestion) => suggestion.id));
+    for (const suggestionId of autoExecutedSuggestionIds.current) {
+      if (!activeSuggestionIds.has(suggestionId)) autoExecutedSuggestionIds.current.delete(suggestionId);
+    }
+  }, [autopilotSuggestions]);
+
+  useEffect(() => {
+    if (autopilotLevel !== 3 || currentEvent === null || autopilotSending !== null) return;
+    const suggestion = autopilotSuggestions.find((item) => (
+      item.device !== undefined &&
+      isSafeAutomaticCommand(item.command) &&
+      !autoExecutedSuggestionIds.current.has(item.id)
+    ));
+    if (suggestion?.device === undefined || suggestion.command === undefined) return;
+
+    const automaticDevice = suggestion.device;
+    const automaticCommand = suggestion.command;
+    autoExecutedSuggestionIds.current.add(suggestion.id);
+    setAutopilotSending(suggestion.id);
+    setAutopilotFeedback(`${automaticDevice.deviceName}の異常に対して、自動復旧を開始しました。`);
+
+    void sendReceptionRemoteCommand(
+      currentEvent.dataDocumentId,
+      automaticDevice.id,
+      automaticCommand
+    ).then(() => {
+      setAutopilotFeedback(`${automaticDevice.deviceName}へ「${remoteCommandLabel(automaticCommand)}」を自動送信しました。状態の回復を監視しています。`);
+    }).catch((error: unknown) => {
+      console.error("自動復旧コマンドを送信できませんでした。", error);
+      setAutopilotFeedback("自動復旧を送信できませんでした。再実行は停止し、人による確認へ切り替えました。");
+    }).finally(() => {
+      setAutopilotSending(null);
+    });
+  }, [autopilotLevel, autopilotSending, autopilotSuggestions, currentEvent]);
 
   const handleAnalysisNavigation = (page: string) => {
     if (page === "past-data") {
@@ -1393,15 +1505,15 @@ export default function App({ database, onReturn }: AppProps) {
       <aside className="sidebar">
         <div className="brand"><span>QR</span><strong>管制</strong></div>
         <nav aria-label="管制メニュー">
-          {(["overview", "analysis", "devices", "incidents", "diagnostics"] as const).map((item) => (
+          {(["overview", "analysis", "devices", "incidents", "diagnostics", "lab"] as const).map((item) => (
             <button key={item} className={view === item ? "active" : ""} onClick={() => {
               setView(item);
               if (item !== "devices") setSelectedDeviceId(null);
             }}>
               <NavIcon kind={item} />
-              {item === "overview" ? "ライブ運行" : item === "analysis" ? "分析" : item === "devices" ? "端末" : item === "incidents" ? "障害履歴" : "運用支援"}
+              {item === "overview" ? "ライブ運行" : item === "analysis" ? "分析" : item === "devices" ? "端末" : item === "incidents" ? "障害履歴" : item === "diagnostics" ? "通信診断" : "管制ラボ"}
               {item === "incidents" && alerts.length > 0 && <b>{alerts.length}</b>}
-              {item === "diagnostics" && autopilotSuggestions.length > 0 && <b>{autopilotSuggestions.length}</b>}
+              {item === "lab" && autopilotLevel > 0 && autopilotSuggestions.length > 0 && <b>{autopilotSuggestions.length}</b>}
             </button>
           ))}
         </nav>
@@ -1459,14 +1571,14 @@ export default function App({ database, onReturn }: AppProps) {
                   <div className="live-map-footer"><span>現在の増減 <strong className={netRate > 0 ? "warning-text" : "ok-text"}>{netRate >= 0 ? "+" : ""}{netRate.toFixed(1)}人/分</strong></span><span>同期待ち <strong className={totalPending > 0 ? "warning-text" : "ok-text"}>{totalPending}件</strong></span><span>最終診断 <strong>{lastHealthCheck === 0 ? "確認中" : formatTime(lastHealthCheck)}</strong></span></div>
                 </article>
 
-                <section className={`autopilot-home-alert ${autopilotSeverity}`}>
-                  <span aria-hidden="true">{autopilotSeverity === "critical" ? "!" : autopilotSeverity === "warning" ? "△" : "✓"}</span>
+                <section className={`autopilot-home-alert ${displayedAutopilotSeverity}`}>
+                  <span aria-hidden="true">{autopilotLevel === 0 ? "—" : displayedAutopilotSeverity === "critical" ? "!" : displayedAutopilotSeverity === "warning" ? "△" : "✓"}</span>
                   <div>
-                    <small>OPERATIONS AUTOPILOT</small>
-                    <strong>{autopilotSeverity === "critical" ? "異常を検知しました" : autopilotSeverity === "warning" ? "確認が必要な項目があります" : "現在、異常はありません"}</strong>
-                    <p>{autopilotSuggestions.length > 0 ? `${autopilotSuggestions.length}件の提案があります。運用支援画面で内容を確認してください。` : "端末・通信・混雑予測を自動監視しています。"}</p>
+                    <small>OPERATIONS AUTOPILOT · {autopilotLevelLabel(autopilotLevel)}</small>
+                    <strong>{autopilotLevel === 0 ? "自動運転は停止中です" : displayedAutopilotSeverity === "critical" ? "異常を検知しました" : displayedAutopilotSeverity === "warning" ? "確認が必要な項目があります" : "現在、異常はありません"}</strong>
+                    <p>{autopilotLevel === 0 ? "通常の端末監視は継続しています。自動運転は管制ラボから再開できます。" : autopilotSuggestions.length > 0 ? `${autopilotSuggestions.length}件の判断対象があります。管制ラボで内容を確認してください。` : "端末・通信・混雑予測を自動監視しています。"}</p>
                   </div>
-                  <button type="button" onClick={() => setView("diagnostics")}>{autopilotSuggestions.length > 0 ? "運用支援を開く" : "監視状況を見る"}<span aria-hidden="true">→</span></button>
+                  <button type="button" onClick={() => setView("lab")}>管制ラボを開く<span aria-hidden="true">→</span></button>
                 </section>
               </section>
 
@@ -1503,31 +1615,95 @@ export default function App({ database, onReturn }: AppProps) {
 
           {view === "incidents" && <section className="page-panel"><div className="page-heading"><div><small>INCIDENTS</small><h2>現在の異常・注意</h2></div><span>{alerts.length}件</span></div><div className="alert-list">{alerts.length === 0 ? <div className="empty-state success">現在、異常はありません</div> : alerts.map((alert) => <article key={alert.id} className={alert.severity}><span>!</span><div><strong>{alert.title}</strong><p>{alert.detail}</p></div></article>)}</div></section>}
 
-          {view === "diagnostics" && (
-            <section className="page-panel diagnostics">
-              <div className="page-heading"><div><small>OPERATIONS SUPPORT</small><h2>運用支援・通信診断</h2></div><button onClick={() => void runHealthCheck()} disabled={firestoreHealth === "checking"}>再診断</button></div>
+          {view === "lab" && (
+            <section className="page-panel lab-page">
+              <div className="page-heading lab-page-heading">
+                <div><small>CONTROL LABORATORY</small><h2>管制ラボ</h2></div>
+                <span>実験システム 01 · 運用オートパイロット</span>
+              </div>
 
-              <aside className="autopilot-panel autopilot-diagnostics">
+              <div className={`lab-status-hero level-${autopilotLevel}`}>
+                <div className="lab-status-orbit" aria-hidden="true"><span>{autopilotLevel}</span></div>
+                <div className="lab-status-copy">
+                  <small>CURRENT AUTOMATION LEVEL</small>
+                  <h3>{autopilotLevelLabel(autopilotLevel)}</h3>
+                  <p>{AUTOPILOT_LEVELS.find((item) => item.level === autopilotLevel)?.description}</p>
+                </div>
+                <dl>
+                  <div><dt>監視状態</dt><dd>{autopilotLevel === 0 ? "停止中" : "稼働中"}</dd></div>
+                  <div><dt>判断対象</dt><dd>{autopilotLevel === 0 ? 0 : autopilotSuggestions.length}件</dd></div>
+                  <div><dt>設定同期</dt><dd>{autopilotUpdatedAt === 0 ? "初期設定" : formatTime(autopilotUpdatedAt)}</dd></div>
+                </dl>
+                <button type="button" className="lab-emergency-stop" onClick={() => void changeAutopilotLevel(0)} disabled={autopilotLevel === 0 || autopilotLevelSaving}>緊急停止</button>
+              </div>
+
+              <div className="autopilot-level-grid" aria-label="自動運転レベル">
+                {AUTOPILOT_LEVELS.map((setting) => (
+                  <button
+                    type="button"
+                    key={setting.level}
+                    className={`${autopilotLevel === setting.level ? "active" : ""} level-${setting.level}`}
+                    onClick={() => void changeAutopilotLevel(setting.level)}
+                    disabled={currentEvent === null || autopilotLevelSaving}
+                    aria-pressed={autopilotLevel === setting.level}
+                  >
+                    <span>{setting.label}</span>
+                    <strong>{setting.name}</strong>
+                    <p>{setting.description}</p>
+                    <small>{autopilotLevel === setting.level ? "現在の設定" : "このレベルへ切替"}</small>
+                  </button>
+                ))}
+              </div>
+
+              <aside className="autopilot-panel autopilot-lab-panel">
                 <div className="autopilot-summary">
-                  <div className="autopilot-heading"><div><small>OPERATIONS AUTOPILOT</small><h2>運用オートパイロット</h2></div><span>提案モード</span></div>
-                  <p className="autopilot-intro">端末・通信・混雑予測を監視し、必要な操作だけを提案します。操作は承認後に実行されます。</p>
+                  <div className="autopilot-heading"><div><small>LIVE DECISION ENGINE</small><h2>現在の判断</h2></div><span>{autopilotLevelLabel(autopilotLevel)}</span></div>
+                  <p className="autopilot-intro">Lv.3でも受付停止・再開は自動化せず、人の承認を待ちます。自動処理は同じ異常に対して1回だけ実行します。</p>
                   {autopilotFeedback !== "" && <p className="autopilot-feedback" role="status">{autopilotFeedback}</p>}
                 </div>
                 <div className="autopilot-list">
-                  {autopilotSuggestions.length === 0 ? (
+                  {autopilotLevel === 0 ? (
+                    <article className="autopilot-clear is-stopped"><span>—</span><div><strong>自動運転は停止しています</strong><p>レベルを選択すると判断エンジンが再開します。</p></div></article>
+                  ) : autopilotSuggestions.length === 0 ? (
                     <article className="autopilot-clear"><span>✓</span><div><strong>対応が必要な項目はありません</strong><p>端末と会場の流れは安定しています。</p></div></article>
                   ) : autopilotSuggestions.map((suggestion) => (
                     <article key={suggestion.id} className={suggestion.severity}>
                       <span>{suggestion.severity === "critical" ? "!" : "△"}</span>
                       <div><strong>{suggestion.title}</strong><p>{suggestion.detail}</p></div>
-                      <button type="button" onClick={() => void executeAutopilotSuggestion(suggestion)} disabled={autopilotSending !== null}>
-                        {autopilotSending === suggestion.id ? "送信中…" : suggestion.buttonLabel}
+                      <button
+                        type="button"
+                        onClick={() => void executeAutopilotSuggestion(suggestion)}
+                        disabled={
+                          autopilotSending !== null ||
+                          (suggestion.command !== undefined && autopilotLevel <= 1) ||
+                          (autopilotLevel === 3 && isSafeAutomaticCommand(suggestion.command))
+                        }
+                      >
+                        {autopilotSending === suggestion.id
+                          ? autopilotLevel === 3 && isSafeAutomaticCommand(suggestion.command) ? "自動送信中…" : "送信中…"
+                          : suggestion.command !== undefined && autopilotLevel === 1
+                            ? "提案のみ"
+                            : autopilotLevel === 3 && isSafeAutomaticCommand(suggestion.command)
+                              ? "自動実行対象"
+                              : suggestion.buttonLabel}
                       </button>
                     </article>
                   ))}
                 </div>
                 <button type="button" className="autopilot-incidents" onClick={() => setView("incidents")}>障害履歴を確認</button>
               </aside>
+
+              <div className="lab-guardrail-grid">
+                <article><span>自</span><div><small>AUTOMATIC</small><strong>自動実行できる操作</strong><p>カメラ再起動、未送信データの再同期</p></div></article>
+                <article><span>認</span><div><small>APPROVAL REQUIRED</small><strong>人の承認が必要</strong><p>受付停止、受付再開、定員やイベント設定の変更</p></div></article>
+                <article><span>限</span><div><small>SYSTEM LIMIT</small><strong>遠隔操作できない状態</strong><p>端末が完全に通信切断している場合は現地確認が必要</p></div></article>
+              </div>
+            </section>
+          )}
+
+          {view === "diagnostics" && (
+            <section className="page-panel diagnostics">
+              <div className="page-heading"><div><small>COMMUNICATION DIAGNOSTICS</small><h2>通信・システム診断</h2></div><button onClick={() => void runHealthCheck()} disabled={firestoreHealth === "checking"}>再診断</button></div>
 
               <div className="diagnostic-grid"><article><small>ブラウザ通信</small><strong className={navigator.onLine ? "ok-text" : "error-text"}>{navigator.onLine ? "オンライン" : "オフライン"}</strong><p>端末がネットワークを認識しているか</p></article><article><small>Firestore実通信</small><strong className={firestoreHealth === "online" ? "ok-text" : firestoreHealth === "error" ? "error-text" : "warning-text"}>{firestoreHealth === "online" ? "正常" : firestoreHealth === "error" ? "接続不可" : "確認中"}</strong><p>キャッシュではなくサーバーへ直接確認</p></article><article><small>リアルタイム監視</small><strong className={streamError === "" ? "ok-text" : "error-text"}>{streamError === "" ? "受信中" : "停止"}</strong><p>{streamError || "イベント・集計・端末状態を受信中"}</p></article><article><small>受付推奨バージョン</small><strong>{EXPECTED_RECEPTION_VERSION}</strong><p>入口・出口の一致を確認します</p></article></div>
               <div className="diagnostic-note"><strong>通信不能時について</strong><p>受付iPadが完全にオフラインになると、管制側では最後に受信した状態までしか確認できません。端末内の未送信データは受付iPadに保持されます。</p></div>
