@@ -250,7 +250,7 @@ service cloud.firestore {
           'deviceId', 'registeredDeviceId', 'deviceName', 'deviceType',
           'role', 'mode', 'appVersion', 'lastSeenAt', 'lastSuccessfulSyncAt',
           'pendingCount', 'cameraState', 'receptionPaused', 'firebaseLatencyMs',
-          'downloadMbps', 'networkMeasuredAt', 'screen', 'sessionStartedAt',
+          'downloadMbps', 'networkMeasuredAt', 'screen', 'viewState', 'sessionStartedAt',
           'lastScanAt', 'updatedAt'
         ])
         && request.resource.data.keys().hasAll([
@@ -298,6 +298,11 @@ service cloud.firestore {
             && request.resource.data.networkMeasuredAt.size() <= 60
           ))
         && request.resource.data.screen in ['entry-reception', 'exit-reception']
+        && (!('viewState' in request.resource.data)
+          || request.resource.data.viewState in [
+            'waiting', 'processing', 'success-animation',
+            'ticket-success', 'member-success', 'error'
+          ])
         && request.resource.data.sessionStartedAt is string
         && request.resource.data.sessionStartedAt.size() <= 60
         && request.resource.data.lastScanAt is string
