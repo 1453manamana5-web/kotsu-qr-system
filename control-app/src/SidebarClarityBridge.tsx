@@ -40,30 +40,6 @@ function decorateNavigation(nav: Element) {
   }
 }
 
-function syncActiveNavigation(nav: Element) {
-  const shell = document.querySelector(".control-shell");
-  if (!(shell instanceof HTMLElement)) return;
-  const buttons = Array.from(nav.querySelectorAll<HTMLButtonElement>(":scope > button[data-nav-key]"));
-  const forcedKey = shell.classList.contains("operations-management-view-open")
-    ? "operations"
-    : shell.classList.contains("maintenance-view-open")
-      ? "settings"
-      : null;
-
-  if (forcedKey !== null) {
-    for (const button of buttons) {
-      button.classList.toggle("active", button.dataset.navKey === forcedKey);
-    }
-    return;
-  }
-
-  for (const button of buttons) {
-    if (button.dataset.navKey === "operations" || button.dataset.navKey === "settings") {
-      button.classList.remove("active");
-    }
-  }
-}
-
 export default function SidebarClarityBridge() {
   const [navTarget, setNavTarget] = useState<Element | null>(null);
 
@@ -71,20 +47,12 @@ export default function SidebarClarityBridge() {
     const update = () => {
       const next = document.querySelector(".sidebar nav");
       setNavTarget((current) => current === next ? current : next);
-      if (next !== null) {
-        decorateNavigation(next);
-        syncActiveNavigation(next);
-      }
+      if (next !== null) decorateNavigation(next);
     };
 
     const initial = window.setTimeout(update, 0);
     const observer = new MutationObserver(update);
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["class", "aria-pressed"],
-    });
+    observer.observe(document.body, { childList: true, subtree: true });
 
     return () => {
       window.clearTimeout(initial);
