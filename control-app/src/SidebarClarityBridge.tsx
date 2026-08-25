@@ -30,15 +30,37 @@ const NAV_ITEMS: ReadonlyArray<{
 
 function decorateNavigation(nav: Element) {
   const buttons = Array.from(nav.querySelectorAll<HTMLButtonElement>(":scope > button"));
-
   for (const button of buttons) {
     const text = (button.textContent ?? "").replace(/\s+/g, "").trim();
     const item = NAV_ITEMS.find((candidate) => text.includes(candidate.match));
     if (item === undefined) continue;
-
     button.dataset.navKey = item.key;
     button.title = `${item.match} — ${item.description}`;
     button.setAttribute("aria-label", `${item.match}。${item.description}`);
+  }
+}
+
+function syncActiveNavigation(nav: Element) {
+  const shell = document.querySelector(".control-shell");
+  if (!(shell instanceof HTMLElement)) return;
+  const buttons = Array.from(nav.querySelectorAll<HTMLButtonElement>(":scope > button[data-nav-key]"));
+  const forcedKey = shell.classList.contains("operations-management-view-open")
+    ? "operations"
+    : shell.classList.contains("maintenance-view-open")
+      ? "settings"
+      : null;
+
+  if (forcedKey !== null) {
+    for (const button of buttons) {
+      button.classList.toggle("active", button.dataset.navKey === forcedKey);
+    }
+    return;
+  }
+
+  for (const button of buttons) {
+    if (button.dataset.navKey === "operations" || button.dataset.navKey === "settings") {
+      button.classList.remove("active");
+    }
   }
 }
 
@@ -49,15 +71,20 @@ export default function SidebarClarityBridge() {
     const update = () => {
       const next = document.querySelector(".sidebar nav");
       setNavTarget((current) => current === next ? current : next);
-      if (next !== null) decorateNavigation(next);
+      if (next !== null) {
+        decorateNavigation(next);
+        syncActiveNavigation(next);
+      }
     };
 
     const initial = window.setTimeout(update, 0);
     const observer = new MutationObserver(update);
     observer.observe(document.body, { childList: true, subtree: true });
+    const timer = window.setInterval(update, 120);
 
     return () => {
       window.clearTimeout(initial);
+      window.clearInterval(timer);
       observer.disconnect();
     };
   }, []);
@@ -66,10 +93,10 @@ export default function SidebarClarityBridge() {
 
   return createPortal(
     <>
-      <span className="sidebar-section-label sidebar-section-label-daily">普段使う</span>
-      <span className="sidebar-section-label sidebar-section-label-check">確認・調査</span>
-      <span className="sidebar-section-label sidebar-section-label-settings">設定</span>
-      <span className="sidebar-section-label sidebar-section-label-experimental">試験機能</span>
+      <span className="sidebar-section-label sidebar-section-label-daily"><strong>メイン</strong><small>日常の運用</small></span>
+      <span className="sidebar-section-label sidebar-section-label-check"><strong>確認</strong><small>状況を調べる</small></span>
+      <span className="sidebar-section-label sidebar-section-label-settings"><strong>システム</strong><small>設定・管理</small></span>
+      <span className="sidebar-section-label sidebar-section-label-experimental"><strong>試験機能</strong><small>高度な機能</small></span>
     </>,
     navTarget
   );
