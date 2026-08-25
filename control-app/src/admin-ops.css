@@ -1,0 +1,182 @@
+.admin-ops-panel {
+  grid-column: 1 / -1;
+  padding: 20px;
+}
+
+.admin-ops-heading,
+.admin-stock-intelligence,
+.copilot-admin-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-ops-heading small,
+.admin-ops-grid small,
+.admin-stock-intelligence small,
+.copilot-admin-panel small {
+  letter-spacing: .12em;
+  opacity: .62;
+}
+
+.admin-ops-heading h2,
+.copilot-admin-panel h3 {
+  margin: 4px 0 0;
+}
+
+.admin-stock-badge {
+  padding: 7px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  background: rgba(127, 127, 127, .14);
+}
+
+.admin-stock-badge.normal,
+.admin-stock-intelligence.normal,
+.copilot-admin-status.normal {
+  border-color: rgba(46, 160, 92, .35);
+}
+
+.admin-stock-badge.watch,
+.admin-stock-intelligence.watch,
+.copilot-admin-status.watch {
+  border-color: rgba(209, 154, 35, .4);
+}
+
+.admin-stock-badge.warning,
+.admin-stock-intelligence.warning,
+.copilot-admin-status.warning {
+  border-color: rgba(209, 70, 70, .42);
+}
+
+.admin-ops-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.admin-ops-grid > section {
+  border: 1px solid var(--line, rgba(127, 127, 127, .2));
+  border-radius: 14px;
+  padding: 15px;
+  min-width: 0;
+}
+
+.admin-ops-grid > section > strong {
+  display: block;
+  margin-top: 7px;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.05;
+}
+
+.admin-ops-grid > section > strong em {
+  margin-left: 4px;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 600;
+  opacity: .65;
+}
+
+.admin-ops-grid dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 10px;
+  margin: 13px 0 0;
+}
+
+.admin-ops-grid dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(127, 127, 127, .14);
+}
+
+.admin-ops-grid dt,
+.admin-ops-grid dd {
+  margin: 0;
+  font-size: 12px;
+}
+
+.admin-ops-grid dd {
+  font-weight: 800;
+}
+
+.admin-ops-grid .event-card > strong {
+  font-size: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-ops-grid .event-card > p {
+  margin: 8px 0 0;
+  font-size: 13px;
+  opacity: .72;
+}
+
+.admin-stock-intelligence {
+  margin-top: 12px;
+  padding: 14px 15px;
+  border: 1px solid rgba(127, 127, 127, .2);
+  border-radius: 14px;
+  align-items: flex-start;
+}
+
+.admin-stock-intelligence > div {
+  min-width: 150px;
+}
+
+.admin-stock-intelligence strong {
+  display: block;
+  margin-top: 3px;
+}
+
+.admin-stock-intelligence p {
+  flex: 1;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.copilot-admin-panel {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid rgba(127, 127, 127, .2);
+  border-radius: 16px;
+}
+
+.copilot-admin-panel > p {
+  margin: 8px 0 0;
+  line-height: 1.55;
+}
+
+.copilot-admin-status {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(127, 127, 127, .2);
+  border-radius: 12px;
+}
+
+.copilot-admin-status span {
+  font-size: 12px;
+  opacity: .7;
+}
+
+.copilot-admin-examples {
+  font-size: 12px;
+  opacity: .7;
+}
+
+@media (max-width: 900px) {
+  .admin-ops-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-stock-intelligence {
+    flex-direction: column;
+  }
+}
