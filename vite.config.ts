@@ -1,5 +1,7 @@
 import {
   defineConfig,
+  type Plugin,
+  type ViteDevServer,
 } from "vite";
 
 import react from "@vitejs/plugin-react";
@@ -10,6 +12,95 @@ import {
 
 const APP_BASE =
   "/qr-system/";
+
+const SPEED_TEST_ASSET_BYTES =
+  256 * 1024;
+
+function createSpeedTestAsset() {
+  const bytes =
+    new Uint8Array(
+      SPEED_TEST_ASSET_BYTES
+    );
+
+  let state =
+    0x6d2b79f5;
+
+  for (
+    let index = 0;
+    index < bytes.length;
+    index += 1
+  ) {
+    state ^=
+      state << 13;
+    state ^=
+      state >>> 17;
+    state ^=
+      state << 5;
+
+    bytes[index] =
+      state >>> 24;
+  }
+
+  return bytes;
+}
+
+function speedTestAssetPlugin(): Plugin {
+  const bytes =
+    createSpeedTestAsset();
+
+  const serveSpeedTestAsset = (
+    server: ViteDevServer
+  ) => {
+    server.middlewares.use(
+      (request, response, next) => {
+        const pathname =
+          (request.url ?? "").split("?")[0];
+
+        if (
+          pathname !==
+          `${APP_BASE}speed-test.bin`
+        ) {
+          next();
+          return;
+        }
+
+        response.statusCode =
+          200;
+        response.setHeader(
+          "Content-Type",
+          "application/octet-stream"
+        );
+        response.setHeader(
+          "Cache-Control",
+          "no-store"
+        );
+        response.end(
+          bytes
+        );
+      }
+    );
+  };
+
+  return {
+    name:
+      "qr-speed-test-asset",
+
+    configureServer:
+      serveSpeedTestAsset,
+
+    generateBundle() {
+
+      this.emitFile({
+        type:
+          "asset",
+        fileName:
+          "speed-test.bin",
+        source:
+          bytes,
+      });
+    },
+  };
+}
 
 export default defineConfig({
   base:
@@ -55,6 +146,8 @@ export default defineConfig({
 
   plugins: [
     react(),
+
+    speedTestAssetPlugin(),
 
     VitePWA({
       /*
