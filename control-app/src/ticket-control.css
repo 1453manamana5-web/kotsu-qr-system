@@ -1,15 +1,11 @@
 .ticket-control-panel {
   margin-top: 18px;
   padding: 18px;
-  border: 1px solid rgba(251, 191, 36, 0.24);
+  border: 1px solid #efdba6;
   border-radius: 16px;
-  background: linear-gradient(
-    135deg,
-    rgba(120, 53, 15, 0.2),
-    rgba(15, 23, 42, 0.54) 46%,
-    rgba(15, 23, 42, 0.46)
-  );
-  box-shadow: inset 0 1px 0 rgba(253, 230, 138, 0.04);
+  background: linear-gradient(145deg, #fffdf7, #fff7df);
+  box-shadow: 0 9px 24px rgba(151, 105, 20, 0.07);
+  color: #3f321b;
 }
 
 .ticket-control-heading,
@@ -23,19 +19,20 @@
 .ticket-control-heading small,
 .ticket-control-current small {
   display: block;
-  color: #f6c96b;
+  color: #a66b08;
   font-size: 0.68rem;
-  font-weight: 800;
+  font-weight: 850;
   letter-spacing: 0.12em;
 }
 
 .ticket-control-heading h3 {
   margin: 4px 0 0;
+  color: #3c2b0d;
   font-size: 1rem;
 }
 
 .ticket-control-heading > span {
-  color: #d9c6a0;
+  color: #8b6f3c;
   font-size: 0.78rem;
 }
 
@@ -50,35 +47,39 @@
   width: 100%;
   min-width: 0;
   padding: 11px 13px;
-  border: 1px solid rgba(245, 158, 11, 0.26);
+  border: 1px solid #e4cf9c;
   border-radius: 10px;
-  background: rgba(40, 24, 7, 0.48);
-  color: #fffaf0;
+  background: #ffffff;
+  color: #2f2a20;
   font: inherit;
 }
 
+.ticket-control-search input::placeholder {
+  color: #a3967c;
+}
+
 .ticket-control-search input:focus {
-  outline: 2px solid rgba(245, 158, 11, 0.26);
-  border-color: rgba(251, 191, 36, 0.58);
+  outline: 2px solid rgba(234, 179, 61, 0.22);
+  border-color: #dca52f;
 }
 
 .ticket-control-search button,
 .ticket-status-actions button,
 .ticket-ai-action-button {
-  border: 1px solid rgba(245, 158, 11, 0.34);
+  border: 1px solid #dfb451;
   border-radius: 10px;
-  background: rgba(146, 64, 14, 0.24);
-  color: #fff2c7;
+  background: #fff0c5;
+  color: #80520b;
   font: inherit;
-  font-weight: 800;
+  font-weight: 850;
   cursor: pointer;
 }
 
 .ticket-control-search button:hover,
 .ticket-status-actions button:not(:disabled):hover,
 .ticket-ai-action-button:not(:disabled):hover {
-  border-color: rgba(251, 191, 36, 0.58);
-  background: rgba(180, 83, 9, 0.32);
+  border-color: #c99322;
+  background: #ffe7a8;
 }
 
 .ticket-control-search button {
@@ -88,15 +89,15 @@
 .ticket-control-result {
   margin-top: 14px;
   padding: 14px;
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  border: 1px solid #ead9b0;
   border-radius: 12px;
-  background: rgba(56, 32, 9, 0.3);
+  background: rgba(255, 255, 255, 0.84);
 }
 
 .ticket-control-current strong {
   display: block;
   margin-top: 3px;
-  color: #fff4d6;
+  color: #302718;
   font-size: 1.08rem;
   letter-spacing: 0.04em;
 }
@@ -109,29 +110,29 @@
 }
 
 .ticket-status-chip.status-0 {
-  background: rgba(34, 197, 94, 0.14);
-  color: #9df4ba;
+  background: #e5f7ec;
+  color: #167744;
 }
 
 .ticket-status-chip.status-1 {
-  background: rgba(56, 189, 248, 0.14);
-  color: #b9ecff;
+  background: #e3f3fb;
+  color: #176a94;
 }
 
 .ticket-status-chip.status-2 {
-  background: rgba(148, 163, 184, 0.14);
-  color: #d5dfec;
+  background: #edf0f4;
+  color: #596779;
 }
 
 .ticket-status-chip.status-3 {
-  background: rgba(248, 113, 113, 0.14);
-  color: #ffc3c3;
+  background: #ffe8e8;
+  color: #a03e3e;
 }
 
 .ticket-control-result > p,
 .ticket-control-note,
 .ticket-control-empty {
-  color: #cbb995;
+  color: #75684f;
   font-size: 0.78rem;
   line-height: 1.6;
 }
@@ -154,7 +155,7 @@
 .ticket-status-actions button:disabled,
 .ticket-ai-action-button:disabled {
   cursor: default;
-  opacity: 0.42;
+  opacity: 0.45;
 }
 
 .ticket-control-note {
@@ -163,7 +164,7 @@
 
 .ticket-control-empty {
   margin: 12px 0 0;
-  color: #ffc1c1;
+  color: #a43d3d;
 }
 
 .ticket-ai-action-button {
