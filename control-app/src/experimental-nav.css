@@ -1,0 +1,46 @@
+/* Experimental feature navigation polish.
+   Keeps trial features visually separate from the core control workflow. */
+
+.sidebar nav button:nth-of-type(6) {
+  position: relative;
+  margin-top: 34px;
+}
+
+.sidebar nav button:nth-of-type(6)::before {
+  content: "試験機能";
+  position: absolute;
+  left: 4px;
+  top: -27px;
+  pointer-events: none;
+  color: #7f91b8;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .14em;
+  line-height: 1;
+}
+
+/*
+ * AI control icon: an original, neutral network/circuit motif.
+ * The old sparkle symbol is visually replaced so it does not resemble
+ * common AI-service branding.
+ */
+.sidebar nav button:nth-of-type(7) > span:first-child {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  justify-self: center;
+  font-size: 0;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 11 15.8 6.8M7 13l8.8 4.2M18 8.2v7.6' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'/%3E%3Ccircle cx='5' cy='12' r='2.35' fill='black'/%3E%3Ccircle cx='18' cy='6' r='2.35' fill='black'/%3E%3Ccircle cx='18' cy='18' r='2.35' fill='black'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 11 15.8 6.8M7 13l8.8 4.2M18 8.2v7.6' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'/%3E%3Ccircle cx='5' cy='12' r='2.35' fill='black'/%3E%3Ccircle cx='18' cy='6' r='2.35' fill='black'/%3E%3Ccircle cx='18' cy='18' r='2.35' fill='black'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* Keep the page title consistent with the sidebar label. */
+.copilot-page-heading h2 {
+  font-size: 0;
+}
+
+.copilot-page-heading h2::after {
+  content: "AI管制";
+  font-size: 18px;
+}
