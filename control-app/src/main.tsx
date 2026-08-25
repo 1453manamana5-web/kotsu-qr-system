@@ -4,6 +4,7 @@ import App from "./App";
 import DeviceAccessGate from "./DeviceAccessGate";
 import { db } from "./firebase";
 import "./index.css";
+import "./experimental-nav.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
