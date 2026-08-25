@@ -98,26 +98,52 @@ async function resetAllData(database: Firestore, currentBackup: FullBackupFile) 
 }
 
 export default function MaintenanceDataBridge({ database }: { database: Firestore }) {
-  const [target, setTarget] = useState<Element | null>(null);
+  const [navTarget, setNavTarget] = useState<Element | null>(null);
+  const [mainTarget, setMainTarget] = useState<Element | null>(null);
+  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
 
   useEffect(() => {
-    const updateTarget = () => {
-      setTarget((current) => {
-        const next = document.getElementById("live-prediction-panel");
+    const updateTargets = () => {
+      setNavTarget((current) => {
+        const next = document.querySelector(".sidebar nav");
+        return current === next ? current : next;
+      });
+      setMainTarget((current) => {
+        const next = document.querySelector(".control-shell main");
         return current === next ? current : next;
       });
     };
 
-    const initial = window.setTimeout(updateTarget, 0);
-    const observer = new MutationObserver(updateTarget);
+    const initial = window.setTimeout(updateTargets, 0);
+    const observer = new MutationObserver(updateTargets);
     observer.observe(document.body, { childList: true, subtree: true });
     return () => {
       window.clearTimeout(initial);
       observer.disconnect();
     };
   }, []);
+
+  useEffect(() => {
+    const shell = document.querySelector(".control-shell");
+    if (!(shell instanceof HTMLElement)) return undefined;
+    shell.classList.toggle("maintenance-view-open", open);
+    return () => shell.classList.remove("maintenance-view-open");
+  }, [open]);
+
+  useEffect(() => {
+    if (navTarget === null) return undefined;
+    const closeWhenAnotherViewOpens = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const button = target.closest("button");
+      if (button === null || button.classList.contains("maintenance-nav-button")) return;
+      setOpen(false);
+    };
+    navTarget.addEventListener("click", closeWhenAnotherViewOpens);
+    return () => navTarget.removeEventListener("click", closeWhenAnotherViewOpens);
+  }, [navTarget]);
 
   const exportData = async () => {
     if (busy) return;
@@ -196,16 +222,8 @@ export default function MaintenanceDataBridge({ database }: { database: Firestor
   const runFullReset = async () => {
     if (busy) return;
     if (!window.confirm(
-      "すべてのイベント・チケット・部員・受付履歴・分析データなどを初期化します。\n実行前に自動バックアップを作成します。続行しますか？"
+      "すべてのイベント・チケット・部員・受付履歴・分析データなどを初期化します。\n実行前に完全バックアップを自動作成します。\n\nこの操作は元に戻せません。実行しますか？"
     )) return;
-
-    const typed = window.prompt(
-      "最終確認です。実行する場合は「全データ初期化」と入力してください。"
-    );
-    if (typed !== "全データ初期化") {
-      if (typed !== null) window.alert("確認文字が一致しないため、初期化を中止しました。");
-      return;
-    }
 
     setBusy(true);
     setStatus("初期化前の完全バックアップを作成しています…");
@@ -232,58 +250,79 @@ export default function MaintenanceDataBridge({ database }: { database: Firestor
     }
   };
 
-  if (target === null) return null;
+  if (navTarget === null || mainTarget === null) return null;
 
-  return createPortal(
-    <section className="maintenance-data-panel">
-      <div className="maintenance-data-heading">
-        <div>
-          <small>MAINTENANCE & DATA CONTROL</small>
-          <h2>保守・データ管理</h2>
-        </div>
-        <span>{busy ? "処理中" : "管制専用"}</span>
-      </div>
+  return (
+    <>
+      {createPortal(
+        <button
+          type="button"
+          className={`maintenance-nav-button${open ? " active" : ""}`}
+          onClick={() => setOpen(true)}
+          aria-pressed={open}
+        >
+          <span aria-hidden="true">◆</span>
+          保守・データ
+        </button>,
+        navTarget
+      )}
 
-      <div className="maintenance-data-grid">
-        <article>
-          <small>BACKUP</small>
-          <strong>完全バックアップ</strong>
-          <p>イベント、チケット、部員、受付履歴、分析、端末設定をJSONへ保存します。</p>
-          <button type="button" disabled={busy} onClick={() => void exportData()}>
-            {busy ? "処理中…" : "バックアップを作成"}
-          </button>
-        </article>
+      {open && createPortal(
+        <section className="page-panel maintenance-data-page">
+          <div className="page-heading maintenance-page-heading">
+            <div>
+              <small>MAINTENANCE & DATA CONTROL</small>
+              <h2>保守・データ管理</h2>
+            </div>
+            <span>{busy ? "処理中" : "管制専用"}</span>
+          </div>
 
-        <article>
-          <small>RESTORE</small>
-          <strong>バックアップ復元</strong>
-          <p>復元前に現在データを自動保存してから、共有データをバックアップ時点へ戻します。</p>
-          <label className={busy ? "is-disabled" : ""}>
-            バックアップを選択
-            <input
-              type="file"
-              accept=".json,application/json"
-              disabled={busy}
-              onChange={importData}
-            />
-          </label>
-        </article>
+          <p className="maintenance-page-intro">
+            システム全体のバックアップ、復元、初期化をここで管理します。重要な操作は実行前に確認します。
+          </p>
 
-        <article className="danger">
-          <small>FULL RESET</small>
-          <strong>全部リセット</strong>
-          <p>実行前に完全バックアップを自動作成します。承認済み部員端末の権限は維持されます。</p>
-          <button type="button" disabled={busy} onClick={() => void runFullReset()}>
-            全データを初期化
-          </button>
-        </article>
-      </div>
+          <div className="maintenance-data-grid">
+            <article>
+              <small>BACKUP</small>
+              <strong>完全バックアップ</strong>
+              <p>イベント、チケット、部員、受付履歴、分析、端末設定をJSONへ保存します。</p>
+              <button type="button" disabled={busy} onClick={() => void exportData()}>
+                {busy ? "処理中…" : "バックアップを作成"}
+              </button>
+            </article>
 
-      <p className="maintenance-data-note">
-        バックアップにはQR認証情報が含まれます。部外者へ渡さず、安全な場所に保管してください。
-      </p>
-      {status !== "" && <p className="maintenance-data-status" role="status">{status}</p>}
-    </section>,
-    target
+            <article>
+              <small>RESTORE</small>
+              <strong>バックアップ復元</strong>
+              <p>復元前に現在データを自動保存してから、共有データをバックアップ時点へ戻します。</p>
+              <label className={busy ? "is-disabled" : ""}>
+                バックアップを選択
+                <input
+                  type="file"
+                  accept=".json,application/json"
+                  disabled={busy}
+                  onChange={importData}
+                />
+              </label>
+            </article>
+
+            <article className="danger">
+              <small>FULL RESET</small>
+              <strong>全部リセット</strong>
+              <p>実行前に完全バックアップを自動作成します。承認済み部員端末の権限は維持されます。</p>
+              <button type="button" disabled={busy} onClick={() => void runFullReset()}>
+                全データを初期化
+              </button>
+            </article>
+          </div>
+
+          <p className="maintenance-data-note">
+            バックアップにはQR認証情報が含まれます。部外者へ渡さず、安全な場所に保管してください。
+          </p>
+          {status !== "" && <p className="maintenance-data-status" role="status">{status}</p>}
+        </section>,
+        mainTarget
+      )}
+    </>
   );
 }
