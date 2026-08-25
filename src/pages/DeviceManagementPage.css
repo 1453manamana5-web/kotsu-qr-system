@@ -430,65 +430,6 @@
   font-weight: 880;
 }
 
-.device-management-link-form {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 138px auto;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 13px;
-  padding: 12px;
-  border: 1px solid #d9defb;
-  border-radius: 15px;
-  background: #f4f5ff;
-}
-
-.device-management-link-form div {
-  display: grid;
-  gap: 2px;
-}
-
-.device-management-link-form strong {
-  color: #2f3c70;
-  font-size: 13px;
-}
-
-.device-management-link-form small {
-  color: #77809a;
-  font-size: 10px;
-}
-
-.device-management-link-form input {
-  width: 100%;
-  min-height: 40px;
-  padding: 0 10px;
-  border: 1px solid #cbd2e9;
-  border-radius: 10px;
-  background: #fff;
-  color: #26345f;
-  font-size: 15px;
-  font-weight: 900;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
-.device-management-link-form button {
-  min-height: 40px;
-  padding: 0 14px;
-  border: 0;
-  border-radius: 10px;
-  color: #fff;
-  background: #4657d8;
-  font-size: 12px;
-  font-weight: 850;
-}
-
-.device-management-link-error {
-  margin: -5px 0 11px;
-  color: #b33030;
-  font-size: 11px;
-  font-weight: 750;
-}
-
 .device-management-list {
   display: grid;
 
@@ -863,14 +804,6 @@
 }
 
 @media (max-width: 620px) {
-  .device-management-link-form {
-    grid-template-columns: 1fr auto;
-  }
-
-  .device-management-link-form div {
-    grid-column: 1 / -1;
-  }
-
   .device-management-device-card {
     height: auto;
     min-height: 132px;
