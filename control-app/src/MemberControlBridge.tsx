@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
-  collection,
   doc,
   onSnapshot,
   type DocumentData,
@@ -9,6 +8,7 @@ import {
 } from "firebase/firestore";
 import {
   saveEventMemberInFirestore,
+  subscribeToEventMembers,
   type EventMember,
   type MemberStatus,
 } from "../../src/memberFirestore";
@@ -52,19 +52,6 @@ function normalize(text: string) {
     .toLowerCase()
     .replace(/[０-９]/g, (value) => String.fromCharCode(value.charCodeAt(0) - 0xfee0))
     .replace(/[\s\u3000。、！？!?「」『』（）()・]/g, "");
-}
-
-function isMemberStatus(value: unknown): value is MemberStatus {
-  return value === "未入室" || value === "入室中" || value === "退出済み";
-}
-
-function readMember(documentId: string, data: DocumentData): EventMember | null {
-  if (typeof data.name !== "string" || !isMemberStatus(data.status)) return null;
-  return {
-    qrNumber: typeof data.qrNumber === "string" ? data.qrNumber : documentId,
-    name: data.name,
-    status: data.status,
-  };
 }
 
 function readCurrentEvent(id: string, data: DocumentData): CurrentEvent | null {
@@ -381,18 +368,21 @@ export default function MemberControlBridge({ database }: { database: Firestore 
   useEffect(() => {
     if (currentEvent === null) return undefined;
     const eventDataId = currentEvent.dataDocumentId;
-    return onSnapshot(
-      collection(database, "event-data", eventDataId, "members"),
-      (snapshot) => {
-        const next = snapshot.docs
-          .map((item) => readMember(item.id, item.data()))
-          .filter((member): member is EventMember => member !== null)
-          .sort((a, b) => a.name.localeCompare(b.name, "ja-JP") || a.qrNumber.localeCompare(b.qrNumber, "ja-JP", { numeric: true }));
+
+    return subscribeToEventMembers(
+      currentEvent.name,
+      (nextMembers) => {
+        const next = [...nextMembers].sort(
+          (a, b) => a.name.localeCompare(b.name, "ja-JP") || a.qrNumber.localeCompare(b.qrNumber, "ja-JP", { numeric: true })
+        );
         membersRef.current = next;
         setMemberState({ eventDataId, members: next });
+      },
+      (error) => {
+        console.error("管制画面で部員名簿を同期できませんでした。", error);
       }
     );
-  }, [currentEvent, database]);
+  }, [currentEvent]);
 
   const members = currentEvent !== null && memberState.eventDataId === currentEvent.dataDocumentId
     ? memberState.members
