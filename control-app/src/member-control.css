@@ -1,9 +1,15 @@
 .member-control-panel {
   margin-top: 14px;
   padding: 18px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid rgba(45, 212, 191, 0.24);
   border-radius: 16px;
-  background: rgba(15, 23, 42, 0.42);
+  background: linear-gradient(
+    135deg,
+    rgba(6, 78, 59, 0.22),
+    rgba(15, 23, 42, 0.52) 46%,
+    rgba(15, 23, 42, 0.44)
+  );
+  box-shadow: inset 0 1px 0 rgba(153, 246, 228, 0.04);
 }
 
 .member-control-heading,
@@ -17,7 +23,7 @@
 .member-control-heading small,
 .member-control-current small {
   display: block;
-  color: #8ea6c8;
+  color: #72e5d1;
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -29,7 +35,7 @@
 }
 
 .member-control-heading > span {
-  color: #a9bbd4;
+  color: #a9d3ca;
   font-size: 0.78rem;
 }
 
@@ -44,29 +50,37 @@
   width: 100%;
   min-width: 0;
   padding: 11px 13px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  border: 1px solid rgba(45, 212, 191, 0.26);
   border-radius: 10px;
-  background: rgba(2, 6, 23, 0.55);
-  color: #f8fafc;
+  background: rgba(3, 40, 36, 0.46);
+  color: #f0fdfa;
   font: inherit;
 }
 
 .member-control-search input:focus {
-  outline: 2px solid rgba(129, 140, 248, 0.28);
-  border-color: rgba(129, 140, 248, 0.5);
+  outline: 2px solid rgba(45, 212, 191, 0.24);
+  border-color: rgba(94, 234, 212, 0.56);
 }
 
 .member-control-search button,
 .member-status-actions button,
 .member-ai-action-button,
 .member-candidate-list button {
-  border: 1px solid rgba(129, 140, 248, 0.28);
+  border: 1px solid rgba(45, 212, 191, 0.32);
   border-radius: 10px;
-  background: rgba(67, 56, 202, 0.17);
-  color: #eef2ff;
+  background: rgba(13, 148, 136, 0.2);
+  color: #ddfff8;
   font: inherit;
   font-weight: 800;
   cursor: pointer;
+}
+
+.member-control-search button:hover,
+.member-status-actions button:not(:disabled):hover,
+.member-ai-action-button:not(:disabled):hover,
+.member-candidate-list button:hover {
+  border-color: rgba(94, 234, 212, 0.56);
+  background: rgba(13, 148, 136, 0.3);
 }
 
 .member-control-search button {
@@ -76,21 +90,22 @@
 .member-control-result {
   margin-top: 14px;
   padding: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  border: 1px solid rgba(45, 212, 191, 0.2);
   border-radius: 12px;
-  background: rgba(2, 6, 23, 0.34);
+  background: rgba(4, 47, 46, 0.28);
 }
 
 .member-control-current strong {
   display: block;
   margin-top: 3px;
+  color: #e7fff9;
   font-size: 1.08rem;
 }
 
 .member-control-current em {
   display: block;
   margin-top: 3px;
-  color: #94a3b8;
+  color: #91c9bf;
   font-size: 0.72rem;
   font-style: normal;
 }
@@ -113,15 +128,15 @@
 }
 
 .member-status-chip.status-2 {
-  background: rgba(99, 102, 241, 0.14);
-  color: #c7d2fe;
+  background: rgba(20, 184, 166, 0.14);
+  color: #99f6e4;
 }
 
 .member-control-result > p,
 .member-control-note,
 .member-control-empty,
 .member-candidate-list > p {
-  color: #9fb0c7;
+  color: #a7c9c2;
   font-size: 0.78rem;
   line-height: 1.6;
 }
@@ -176,7 +191,7 @@
 }
 
 .member-candidate-list button span {
-  color: #a9bbd4;
+  color: #9ecbc2;
   font-size: 0.72rem;
   font-weight: 600;
 }
