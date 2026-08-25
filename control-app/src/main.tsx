@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import DeviceAccessGate from "./DeviceAccessGate";
 import PredictiveOpsOverlay from "./PredictiveOpsOverlay";
+import CopilotCapabilityBridge from "./CopilotCapabilityBridge";
 import PredictiveCorrelationMemory from "./PredictiveCorrelationMemory";
 import PredictiveChatBridge from "./PredictiveChatBridge";
 import { db } from "./firebase";
@@ -10,6 +11,7 @@ import "./index.css";
 import "./experimental-nav.css";
 import "./predictive-ops.css";
 import "./predictive-correlation.css";
+import "./copilot-capabilities.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -17,6 +19,7 @@ createRoot(document.getElementById("root")!).render(
       <>
         <App database={db} />
         <PredictiveOpsOverlay database={db} />
+        <CopilotCapabilityBridge database={db} />
         <PredictiveCorrelationMemory database={db} />
         <PredictiveChatBridge database={db} />
       </>
