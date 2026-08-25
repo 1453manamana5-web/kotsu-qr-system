@@ -154,18 +154,25 @@ export default function EventDeletionCleanup() {
       collection(db, "events"),
       { includeMetadataChanges: true },
       (snapshot) => {
+        // Firestore は削除操作をローカルへ先に反映します。
+        // サーバー確定前に関連データを消すと、削除失敗時に復元できないため無視します。
+        if (
+          snapshot.metadata.fromCache ||
+          snapshot.metadata.hasPendingWrites
+        ) {
+          return;
+        }
+
         const nextEvents = readKnownEvents(snapshot.docs);
         const previousEvents = previousEventsRef.current;
         previousEventsRef.current = nextEvents;
 
         // AI障害メモリはイベント一覧を正として常に孤児レコードを掃除します。
-        if (!snapshot.metadata.fromCache) {
-          void removeDeletedEventsFromIncidentMemory(
-            new Set(nextEvents.keys())
-          ).catch((error) => {
-            console.warn("削除済みイベントのAI障害メモリを整理できませんでした。", error);
-          });
-        }
+        void removeDeletedEventsFromIncidentMemory(
+          new Set(nextEvents.keys())
+        ).catch((error) => {
+          console.warn("削除済みイベントのAI障害メモリを整理できませんでした。", error);
+        });
 
         if (previousEvents === null) return;
 
