@@ -325,7 +325,7 @@ export default function PersonalizedControlBridge({ database }: { database: Fire
   const [overviewHost, setOverviewHost] = useState<HTMLElement | null>(null);
   const [topbarHost, setTopbarHost] = useState<Element | null>(null);
   const [currentFeature, setCurrentFeature] = useState<FeatureId | null>(() => currentFeatureFromDom());
-  const [clock, setClock] = useState(Date.now());
+  const [clock, setClock] = useState(0);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(database, "system", "current-event"), (snapshot) => {
@@ -373,6 +373,7 @@ export default function PersonalizedControlBridge({ database }: { database: Fire
   }, []);
 
   useEffect(() => {
+    queueMicrotask(() => setClock(Date.now()));
     const interval = window.setInterval(() => setClock(Date.now()), 30_000);
     return () => window.clearInterval(interval);
   }, []);
