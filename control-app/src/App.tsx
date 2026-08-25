@@ -1275,6 +1275,9 @@ export default function App({ database, onReturn }: AppProps) {
       .sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity])
       .slice(0, 3);
   }, [capacity, entryDevice, entryRate, exitDevice, forecast15, predicted15, previousEntryRate]);
+  const autopilotSeverity: HealthSeverity = autopilotSuggestions.some((suggestion) => suggestion.severity === "critical")
+    ? "critical"
+    : autopilotSuggestions.length > 0 ? "warning" : "normal";
 
   const changeCapacity = async () => {
     if (currentEvent === null || capacitySaving) return;
@@ -1304,7 +1307,10 @@ export default function App({ database, onReturn }: AppProps) {
     if (autopilotSending !== null) return;
 
     if (suggestion.destination === "forecast") {
-      document.getElementById("live-prediction-panel")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setView("overview");
+      window.setTimeout(() => {
+        document.getElementById("live-prediction-panel")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 0);
       return;
     }
 
@@ -1393,8 +1399,9 @@ export default function App({ database, onReturn }: AppProps) {
               if (item !== "devices") setSelectedDeviceId(null);
             }}>
               <NavIcon kind={item} />
-              {item === "overview" ? "ライブ運行" : item === "analysis" ? "分析" : item === "devices" ? "端末" : item === "incidents" ? "障害履歴" : "診断"}
+              {item === "overview" ? "ライブ運行" : item === "analysis" ? "分析" : item === "devices" ? "端末" : item === "incidents" ? "障害履歴" : "運用支援"}
               {item === "incidents" && alerts.length > 0 && <b>{alerts.length}</b>}
+              {item === "diagnostics" && autopilotSuggestions.length > 0 && <b>{autopilotSuggestions.length}</b>}
             </button>
           ))}
         </nav>
@@ -1452,27 +1459,15 @@ export default function App({ database, onReturn }: AppProps) {
                   <div className="live-map-footer"><span>現在の増減 <strong className={netRate > 0 ? "warning-text" : "ok-text"}>{netRate >= 0 ? "+" : ""}{netRate.toFixed(1)}人/分</strong></span><span>同期待ち <strong className={totalPending > 0 ? "warning-text" : "ok-text"}>{totalPending}件</strong></span><span>最終診断 <strong>{lastHealthCheck === 0 ? "確認中" : formatTime(lastHealthCheck)}</strong></span></div>
                 </article>
 
-                <aside className="autopilot-panel">
-                  <div className="autopilot-summary">
-                    <div className="autopilot-heading"><div><small>OPERATIONS AUTOPILOT</small><h2>運用オートパイロット</h2></div><span>提案モード</span></div>
-                    <p className="autopilot-intro">状況を監視し、必要な操作だけを提案します。操作は承認後に実行されます。</p>
-                    {autopilotFeedback !== "" && <p className="autopilot-feedback" role="status">{autopilotFeedback}</p>}
+                <section className={`autopilot-home-alert ${autopilotSeverity}`}>
+                  <span aria-hidden="true">{autopilotSeverity === "critical" ? "!" : autopilotSeverity === "warning" ? "△" : "✓"}</span>
+                  <div>
+                    <small>OPERATIONS AUTOPILOT</small>
+                    <strong>{autopilotSeverity === "critical" ? "異常を検知しました" : autopilotSeverity === "warning" ? "確認が必要な項目があります" : "現在、異常はありません"}</strong>
+                    <p>{autopilotSuggestions.length > 0 ? `${autopilotSuggestions.length}件の提案があります。運用支援画面で内容を確認してください。` : "端末・通信・混雑予測を自動監視しています。"}</p>
                   </div>
-                  <div className="autopilot-list">
-                    {autopilotSuggestions.length === 0 ? (
-                      <article className="autopilot-clear"><span>✓</span><div><strong>対応が必要な項目はありません</strong><p>端末と会場の流れは安定しています。</p></div></article>
-                    ) : autopilotSuggestions.map((suggestion) => (
-                      <article key={suggestion.id} className={suggestion.severity}>
-                        <span>{suggestion.severity === "critical" ? "!" : "△"}</span>
-                        <div><strong>{suggestion.title}</strong><p>{suggestion.detail}</p></div>
-                        <button type="button" onClick={() => void executeAutopilotSuggestion(suggestion)} disabled={autopilotSending !== null}>
-                          {autopilotSending === suggestion.id ? "送信中…" : suggestion.buttonLabel}
-                        </button>
-                      </article>
-                    ))}
-                  </div>
-                  <button type="button" className="autopilot-incidents" onClick={() => setView("incidents")}>異常・注意をすべて確認</button>
-                </aside>
+                  <button type="button" onClick={() => setView("diagnostics")}>{autopilotSuggestions.length > 0 ? "運用支援を開く" : "監視状況を見る"}<span aria-hidden="true">→</span></button>
+                </section>
               </section>
 
               <section className="live-forecast-grid" id="live-prediction-panel">
@@ -1508,7 +1503,36 @@ export default function App({ database, onReturn }: AppProps) {
 
           {view === "incidents" && <section className="page-panel"><div className="page-heading"><div><small>INCIDENTS</small><h2>現在の異常・注意</h2></div><span>{alerts.length}件</span></div><div className="alert-list">{alerts.length === 0 ? <div className="empty-state success">現在、異常はありません</div> : alerts.map((alert) => <article key={alert.id} className={alert.severity}><span>!</span><div><strong>{alert.title}</strong><p>{alert.detail}</p></div></article>)}</div></section>}
 
-          {view === "diagnostics" && <section className="page-panel diagnostics"><div className="page-heading"><div><small>DIAGNOSTICS</small><h2>通信診断</h2></div><button onClick={() => void runHealthCheck()} disabled={firestoreHealth === "checking"}>再診断</button></div><div className="diagnostic-grid"><article><small>ブラウザ通信</small><strong className={navigator.onLine ? "ok-text" : "error-text"}>{navigator.onLine ? "オンライン" : "オフライン"}</strong><p>端末がネットワークを認識しているか</p></article><article><small>Firestore実通信</small><strong className={firestoreHealth === "online" ? "ok-text" : firestoreHealth === "error" ? "error-text" : "warning-text"}>{firestoreHealth === "online" ? "正常" : firestoreHealth === "error" ? "接続不可" : "確認中"}</strong><p>キャッシュではなくサーバーへ直接確認</p></article><article><small>リアルタイム監視</small><strong className={streamError === "" ? "ok-text" : "error-text"}>{streamError === "" ? "受信中" : "停止"}</strong><p>{streamError || "イベント・集計・端末状態を受信中"}</p></article><article><small>受付推奨バージョン</small><strong>{EXPECTED_RECEPTION_VERSION}</strong><p>入口・出口の一致を確認します</p></article></div><div className="diagnostic-note"><strong>通信不能時について</strong><p>受付iPadが完全にオフラインになると、管制側では最後に受信した状態までしか確認できません。端末内の未送信データは受付iPadに保持されます。</p></div></section>}
+          {view === "diagnostics" && (
+            <section className="page-panel diagnostics">
+              <div className="page-heading"><div><small>OPERATIONS SUPPORT</small><h2>運用支援・通信診断</h2></div><button onClick={() => void runHealthCheck()} disabled={firestoreHealth === "checking"}>再診断</button></div>
+
+              <aside className="autopilot-panel autopilot-diagnostics">
+                <div className="autopilot-summary">
+                  <div className="autopilot-heading"><div><small>OPERATIONS AUTOPILOT</small><h2>運用オートパイロット</h2></div><span>提案モード</span></div>
+                  <p className="autopilot-intro">端末・通信・混雑予測を監視し、必要な操作だけを提案します。操作は承認後に実行されます。</p>
+                  {autopilotFeedback !== "" && <p className="autopilot-feedback" role="status">{autopilotFeedback}</p>}
+                </div>
+                <div className="autopilot-list">
+                  {autopilotSuggestions.length === 0 ? (
+                    <article className="autopilot-clear"><span>✓</span><div><strong>対応が必要な項目はありません</strong><p>端末と会場の流れは安定しています。</p></div></article>
+                  ) : autopilotSuggestions.map((suggestion) => (
+                    <article key={suggestion.id} className={suggestion.severity}>
+                      <span>{suggestion.severity === "critical" ? "!" : "△"}</span>
+                      <div><strong>{suggestion.title}</strong><p>{suggestion.detail}</p></div>
+                      <button type="button" onClick={() => void executeAutopilotSuggestion(suggestion)} disabled={autopilotSending !== null}>
+                        {autopilotSending === suggestion.id ? "送信中…" : suggestion.buttonLabel}
+                      </button>
+                    </article>
+                  ))}
+                </div>
+                <button type="button" className="autopilot-incidents" onClick={() => setView("incidents")}>障害履歴を確認</button>
+              </aside>
+
+              <div className="diagnostic-grid"><article><small>ブラウザ通信</small><strong className={navigator.onLine ? "ok-text" : "error-text"}>{navigator.onLine ? "オンライン" : "オフライン"}</strong><p>端末がネットワークを認識しているか</p></article><article><small>Firestore実通信</small><strong className={firestoreHealth === "online" ? "ok-text" : firestoreHealth === "error" ? "error-text" : "warning-text"}>{firestoreHealth === "online" ? "正常" : firestoreHealth === "error" ? "接続不可" : "確認中"}</strong><p>キャッシュではなくサーバーへ直接確認</p></article><article><small>リアルタイム監視</small><strong className={streamError === "" ? "ok-text" : "error-text"}>{streamError === "" ? "受信中" : "停止"}</strong><p>{streamError || "イベント・集計・端末状態を受信中"}</p></article><article><small>受付推奨バージョン</small><strong>{EXPECTED_RECEPTION_VERSION}</strong><p>入口・出口の一致を確認します</p></article></div>
+              <div className="diagnostic-note"><strong>通信不能時について</strong><p>受付iPadが完全にオフラインになると、管制側では最後に受信した状態までしか確認できません。端末内の未送信データは受付iPadに保持されます。</p></div>
+            </section>
+          )}
         </main>
       </div>
     </div>
