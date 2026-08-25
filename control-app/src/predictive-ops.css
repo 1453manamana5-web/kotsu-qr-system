@@ -1,0 +1,292 @@
+.predictive-radar-panel,
+.predictive-command-center {
+  margin-top: 18px;
+  padding: 20px;
+  border: 1px solid #d8e1ee;
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(255,255,255,.98), rgba(245,248,253,.96));
+  box-shadow: 0 12px 30px rgba(31, 51, 88, .08);
+}
+
+.predictive-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.predictive-panel-heading small,
+.predictive-radar-hero small,
+.predictive-command-brief small {
+  color: #7b8ba8;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+
+.predictive-panel-heading h2 {
+  margin: 4px 0 0;
+  color: #17284a;
+  font-size: 19px;
+}
+
+.predictive-panel-heading > span {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  padding: 0 11px;
+  border-radius: 999px;
+  color: #147249;
+  background: #e2f5e9;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.predictive-panel-heading > span.watch { color: #865600; background: #fff0c7; }
+.predictive-panel-heading > span.warning { color: #a05c00; background: #ffe7bd; }
+.predictive-panel-heading > span.critical { color: #a12d37; background: #ffe0e3; }
+
+.predictive-radar-hero {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  align-items: center;
+  gap: 22px;
+  margin-top: 17px;
+  padding: 17px 18px;
+  overflow: hidden;
+  border: 1px solid #dbe5f1;
+  border-radius: 17px;
+  background:
+    radial-gradient(circle at 12% 50%, rgba(81,91,255,.10), transparent 27%),
+    #f8faff;
+}
+
+.predictive-radar-hero strong {
+  display: block;
+  margin-top: 5px;
+  color: #18294b;
+  font-size: 18px;
+}
+
+.predictive-radar-hero p {
+  margin: 7px 0 0;
+  color: #62708b;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.predictive-radar-visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 112px;
+  border: 1px solid #c9d5e7;
+  border-radius: 50%;
+  background:
+    linear-gradient(90deg, transparent 49.5%, #dce4ef 50%, transparent 50.5%),
+    linear-gradient(transparent 49.5%, #dce4ef 50%, transparent 50.5%),
+    radial-gradient(circle, transparent 24%, #dce4ef 25%, transparent 26%, transparent 48%, #dce4ef 49%, transparent 50%);
+}
+
+.predictive-radar-visual::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: conic-gradient(from 270deg, rgba(67,83,219,.32), transparent 22%, transparent 100%);
+  animation: predictive-radar-sweep 4.2s linear infinite;
+}
+
+.predictive-radar-visual > span {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  color: #fff;
+  background: #3549c9;
+  box-shadow: 0 7px 18px rgba(53,73,201,.28);
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.predictive-radar-visual > i {
+  position: absolute;
+  z-index: 3;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e39b1d;
+  box-shadow: 0 0 0 4px rgba(227,155,29,.14);
+}
+
+.predictive-radar-visual > i:nth-child(1) { left: 23px; top: 35px; }
+.predictive-radar-visual > i:nth-child(2) { right: 21px; top: 24px; }
+.predictive-radar-visual > i:nth-child(3) { right: 30px; bottom: 20px; }
+
+@keyframes predictive-radar-sweep { to { transform: rotate(360deg); } }
+
+.predictive-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 15px;
+}
+
+.predictive-risk-card {
+  position: relative;
+  overflow: hidden;
+  padding: 16px;
+  border: 1px solid #dbe4ef;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.predictive-risk-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: #20a86a;
+}
+.predictive-risk-card.watch::before { background: #d7a323; }
+.predictive-risk-card.warning::before { background: #e48721; }
+.predictive-risk-card.critical::before { background: #d84b55; }
+
+.predictive-risk-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.predictive-risk-head small { color: #8996ac; font-size: 8px; font-weight: 900; letter-spacing: .13em; }
+.predictive-risk-head h3 { margin: 3px 0 0; color: #203052; font-size: 16px; }
+.predictive-risk-state { padding: 5px 9px; border-radius: 999px; color: #087548; background: #e3f6eb; font-size: 10px; font-weight: 900; }
+.predictive-risk-state.watch { color: #865800; background: #fff0c8; }
+.predictive-risk-state.warning { color: #9a5500; background: #ffe6ba; }
+.predictive-risk-state.critical { color: #a42e38; background: #ffe1e4; }
+
+.predictive-score-row {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  margin-top: 15px;
+}
+
+.predictive-score-ring {
+  --risk: 0deg;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, #fff 0 58%, transparent 59%), conic-gradient(#4b5ed9 var(--risk), #e8edf5 0);
+}
+
+.predictive-score-ring strong { color: #21345b; font-size: 22px; line-height: 1; }
+.predictive-score-ring small { margin-top: 2px; color: #8b97aa; font-size: 9px; font-weight: 800; }
+.predictive-score-copy b { color: #233657; font-size: 13px; }
+.predictive-score-copy p { margin: 5px 0 0; color: #68758e; font-size: 11px; line-height: 1.55; }
+
+.predictive-evidence-list {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 12px 13px 12px 28px;
+  border-radius: 12px;
+  color: #586983;
+  background: #f6f8fc;
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.predictive-evidence-list li::marker { color: #6a78cb; }
+.predictive-disclaimer,
+.predictive-empty {
+  margin: 13px 2px 0;
+  color: #8490a5;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.predictive-empty {
+  padding: 22px;
+  border: 1px dashed #cfd9e8;
+  border-radius: 14px;
+  text-align: center;
+}
+
+.predictive-command-center {
+  border-color: #d9dcf3;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(94,89,222,.10), transparent 34%),
+    linear-gradient(145deg, #fff, #f7f7ff);
+}
+
+.predictive-command-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(230px, .7fr);
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.predictive-command-brief,
+.predictive-command-status {
+  border: 1px solid #e0e3f1;
+  border-radius: 15px;
+  background: rgba(255,255,255,.9);
+}
+
+.predictive-command-brief { padding: 16px 17px; }
+.predictive-command-brief strong { display: block; margin-top: 5px; color: #202f57; font-size: 17px; }
+.predictive-command-brief p { margin: 7px 0 0; color: #66738d; font-size: 11.5px; line-height: 1.6; }
+.predictive-command-brief ul { display: grid; gap: 5px; margin: 11px 0 0; padding-left: 18px; color: #52617d; font-size: 10.5px; }
+
+.predictive-command-status {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.predictive-command-status > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  padding: 13px 8px;
+  border-left: 1px solid #e7e9f2;
+  text-align: center;
+}
+.predictive-command-status > div:first-child { border-left: 0; }
+.predictive-command-status span { color: #7e8ba2; font-size: 9px; font-weight: 800; }
+.predictive-command-status strong { color: #293b6b; font-size: 25px; }
+
+.predictive-command-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+}
+.predictive-command-prompts > span { margin-right: 3px; color: #7c88a0; font-size: 9px; font-weight: 850; }
+.predictive-command-prompts b { padding: 7px 10px; border: 1px solid #dce1f1; border-radius: 999px; color: #4b5a86; background: rgba(255,255,255,.85); font-size: 10px; }
+
+@media (max-width: 900px) {
+  .predictive-risk-grid,
+  .predictive-command-grid { grid-template-columns: 1fr; }
+  .predictive-radar-hero { grid-template-columns: 102px minmax(0, 1fr); }
+  .predictive-radar-visual { width: 92px; height: 92px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .predictive-radar-visual::after { animation: none; }
+}
