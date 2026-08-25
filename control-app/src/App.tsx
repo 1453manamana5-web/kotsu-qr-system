@@ -11,6 +11,7 @@ import {
   collection,
   doc,
   getDocFromServer,
+  getDocs,
   limit,
   onSnapshot,
   orderBy,
@@ -46,6 +47,8 @@ const WARNING_AFTER = 15_000;
 const CRITICAL_AFTER = 45_000;
 const DEFAULT_CAPACITY = 200;
 const ACTIVITY_HISTORY_LIMIT = 240;
+const HISTORICAL_EVENT_LIMIT = 5;
+const HISTORICAL_ACTIVITY_LIMIT = 2_000;
 
 type View = "overview" | "analysis" | "past-data" | "devices" | "incidents" | "diagnostics";
 type FirestoreHealth = "checking" | "online" | "error";
@@ -64,6 +67,24 @@ type MinuteFlow = {
   label: string;
   entries: number;
   exits: number;
+};
+type HistoricalEventFlow = {
+  eventId: string;
+  eventName: string;
+  startAt: number;
+  endAt: number;
+  activities: LiveActivity[];
+};
+type HybridForecast = {
+  minutes: 5 | 10 | 15;
+  value: number;
+  lower: number;
+  upper: number;
+  confidence: number;
+  liveDelta: number;
+  historicalDelta: number | null;
+  historyWeight: number;
+  historicalSamples: number;
 };
 type AutopilotSuggestion = {
   id: string;
@@ -235,14 +256,86 @@ function activityRate(
   )).length / minutes;
 }
 
-function predictOccupancy(current: number, netRate: number, minutes: number) {
-  return Math.max(0, Math.round(current + netRate * minutes));
+function eventDateTime(event: EventData, time: string) {
+  const timestamp = new Date(`${event.date}T${time}`).getTime();
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function netChangeBetween(activities: LiveActivity[], start: number, end: number) {
+  return activities
+    .filter((activity) => activity.timestamp > start && activity.timestamp <= end)
+    .reduce((total, activity) => total + (isEntryActivity(activity) ? 1 : -1), 0);
+}
+
+function clamp(value: number, minimum: number, maximum: number) {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
+function createHybridForecast(
+  minutes: 5 | 10 | 15,
+  current: number,
+  liveNetRate: number,
+  recentActivityCount: number,
+  historicalFlows: HistoricalEventFlow[],
+  currentStartAt: number,
+  now: number
+): HybridForecast {
+  const elapsed = Math.max(0, now - currentStartAt);
+  const historicalDeltas = currentStartAt <= 0 ? [] : historicalFlows.flatMap((historical) => {
+    const start = historical.startAt + elapsed;
+    const end = start + minutes * 60_000;
+    if (start < historical.startAt || end > historical.endAt) return [];
+    return [netChangeBetween(historical.activities, start, end)];
+  });
+  const historicalDelta = historicalDeltas.length === 0
+    ? null
+    : historicalDeltas.reduce((total, value) => total + value, 0) / historicalDeltas.length;
+  const liveEvidence = clamp(recentActivityCount / 10, 0, 1);
+  const historyWeight = historicalDelta === null
+    ? 0
+    : clamp(0.15 + historicalDeltas.length * 0.08 + (1 - liveEvidence) * 0.22, 0.18, 0.55);
+  const liveDelta = liveNetRate * minutes;
+  const blendedDelta = historicalDelta === null
+    ? liveDelta
+    : liveDelta * (1 - historyWeight) + historicalDelta * historyWeight;
+  const historicalAverage = historicalDelta ?? 0;
+  const variance = historicalDeltas.length < 2
+    ? 0
+    : historicalDeltas.reduce((total, value) => total + (value - historicalAverage) ** 2, 0) / historicalDeltas.length;
+  const consistency = historicalDeltas.length === 0
+    ? 0
+    : historicalDeltas.length === 1
+      ? 0.5
+      : 1 - clamp(Math.sqrt(variance) / (Math.abs(historicalAverage) + 5), 0, 1);
+  const historyEvidence = clamp(historicalDeltas.length / 3, 0, 1);
+  const confidence = Math.round(clamp(
+    30 + liveEvidence * 35 + historyEvidence * 20 + consistency * 15,
+    25,
+    94
+  ));
+  const disagreement = historicalDelta === null ? 0 : Math.abs(liveDelta - historicalDelta);
+  const uncertainty = Math.max(2, Math.round(
+    2 + (100 - confidence) / 100 * minutes * 0.35 + disagreement * 0.45 + Math.abs(blendedDelta) * 0.18
+  ));
+  const value = Math.max(0, Math.round(current + blendedDelta));
+
+  return {
+    minutes,
+    value,
+    lower: Math.max(0, value - uncertainty),
+    upper: value + uncertainty,
+    confidence,
+    liveDelta,
+    historicalDelta,
+    historyWeight,
+    historicalSamples: historicalDeltas.length,
+  };
 }
 
 function buildOccupancyPoints(
   activities: LiveActivity[],
   current: number,
-  netRate: number,
+  forecasts: HybridForecast[],
   now: number
 ): OccupancyPoint[] {
   const history = [30, 25, 20, 15, 10, 5, 0].map((minutesAgo) => {
@@ -260,9 +353,9 @@ function buildOccupancyPoints(
 
   return [
     ...history,
-    ...[5, 10, 15].map((minutes) => ({
-      label: `+${minutes}分`,
-      value: predictOccupancy(current, netRate, minutes),
+    ...forecasts.map((forecast) => ({
+      label: `+${forecast.minutes}分`,
+      value: forecast.value,
       predicted: true,
     })),
   ];
@@ -726,6 +819,8 @@ export default function App({ database, onReturn }: AppProps) {
   const [currentEventId, setCurrentEventId] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [activities, setActivities] = useState<LiveActivity[]>([]);
+  const [historicalFlows, setHistoricalFlows] = useState<HistoricalEventFlow[]>([]);
+  const [historyLoadState, setHistoryLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [devices, setDevices] = useState<ReceptionDevice[]>([]);
   const [networkHistory, setNetworkHistory] = useState<Record<string, NetworkQualitySample[]>>({});
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
@@ -771,6 +866,73 @@ export default function App({ database, onReturn }: AppProps) {
     () => events.find((event) => event.id === currentEventId) ?? null,
     [currentEventId, events]
   );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadHistoricalFlows = async () => {
+      await Promise.resolve();
+      if (cancelled) return;
+      setHistoryLoadState("loading");
+
+      const historicalEvents = events
+        .filter((event) => event.id !== currentEvent?.id)
+        .map((event) => ({
+          event,
+          startAt: eventDateTime(event, event.startTime),
+          endAt: eventDateTime(event, event.endTime),
+        }))
+        .filter(({ event, startAt, endAt }) => (
+          startAt > 0 &&
+          endAt > startAt &&
+          (event.status === "ended" || endAt < Date.now())
+        ))
+        .sort((a, b) => b.startAt - a.startAt)
+        .slice(0, HISTORICAL_EVENT_LIMIT);
+
+      if (historicalEvents.length === 0) {
+        if (!cancelled) {
+          setHistoricalFlows([]);
+          setHistoryLoadState("ready");
+        }
+        return;
+      }
+
+      const loaded = await Promise.all(historicalEvents.map(async ({ event, startAt, endAt }) => {
+        try {
+          const snapshot = await getDocs(query(
+            collection(database, "event-data", event.dataDocumentId, "activity"),
+            orderBy("timestamp", "asc"),
+            limit(HISTORICAL_ACTIVITY_LIMIT)
+          ));
+          const historicalActivities = snapshot.docs
+            .map((item) => readLiveActivity(item.id, item.data()))
+            .filter((activity): activity is LiveActivity => activity !== null);
+          if (historicalActivities.length === 0) return null;
+          return {
+            eventId: event.id,
+            eventName: event.name,
+            startAt,
+            endAt,
+            activities: historicalActivities,
+          } satisfies HistoricalEventFlow;
+        } catch (error) {
+          console.warn(`${event.name}の過去履歴を予測へ読み込めませんでした。`, error);
+          return null;
+        }
+      }));
+
+      if (cancelled) return;
+      const successful = loaded.filter((flow): flow is HistoricalEventFlow => flow !== null);
+      setHistoricalFlows(successful);
+      setHistoryLoadState(successful.length === 0 ? "error" : "ready");
+    };
+
+    void loadHistoricalFlows();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentEvent?.id, database, events]);
 
   useEffect(() => {
     if (currentEvent === null) {
@@ -911,19 +1073,73 @@ export default function App({ database, onReturn }: AppProps) {
   const entryRate = activityRate(observedActivities, now, 5, 0, isEntryActivity);
   const exitRate = activityRate(observedActivities, now, 5, 0, (activity) => !isEntryActivity(activity));
   const previousEntryRate = activityRate(observedActivities, now, 10, 5, isEntryActivity);
-  const netRate = entryRate - exitRate;
-  const predicted5 = predictOccupancy(currentOccupancy, netRate, 5);
-  const predicted10 = predictOccupancy(currentOccupancy, netRate, 10);
-  const predicted15 = predictOccupancy(currentOccupancy, netRate, 15);
+  const netRate1 = activityRate(observedActivities, now, 1, 0, isEntryActivity)
+    - activityRate(observedActivities, now, 1, 0, (activity) => !isEntryActivity(activity));
+  const netRate5 = entryRate - exitRate;
+  const netRate10 = activityRate(observedActivities, now, 10, 0, isEntryActivity)
+    - activityRate(observedActivities, now, 10, 0, (activity) => !isEntryActivity(activity));
+  const netRate = netRate1 * 0.5 + netRate5 * 0.35 + netRate10 * 0.15;
+  const recentActivityCount = observedActivities.filter((activity) => activity.timestamp > now - 10 * 60_000 && activity.timestamp <= now).length;
+  const currentEventStartAt = currentEvent === null ? 0 : eventDateTime(currentEvent, currentEvent.startTime);
+  const deviceConfidencePenalty = (entryDevice === null || exitDevice === null ? 15 : 0) + (streamError === "" ? 0 : 15);
+  const hybridForecasts = useMemo(
+    () => ([5, 10, 15] as const).map((minutes) => {
+      const forecast = createHybridForecast(
+        minutes,
+        currentOccupancy,
+        netRate,
+        recentActivityCount,
+        historicalFlows,
+        currentEventStartAt,
+        now
+      );
+      return {
+        ...forecast,
+        confidence: Math.max(20, forecast.confidence - deviceConfidencePenalty),
+      };
+    }),
+    [currentEventStartAt, currentOccupancy, deviceConfidencePenalty, historicalFlows, netRate, now, recentActivityCount]
+  );
+  const forecast5 = hybridForecasts[0];
+  const forecast10 = hybridForecasts[1];
+  const forecast15 = hybridForecasts[2];
+  const predicted5 = forecast5?.value ?? currentOccupancy;
+  const predicted10 = forecast10?.value ?? currentOccupancy;
+  const predicted15 = forecast15?.value ?? currentOccupancy;
   const occupancyRate = capacity > 0 ? Math.round(currentOccupancy / capacity * 100) : 0;
   const occupancyPoints = useMemo(
-    () => buildOccupancyPoints(observedActivities, currentOccupancy, netRate, now),
-    [currentOccupancy, netRate, now, observedActivities]
+    () => buildOccupancyPoints(observedActivities, currentOccupancy, hybridForecasts, now),
+    [currentOccupancy, hybridForecasts, now, observedActivities]
   );
   const minuteFlow = useMemo(
     () => buildMinuteFlow(observedActivities, now),
     [now, observedActivities]
   );
+  const predictionReasons = useMemo(() => {
+    const reasons: string[] = [];
+    const historicalSamples = forecast15?.historicalSamples ?? 0;
+    const historyWeight = forecast15?.historyWeight ?? 0;
+
+    if (historicalSamples > 0) {
+      reasons.push(`過去${historicalSamples}イベントの同じ経過時間を${Math.round(historyWeight * 100)}%反映`);
+    } else if (historyLoadState === "loading") {
+      reasons.push("過去イベントの傾向を読み込み中");
+    } else if (historyLoadState === "error") {
+      reasons.push("過去履歴を取得できないためライブデータ中心");
+    } else {
+      reasons.push("比較できる過去履歴がないためライブデータ中心");
+    }
+
+    reasons.push("直近1・5・10分の流れを、新しい動きほど強く反映");
+    if (entryRate >= previousEntryRate * 1.25 && entryRate >= 1) {
+      reasons.push(`入場ペースが前の5分より上昇（毎分${entryRate.toFixed(1)}人）`);
+    } else if (entryRate <= previousEntryRate * 0.75 && previousEntryRate >= 1) {
+      reasons.push("入場ペースが前の5分より低下");
+    } else {
+      reasons.push("入退場ペースは大きく変化していません");
+    }
+    return reasons;
+  }, [entryRate, forecast15, historyLoadState, previousEntryRate]);
 
   const alerts = useMemo<SystemAlert[]>(() => {
     const result: SystemAlert[] = [];
@@ -957,23 +1173,25 @@ export default function App({ database, onReturn }: AppProps) {
   const autopilotSuggestions = useMemo<AutopilotSuggestion[]>(() => {
     const suggestions: AutopilotSuggestion[] = [];
     const forecastRatio = capacity > 0 ? predicted15 / capacity : 0;
+    const forecastUpperRatio = capacity > 0 ? (forecast15?.upper ?? predicted15) / capacity : 0;
+    const forecastConfidence = forecast15?.confidence ?? 20;
 
     if (forecastRatio >= 1 && entryDevice !== null) {
       suggestions.push({
         id: "forecast-capacity",
         severity: "critical",
         title: "15分以内に定員へ達する予測です",
-        detail: `${predicted15}人まで増える予測です。入口受付の一時停止を提案します。`,
+        detail: `${predicted15}人（${forecast15?.lower ?? predicted15}〜${forecast15?.upper ?? predicted15}人、信頼度${forecastConfidence}%）の予測です。`,
         buttonLabel: "入口を一時停止",
         device: entryDevice,
         command: "pause-reception",
       });
-    } else if (forecastRatio >= 0.8) {
+    } else if (forecastRatio >= 0.8 || forecastUpperRatio >= 1) {
       suggestions.push({
         id: "forecast-warning",
         severity: "warning",
-        title: "会場が混雑する見込みです",
-        detail: `15分後は定員の${Math.round(forecastRatio * 100)}%になる予測です。`,
+        title: forecastUpperRatio >= 1 ? "予測範囲が定員へ達する可能性があります" : "会場が混雑する見込みです",
+        detail: `15分後は${predicted15}人、予測範囲は${forecast15?.lower ?? predicted15}〜${forecast15?.upper ?? predicted15}人です。`,
         buttonLabel: "予測を確認",
         destination: "forecast",
       });
@@ -1056,7 +1274,7 @@ export default function App({ database, onReturn }: AppProps) {
     return suggestions
       .sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity])
       .slice(0, 3);
-  }, [capacity, entryDevice, entryRate, exitDevice, predicted15, previousEntryRate]);
+  }, [capacity, entryDevice, entryRate, exitDevice, forecast15, predicted15, previousEntryRate]);
 
   const changeCapacity = async () => {
     if (currentEvent === null || capacitySaving) return;
@@ -1257,8 +1475,14 @@ export default function App({ database, onReturn }: AppProps) {
 
               <section className="live-forecast-grid" id="live-prediction-panel">
                 <article className="panel forecast-panel">
-                  <div className="live-panel-heading"><div><small>OCCUPANCY FORECAST</small><h2>会場人数・15分予測</h2></div><div className="forecast-values"><span>+5分 <strong>{predicted5}人</strong></span><span>+10分 <strong>{predicted10}人</strong></span><span>+15分 <strong>{predicted15}人</strong></span></div></div>
+                  <div className="live-panel-heading"><div><small>HYBRID OCCUPANCY FORECAST</small><h2>会場人数・学習型15分予測</h2></div><div className="forecast-values"><span>+5分 <strong>{predicted5}人</strong><em>{forecast5?.lower ?? predicted5}〜{forecast5?.upper ?? predicted5}</em></span><span>+10分 <strong>{predicted10}人</strong><em>{forecast10?.lower ?? predicted10}〜{forecast10?.upper ?? predicted10}</em></span><span>+15分 <strong>{predicted15}人</strong><em>{forecast15?.lower ?? predicted15}〜{forecast15?.upper ?? predicted15}</em></span></div></div>
                   <ForecastChart points={occupancyPoints} capacity={capacity} />
+                  <div className="forecast-explanation">
+                    <div className={`forecast-confidence ${(forecast15?.confidence ?? 20) >= 75 ? "high" : (forecast15?.confidence ?? 20) >= 50 ? "medium" : "low"}`}>
+                      <span>予測信頼度</span><strong>{forecast15?.confidence ?? 20}%</strong><small>{(forecast15?.confidence ?? 20) >= 75 ? "高" : (forecast15?.confidence ?? 20) >= 50 ? "中" : "低"}</small>
+                    </div>
+                    <div className="forecast-reasons"><strong>この予測の根拠</strong><ul>{predictionReasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></div>
+                  </div>
                 </article>
                 <article className="panel flow-panel">
                   <div className="live-panel-heading"><div><small>LIVE FLOW</small><h2>直近10分の入退場</h2></div><b className={netRate > 0 ? "warning-text" : "ok-text"}>{netRate >= 0 ? "+" : ""}{netRate.toFixed(1)}人/分</b></div>
