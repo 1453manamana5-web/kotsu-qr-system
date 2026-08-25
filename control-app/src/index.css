@@ -126,11 +126,11 @@ button { cursor: pointer; }
 .all-device-grid { margin-top: 20px; }
 .device-detail-panel { display: grid; align-content: start; gap: 17px; }
 .device-detail-heading { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 17px; padding-bottom: 17px; border-bottom: 1px solid #e5eaf1; }
-.device-detail-heading small, .device-live-title small, .remote-control-heading small, .command-history-heading small { color: #7d8ca8; font-size: 9px; font-weight: 850; letter-spacing: .13em; }
+.device-detail-heading small, .device-live-title small, .remote-control-heading small, .command-history-heading small, .network-quality-heading small { color: #7d8ca8; font-size: 9px; font-weight: 850; letter-spacing: .13em; }
 .device-detail-heading h2 { margin: 3px 0 0; color: #17294d; font-size: clamp(23px, 3vw, 32px); }
 .device-detail-back { min-height: 40px; padding: 8px 13px; border: 1px solid #cfd8e8; border-radius: 11px; color: #33466e; background: #f7f9fd; font-size: 12px; font-weight: 850; }
 .device-detail-layout { display: grid; grid-template-columns: minmax(280px, .82fr) minmax(380px, 1.3fr); gap: 17px; }
-.device-live-panel, .remote-control-panel, .command-history-panel { border: 1px solid #dee6f1; border-radius: 16px; background: #fbfcfe; }
+.device-live-panel, .remote-control-panel, .command-history-panel, .network-quality-panel { border: 1px solid #dee6f1; border-radius: 16px; background: #fbfcfe; }
 .device-live-panel { padding: 18px; }
 .device-live-title { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .device-live-title strong { display: block; margin-top: 3px; color: #23375e; font-size: 17px; }
@@ -153,6 +153,22 @@ button { cursor: pointer; }
 .remote-control-note, .remote-control-error { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; font-size: 10px; line-height: 1.6; }
 .remote-control-note { color: #6f5a27; background: #fff2cd; }
 .remote-control-error { color: #a12f2f; background: #ffe8e8; }
+.network-quality-panel { padding: 18px; background: linear-gradient(145deg, #fbfcff, #f4f8fb); }
+.network-quality-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.network-quality-heading h3 { margin: 3px 0 0; color: #21365f; font-size: 18px; }
+.network-quality-heading > span { color: #63748f; font-size: 10px; font-weight: 800; }
+.network-chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+.metric-chart-card { min-width: 0; padding: 14px; border: 1px solid #e0e7f1; border-radius: 13px; background: #fff; }
+.metric-chart-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; }
+.metric-chart-heading small { display: block; color: #7a879c; font-size: 9px; font-weight: 850; letter-spacing: .1em; }
+.metric-chart-heading strong { display: block; margin-top: 5px; color: #21365f; font-size: 26px; line-height: 1; }
+.metric-chart-heading strong em { margin-left: 4px; color: #748199; font-size: 10px; font-style: normal; }
+.metric-chart-heading > span { color: #8490a3; font-size: 9px; font-weight: 750; text-align: right; }
+.metric-chart-card svg { display: block; width: 100%; height: 155px; margin-top: 8px; overflow: visible; }
+.metric-grid-line { stroke: #e8edf4; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.metric-chart-empty { display: grid; place-items: center; height: 155px; margin-top: 8px; color: #8a96a8; background: repeating-linear-gradient(to top, transparent 0, transparent 37px, #edf1f6 38px); font-size: 10px; }
+.metric-chart-axis { display: flex; justify-content: space-between; color: #8b96a8; font-size: 8px; font-weight: 750; }
+.network-quality-note { margin: 12px 0 0; color: #738099; font-size: 9px; line-height: 1.6; }
 .command-history-panel { padding: 17px 18px; }
 .command-history-heading > span { color: #71809b; font-size: 11px; font-weight: 850; }
 .command-history-panel ul { display: grid; margin: 13px 0 0; padding: 0; list-style: none; }
@@ -211,6 +227,7 @@ button { cursor: pointer; }
   .device-grid, .all-device-grid, .lower-grid { grid-template-columns: 1fr; }
   .diagnostic-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .device-detail-layout { grid-template-columns: 1fr; }
+  .network-chart-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 720px) {
@@ -246,6 +263,7 @@ button { cursor: pointer; }
   .device-detail-heading { grid-template-columns: auto 1fr; }
   .device-detail-heading > .status-badge { grid-column: 1 / -1; justify-self: start; }
   .remote-action-grid { grid-template-columns: 1fr; }
+  .network-quality-heading { align-items: flex-start; flex-direction: column; }
 }
 
 @media (max-width: 430px) {

@@ -42,6 +42,9 @@ export type ReceptionDevice = {
   pendingCount: number;
   cameraState: ReceptionCameraState;
   receptionPaused: boolean;
+  firebaseLatencyMs: number;
+  downloadMbps: number;
+  networkMeasuredAt: string;
   screen: ReceptionScreen;
   sessionStartedAt: string;
   lastScanAt: string;
@@ -66,6 +69,9 @@ export type ReceptionHeartbeat = {
   pendingCount: number;
   cameraState: ReceptionCameraState;
   receptionPaused: boolean;
+  firebaseLatencyMs: number;
+  downloadMbps: number;
+  networkMeasuredAt: string;
   screen: ReceptionScreen;
   sessionStartedAt: string;
   lastScanAt: string;
@@ -179,6 +185,34 @@ function convertReceptionDevice(
     receptionPaused:
       data.receptionPaused === true,
 
+    firebaseLatencyMs:
+      typeof data.firebaseLatencyMs ===
+        "number"
+        ? Math.max(
+            0,
+            Math.round(
+              data.firebaseLatencyMs
+            )
+          )
+        : 0,
+
+    downloadMbps:
+      typeof data.downloadMbps ===
+        "number"
+        ? Math.max(
+            0,
+            Math.round(
+              data.downloadMbps * 10
+            ) / 10
+          )
+        : 0,
+
+    networkMeasuredAt:
+      typeof data.networkMeasuredAt ===
+        "string"
+        ? data.networkMeasuredAt
+        : "",
+
     screen:
       data.screen === "exit-reception"
         ? "exit-reception"
@@ -275,8 +309,11 @@ export async function sendReceptionHeartbeat(
     eventName.trim() ===
     ""
   ) {
-    return;
+    return 0;
   }
+
+  const startedAt =
+    performance.now();
 
   await setDoc(
     getReceptionDeviceDocument(
@@ -323,6 +360,15 @@ export async function sendReceptionHeartbeat(
       receptionPaused:
         heartbeat.receptionPaused,
 
+      firebaseLatencyMs:
+        heartbeat.firebaseLatencyMs,
+
+      downloadMbps:
+        heartbeat.downloadMbps,
+
+      networkMeasuredAt:
+        heartbeat.networkMeasuredAt,
+
       screen:
         heartbeat.screen,
 
@@ -338,6 +384,14 @@ export async function sendReceptionHeartbeat(
     {
       merge: true,
     }
+  );
+
+  return Math.max(
+    0,
+    Math.round(
+      performance.now() -
+      startedAt
+    )
   );
 }
 

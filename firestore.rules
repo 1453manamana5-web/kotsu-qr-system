@@ -249,7 +249,8 @@ service cloud.firestore {
       return request.resource.data.keys().hasOnly([
           'deviceId', 'registeredDeviceId', 'deviceName', 'deviceType',
           'role', 'mode', 'appVersion', 'lastSeenAt', 'lastSuccessfulSyncAt',
-          'pendingCount', 'cameraState', 'receptionPaused', 'screen', 'sessionStartedAt',
+          'pendingCount', 'cameraState', 'receptionPaused', 'firebaseLatencyMs',
+          'downloadMbps', 'networkMeasuredAt', 'screen', 'sessionStartedAt',
           'lastScanAt', 'updatedAt'
         ])
         && request.resource.data.keys().hasAll([
@@ -278,6 +279,24 @@ service cloud.firestore {
         && request.resource.data.cameraState in ['starting', 'ready', 'error']
         && (!('receptionPaused' in request.resource.data)
           || request.resource.data.receptionPaused is bool)
+        && (!('firebaseLatencyMs' in request.resource.data)
+          || (
+            request.resource.data.firebaseLatencyMs is int
+            && request.resource.data.firebaseLatencyMs >= 0
+            && request.resource.data.firebaseLatencyMs <= 120000
+          ))
+        && (!('downloadMbps' in request.resource.data)
+          || (
+            (request.resource.data.downloadMbps is int
+              || request.resource.data.downloadMbps is float)
+            && request.resource.data.downloadMbps >= 0
+            && request.resource.data.downloadMbps <= 10000
+          ))
+        && (!('networkMeasuredAt' in request.resource.data)
+          || (
+            request.resource.data.networkMeasuredAt is string
+            && request.resource.data.networkMeasuredAt.size() <= 60
+          ))
         && request.resource.data.screen in ['entry-reception', 'exit-reception']
         && request.resource.data.sessionStartedAt is string
         && request.resource.data.sessionStartedAt.size() <= 60
