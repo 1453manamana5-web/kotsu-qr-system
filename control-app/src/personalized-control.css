@@ -1,0 +1,342 @@
+.personalized-operator-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 9px 6px 11px;
+  border: 1px solid rgba(100, 116, 139, 0.24);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #334155;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.personalized-operator-selector > span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.personalized-operator-selector select {
+  min-width: 152px;
+  max-width: 220px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #0f172a;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.personalized-operator-selector i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #94a3b8;
+  box-shadow: 0 0 0 4px rgba(148, 163, 184, 0.14);
+}
+
+.personalized-operator-selector i.learning {
+  background: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.14);
+}
+
+.personalized-operator-selector i.paused {
+  background: #f59e0b;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.14);
+}
+
+#personalized-control-host {
+  margin-bottom: 16px;
+}
+
+.personalized-control-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #dbe6f3;
+  border-radius: 20px;
+  padding: 18px;
+  background:
+    radial-gradient(circle at 88% 0%, rgba(59, 130, 246, 0.12), transparent 30%),
+    linear-gradient(145deg, #f8fbff 0%, #ffffff 58%, #f7faff 100%);
+  box-shadow: 0 16px 45px rgba(15, 23, 42, 0.07);
+}
+
+.personalized-control-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, #2563eb, #7c3aed);
+}
+
+.personalized-control-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.personalized-control-heading small,
+.personalized-control-empty small,
+.personalized-card-title small {
+  display: block;
+  margin-bottom: 4px;
+  color: #2563eb;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+}
+
+.personalized-control-heading h2,
+.personalized-control-empty h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(17px, 1.5vw, 22px);
+  line-height: 1.3;
+}
+
+.personalized-control-heading p,
+.personalized-control-empty p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.personalized-control-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.personalized-control-actions button {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 11px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.personalized-control-actions button:hover:not(:disabled) {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.personalized-control-actions button.subtle {
+  color: #64748b;
+}
+
+.personalized-control-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.personalized-control-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  gap: 14px;
+}
+
+.personalized-card {
+  min-width: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.personalized-card-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.personalized-card-title strong {
+  display: block;
+  color: #172033;
+  font-size: 14px;
+}
+
+.personalized-card-title > span {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.personalized-ranking {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.personalized-ranking button,
+.personalized-frequency-list button {
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.personalized-ranking button:hover,
+.personalized-frequency-list button:hover {
+  transform: translateY(-1px);
+  border-color: #93c5fd;
+  box-shadow: 0 9px 20px rgba(37, 99, 235, 0.08);
+}
+
+.personalized-ranking button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  min-height: 82px;
+  padding: 10px;
+  border-radius: 13px;
+  text-align: left;
+}
+
+.personalized-ranking button > b {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 12px;
+}
+
+.personalized-ranking button > div {
+  min-width: 0;
+}
+
+.personalized-ranking button strong,
+.personalized-frequency-list button strong {
+  display: block;
+  color: #0f172a;
+  font-size: 12px;
+}
+
+.personalized-ranking button div > span,
+.personalized-frequency-list button small {
+  display: block;
+  overflow: hidden;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.personalized-ranking button div > i,
+.personalized-frequency-list button > i {
+  display: block;
+  overflow: hidden;
+  height: 4px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: #eef2f7;
+}
+
+.personalized-ranking button div > i em,
+.personalized-frequency-list button > i em {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2563eb, #7c3aed);
+}
+
+.personalized-ranking button > span {
+  color: #94a3b8;
+  font-size: 16px;
+}
+
+.personalized-frequency-list {
+  display: grid;
+  gap: 8px;
+}
+
+.personalized-frequency-list button {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) minmax(55px, 0.55fr);
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border-radius: 11px;
+  text-align: left;
+}
+
+.personalized-frequency-list button > span {
+  color: #7c3aed;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.personalized-frequency-list button > i {
+  margin: 0;
+}
+
+.personalized-empty {
+  margin: 16px 0 8px;
+  color: #94a3b8;
+  font-size: 11px;
+  text-align: center;
+}
+
+.personalized-control-note {
+  margin: 12px 2px 0;
+  color: #94a3b8;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.personalized-control-empty {
+  display: flex;
+  align-items: center;
+  min-height: 100px;
+}
+
+@media (max-width: 1180px) {
+  .personalized-control-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .personalized-operator-selector {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .personalized-operator-selector select {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .personalized-control-heading {
+    flex-direction: column;
+  }
+
+  .personalized-control-actions {
+    justify-content: flex-start;
+  }
+
+  .personalized-ranking {
+    grid-template-columns: 1fr;
+  }
+}
