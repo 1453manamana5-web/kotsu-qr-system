@@ -27,6 +27,7 @@ import type {
   LiveActivity,
   ReceptionDevice,
   ReceptionMode,
+  ReceptionViewState,
   SystemAlert,
 } from "./types";
 
@@ -214,6 +215,14 @@ function readReceptionDevice(id: string, data: DocumentData): ReceptionDevice | 
     downloadMbps: readDecimal(data.downloadMbps),
     networkMeasuredAt: typeof data.networkMeasuredAt === "string" ? data.networkMeasuredAt : "",
     screen: typeof data.screen === "string" ? data.screen : "",
+    viewState:
+      data.viewState === "processing" ||
+      data.viewState === "success-animation" ||
+      data.viewState === "ticket-success" ||
+      data.viewState === "member-success" ||
+      data.viewState === "error"
+        ? data.viewState
+        : "waiting",
     sessionStartedAt: typeof data.sessionStartedAt === "string" ? data.sessionStartedAt : "",
     lastScanAt: typeof data.lastScanAt === "string" ? data.lastScanAt : "",
   };
@@ -650,6 +659,136 @@ function MinuteFlowChart({ values }: { values: MinuteFlow[] }) {
   );
 }
 
+type MirrorDisplayState =
+  | ReceptionViewState
+  | "offline"
+  | "paused"
+  | "camera-error"
+  | "camera-starting";
+
+function VirtualScreenMirror({ device, now }: {
+  device: ReceptionDevice;
+  now: number;
+}) {
+  const online = now - device.lastSeenAt <= CRITICAL_AFTER;
+  const mode: ReceptionMode = device.screen === "exit-reception" ? "exit" : device.mode;
+
+  let displayState: MirrorDisplayState = device.viewState;
+
+  if (!online) {
+    displayState = "offline";
+  } else if (device.receptionPaused) {
+    displayState = "paused";
+  } else if (device.cameraState === "error") {
+    displayState = "camera-error";
+  } else if (device.cameraState === "starting") {
+    displayState = "camera-starting";
+  }
+
+  const isSuccess =
+    displayState === "success-animation" ||
+    displayState === "ticket-success" ||
+    displayState === "member-success";
+
+  const footerStatus =
+    displayState === "waiting"
+      ? "読取待機中"
+      : displayState === "processing"
+        ? "受付処理中"
+        : isSuccess
+          ? "受付完了"
+          : displayState === "error"
+            ? "受付エラー"
+            : displayState === "paused"
+              ? "一時停止中"
+              : displayState === "offline"
+                ? "通信なし"
+                : displayState === "camera-error"
+                  ? "カメラ異常"
+                  : "カメラ準備中";
+
+  return (
+    <article className="virtual-mirror-panel" aria-label={`${device.deviceName}の仮想画面ミラー`}>
+      <div className="virtual-mirror-heading">
+        <div>
+          <small>VIRTUAL SCREEN MIRROR</small>
+          <h3>仮想画面ミラー <span>状態から再現</span></h3>
+        </div>
+        <span className={online ? "is-live" : "is-offline"}>
+          <i aria-hidden="true" />{online ? "リアルタイム" : "更新停止"}
+        </span>
+      </div>
+
+      <div className="virtual-ipad-shell">
+        <span className="virtual-ipad-camera" aria-hidden="true" />
+        <div className={`virtual-reception-screen ${mode} state-${displayState}`}>
+          <header>
+            <small>{formatTime(now)}</small>
+            <strong>{mode === "entry" ? "入口受付端末" : "出口受付端末"}</strong>
+            <span>{online ? "● ONLINE" : "○ OFFLINE"}</span>
+          </header>
+
+          <div className="virtual-reception-main">
+            {displayState === "waiting" && (
+              <div className="virtual-waiting-state">
+                <strong>QRコードをかざしてください</strong>
+                <div className="virtual-scan-frame" aria-hidden="true">
+                  <i /><i /><i /><i />
+                  <span />
+                </div>
+                <small>読み取り枠に入ると自動で受付します</small>
+              </div>
+            )}
+
+            {(displayState === "processing" || displayState === "camera-starting") && (
+              <div className="virtual-message-state">
+                <span className="virtual-spinner" aria-hidden="true" />
+                <strong>{displayState === "processing" ? "受付処理中" : "カメラを準備しています"}</strong>
+                <small>{displayState === "processing" ? "チケット情報を確認しています" : "まもなく読み取りを開始します"}</small>
+              </div>
+            )}
+
+            {isSuccess && (
+              <div className="virtual-message-state success">
+                <span aria-hidden="true">✓</span>
+                <strong>{displayState === "member-success" ? "部員受付完了" : mode === "entry" ? "入場OK" : "退出OK"}</strong>
+                <small>次の読み取り画面へ戻ります</small>
+              </div>
+            )}
+
+            {displayState === "error" && (
+              <div className="virtual-message-state error">
+                <span aria-hidden="true">×</span>
+                <strong>受付失敗</strong>
+                <small>受付端末にエラー内容を表示中です</small>
+              </div>
+            )}
+
+            {(displayState === "paused" || displayState === "offline" || displayState === "camera-error") && (
+              <div className={`virtual-message-state ${displayState}`}>
+                <span aria-hidden="true">{displayState === "paused" ? "Ⅱ" : "!"}</span>
+                <strong>{displayState === "paused" ? "受付を一時停止しています" : displayState === "offline" ? "端末と通信できません" : "カメラでエラーが発生しています"}</strong>
+                <small>{displayState === "offline" ? "最後に受信した状態で表示を停止しました" : "管制の遠隔操作から復旧できます"}</small>
+              </div>
+            )}
+          </div>
+
+          <footer>
+            <span>♪ 音声案内 ON</span>
+            <strong>{footerStatus}</strong>
+            <time>{formatTime(device.lastSeenAt)}</time>
+          </footer>
+        </div>
+      </div>
+
+      <p className="virtual-mirror-note">
+        <span aria-hidden="true">i</span>
+        カメラ映像ではなく、端末から届く画面状態をもとに安全に再現しています。
+      </p>
+    </article>
+  );
+}
+
 function DeviceDetail({ eventDataId, device, networkSamples, now, onClose }: {
   eventDataId: string;
   device: ReceptionDevice;
@@ -732,42 +871,46 @@ function DeviceDetail({ eventDataId, device, networkSamples, now, onClose }: {
       </div>
 
       <div className="device-detail-layout">
-        <article className="device-live-panel">
-          <div className="device-live-title"><span className={`mode-icon ${device.mode}`}>{device.mode === "entry" ? "→" : "←"}</span><div><small>LIVE STATUS</small><strong>端末の現在状態</strong></div></div>
-          <dl>
-            <div><dt>最終通信</dt><dd>{formatAge(device.lastSeenAt, now)}</dd></div>
-            <div><dt>受付モード</dt><dd>{device.mode === "entry" ? "入口受付" : "出口受付"}</dd></div>
-            <div><dt>カメラ</dt><dd className={device.cameraState === "error" ? "error-text" : "ok-text"}>{device.cameraState === "ready" ? "正常" : device.cameraState === "error" ? "エラー" : "準備中"}</dd></div>
-            <div><dt>Firebase</dt><dd className={device.lastSuccessfulSyncAt > 0 ? "ok-text" : "muted-text"}>{device.lastSuccessfulSyncAt > 0 ? "接続確認済み" : "記録なし"}</dd></div>
-            <div><dt>Firebase応答</dt><dd>{device.firebaseLatencyMs > 0 ? `${device.firebaseLatencyMs}ms` : "測定中"}</dd></div>
-            <div><dt>下り速度</dt><dd>{device.downloadMbps > 0 ? `${device.downloadMbps.toFixed(1)}Mbps` : "測定中"}</dd></div>
-            <div><dt>同期待ち</dt><dd className={device.pendingCount > 0 ? "warning-text" : "ok-text"}>{device.pendingCount}件</dd></div>
-            <div><dt>最終読取</dt><dd>{device.lastScanAt === "" ? "記録なし" : formatTime(device.lastScanAt)}</dd></div>
-            <div><dt>バージョン</dt><dd>{device.appVersion}</dd></div>
-            <div><dt>端末種別</dt><dd>{device.deviceType}</dd></div>
-          </dl>
-        </article>
+        <VirtualScreenMirror device={device} now={now} />
 
-        <article className="remote-control-panel">
-          <div className="remote-control-heading"><div><small>REMOTE CONTROL</small><h3>遠隔操作</h3></div><span>{online ? "操作可能" : "端末オフライン"}</span></div>
-          <div className="remote-action-grid">
-            {actions.map((action) => (
-              <button
-                type="button"
-                key={action.type}
-                className={action.danger ? "remote-action danger" : "remote-action"}
-                disabled={!online || sending !== null || action.disabled === true}
-                onClick={() => void sendCommand(action.type)}
-              >
-                <span aria-hidden="true">{action.icon}</span>
-                <strong>{sending === action.type ? "送信しています…" : remoteCommandLabel(action.type)}</strong>
-                <small>{action.description}</small>
-              </button>
-            ))}
-          </div>
-          {!online && <p className="remote-control-note">通信が復旧すると操作できるようになります。古い命令の誤実行を防ぐため、オフライン中は予約送信しません。</p>}
-          {commandError !== "" && <p className="remote-control-error" role="alert">{commandError}</p>}
-        </article>
+        <div className="device-detail-side">
+          <article className="device-live-panel">
+            <div className="device-live-title"><span className={`mode-icon ${device.mode}`}>{device.mode === "entry" ? "→" : "←"}</span><div><small>LIVE STATUS</small><strong>端末の現在状態</strong></div></div>
+            <dl>
+              <div><dt>最終通信</dt><dd>{formatAge(device.lastSeenAt, now)}</dd></div>
+              <div><dt>受付モード</dt><dd>{device.mode === "entry" ? "入口受付" : "出口受付"}</dd></div>
+              <div><dt>カメラ</dt><dd className={device.cameraState === "error" ? "error-text" : "ok-text"}>{device.cameraState === "ready" ? "正常" : device.cameraState === "error" ? "エラー" : "準備中"}</dd></div>
+              <div><dt>Firebase</dt><dd className={device.lastSuccessfulSyncAt > 0 ? "ok-text" : "muted-text"}>{device.lastSuccessfulSyncAt > 0 ? "接続確認済み" : "記録なし"}</dd></div>
+              <div><dt>Firebase応答</dt><dd>{device.firebaseLatencyMs > 0 ? `${device.firebaseLatencyMs}ms` : "測定中"}</dd></div>
+              <div><dt>下り速度</dt><dd>{device.downloadMbps > 0 ? `${device.downloadMbps.toFixed(1)}Mbps` : "測定中"}</dd></div>
+              <div><dt>同期待ち</dt><dd className={device.pendingCount > 0 ? "warning-text" : "ok-text"}>{device.pendingCount}件</dd></div>
+              <div><dt>最終読取</dt><dd>{device.lastScanAt === "" ? "記録なし" : formatTime(device.lastScanAt)}</dd></div>
+              <div><dt>バージョン</dt><dd>{device.appVersion}</dd></div>
+              <div><dt>端末種別</dt><dd>{device.deviceType}</dd></div>
+            </dl>
+          </article>
+
+          <article className="remote-control-panel">
+            <div className="remote-control-heading"><div><small>REMOTE CONTROL</small><h3>遠隔操作</h3></div><span>{online ? "操作可能" : "端末オフライン"}</span></div>
+            <div className="remote-action-grid">
+              {actions.map((action) => (
+                <button
+                  type="button"
+                  key={action.type}
+                  className={action.danger ? "remote-action danger" : "remote-action"}
+                  disabled={!online || sending !== null || action.disabled === true}
+                  onClick={() => void sendCommand(action.type)}
+                >
+                  <span aria-hidden="true">{action.icon}</span>
+                  <strong>{sending === action.type ? "送信しています…" : remoteCommandLabel(action.type)}</strong>
+                  <small>{action.description}</small>
+                </button>
+              ))}
+            </div>
+            {!online && <p className="remote-control-note">通信が復旧すると操作できるようになります。古い命令の誤実行を防ぐため、オフライン中は予約送信しません。</p>}
+            {commandError !== "" && <p className="remote-control-error" role="alert">{commandError}</p>}
+          </article>
+        </div>
       </div>
 
       <article className="network-quality-panel">
