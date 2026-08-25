@@ -225,7 +225,6 @@ function RemoteMessages({
 
 export default function CopilotRemoteCommandBridge({ database }: { database: Firestore }) {
   const [currentEvent, setCurrentEvent] = useState<CurrentEvent | null>(null);
-  const [devices, setDevices] = useState<ReceptionDevice[]>([]);
   const [messageTarget, setMessageTarget] = useState<Element | null>(null);
   const [messages, setMessages] = useState<RemoteMessage[]>([]);
   const [runningActionId, setRunningActionId] = useState<string | null>(null);
@@ -266,16 +265,13 @@ export default function CopilotRemoteCommandBridge({ database }: { database: Fir
 
   useEffect(() => {
     devicesRef.current = [];
-    setDevices([]);
     if (currentEvent === null) return undefined;
     return onSnapshot(
       collection(database, "event-data", currentEvent.dataDocumentId, "reception-devices"),
       (snapshot) => {
-        const next = snapshot.docs
+        devicesRef.current = snapshot.docs
           .map((item) => readDevice(item.id, item.data()))
           .filter((device): device is ReceptionDevice => device !== null);
-        devicesRef.current = next;
-        setDevices(next);
       }
     );
   }, [currentEvent, database]);
@@ -357,8 +353,6 @@ export default function CopilotRemoteCommandBridge({ database }: { database: Fir
       observer.disconnect();
     };
   }, []);
-
-  void devices;
 
   if (messageTarget === null) return null;
   return createPortal(
