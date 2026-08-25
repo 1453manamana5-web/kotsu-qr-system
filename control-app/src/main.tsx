@@ -6,6 +6,7 @@ import PredictiveOpsOverlay from "./PredictiveOpsOverlay";
 import ExperimentalLabBridge from "./ExperimentalLabBridge";
 import TicketControlBridge from "./TicketControlBridge";
 import MemberControlBridge from "./MemberControlBridge";
+import TicketInventoryForecastBridge from "./TicketInventoryForecastBridge";
 import AdminOpsBridge from "./AdminOpsBridge";
 import MaintenanceDataBridge from "./MaintenanceDataBridge";
 import CopilotLanguageExpansionBridge from "./CopilotLanguageExpansionBridge";
@@ -22,6 +23,7 @@ import "./copilot-capabilities.css";
 import "./admin-ops.css";
 import "./ticket-control.css";
 import "./member-control.css";
+import "./ticket-inventory-forecast.css";
 import "./maintenance-data.css";
 import "./experimental-lab-extensions.css";
 
@@ -34,6 +36,7 @@ createRoot(document.getElementById("root")!).render(
         <ExperimentalLabBridge database={db} />
         <TicketControlBridge database={db} />
         <MemberControlBridge database={db} />
+        <TicketInventoryForecastBridge database={db} />
         <AdminOpsBridge database={db} />
         <MaintenanceDataBridge database={db} />
         <CopilotLanguageExpansionBridge />
