@@ -41,6 +41,7 @@ import "./operations-management.css";
 import "./sidebar-clarity.css";
 import "./copilot-simplified.css";
 import "./anomaly-notifications.css";
+import "./topbar-clarity.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
