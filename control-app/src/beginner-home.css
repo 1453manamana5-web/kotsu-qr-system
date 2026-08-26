@@ -281,6 +281,125 @@
   white-space: nowrap;
 }
 
+.beginner-home-guides {
+  padding: 16px;
+  border-top: 1px solid #e3e9f2;
+  background: #ffffff;
+}
+
+.beginner-home-guides-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 11px;
+}
+
+.beginner-home-guides-heading small,
+.beginner-home-guides-heading strong,
+.beginner-home-guides-heading span {
+  display: block;
+}
+
+.beginner-home-guides-heading small {
+  color: #7352d6;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+
+.beginner-home-guides-heading strong {
+  margin-top: 3px;
+  color: #263958;
+  font-size: 14px;
+}
+
+.beginner-home-guides-heading span {
+  margin-top: 3px;
+  color: #8290a5;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.beginner-home-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.beginner-home-guide-grid button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 72px;
+  padding: 11px 12px;
+  border: 1px solid #dbe4ef;
+  border-radius: 14px;
+  background: #fbfcfe;
+  color: #263958;
+  text-align: left;
+}
+
+.beginner-home-guide-grid button:hover {
+  transform: translateY(-1px);
+  border-color: #a996e7;
+  box-shadow: 0 9px 22px rgba(63, 48, 118, .09);
+}
+
+.beginner-home-guide-grid button b {
+  display: grid;
+  place-items: center;
+  width: 37px;
+  height: 37px;
+  border-radius: 11px;
+  color: #ffffff;
+  background: #526fd0;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.beginner-home-guide-grid button.experimental b {
+  background: #7352d6;
+}
+
+.beginner-home-guide-grid button > span {
+  min-width: 0;
+}
+
+.beginner-home-guide-grid button strong,
+.beginner-home-guide-grid button small {
+  display: block;
+}
+
+.beginner-home-guide-grid button strong {
+  color: #243656;
+  font-size: 12px;
+}
+
+.beginner-home-guide-grid button small {
+  margin-top: 3px;
+  color: #7f8da2;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.beginner-home-guide-grid button em {
+  padding: 5px 7px;
+  border-radius: 999px;
+  color: #4960a8;
+  background: #edf2ff;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: .06em;
+}
+
+.beginner-home-guide-grid button.experimental em {
+  color: #654aa8;
+  background: #f0ebff;
+}
+
 @media (max-width: 1050px) {
   .beginner-home-overview {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -292,6 +411,10 @@
 
   .beginner-home-actions > div {
     grid-column: 1 / -1;
+  }
+
+  .beginner-home-guide-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -320,6 +443,10 @@
   .beginner-home-actions {
     grid-template-columns: 1fr 1fr;
     padding: 10px;
+  }
+
+  .beginner-home-guides {
+    padding: 12px;
   }
 }
 
@@ -354,6 +481,14 @@
   }
 
   .beginner-home-actions button b {
+    display: none;
+  }
+
+  .beginner-home-guide-grid button {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .beginner-home-guide-grid button em {
     display: none;
   }
 }
