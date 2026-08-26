@@ -123,8 +123,9 @@ export default defineConfig({
     rolldownOptions: {
       output: {
         /*
-          Firestoreの通信層を独立させ、iPadで一度に
-          解析するJavaScriptを抑えます。
+          大きな共通ライブラリを用途別に分離し、iPadが初回表示時に
+          1つの巨大JavaScriptを解析する負荷を抑えます。
+          機能や読み込み順は変えず、ブラウザキャッシュも効きやすくします。
         */
         codeSplitting: {
           groups: [
@@ -136,7 +137,47 @@ export default defineConfig({
                 /node_modules[\\/]@firebase[\\/]webchannel-wrapper/,
 
               priority:
+                40,
+            },
+            {
+              name:
+                "firebase-firestore",
+
+              test:
+                /node_modules[\\/]@firebase[\\/]firestore/,
+
+              priority:
+                30,
+            },
+            {
+              name:
+                "firebase-auth",
+
+              test:
+                /node_modules[\\/]@firebase[\\/]auth/,
+
+              priority:
+                30,
+            },
+            {
+              name:
+                "firebase-core",
+
+              test:
+                /node_modules[\\/](@firebase|firebase)[\\/]/,
+
+              priority:
                 20,
+            },
+            {
+              name:
+                "react",
+
+              test:
+                /node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+
+              priority:
+                10,
             },
           ],
         },
