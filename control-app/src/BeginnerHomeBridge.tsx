@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import "./beginner-home.css";
 
 type Severity = "normal" | "warning" | "critical";
+type TutorialMode = "basic" | "lab" | "copilot";
 
 type HomeSnapshot = {
   severity: Severity;
@@ -184,6 +185,10 @@ export default function BeginnerHomeBridge() {
     findSidebarButton(label)?.click();
   }, []);
 
+  const startTutorial = useCallback((mode: TutorialMode) => {
+    window.dispatchEvent(new CustomEvent<TutorialMode>("control-tutorial:start", { detail: mode }));
+  }, []);
+
   const primaryAction = useMemo(() => {
     if (snapshot.severity === "critical" || snapshot.severity === "warning") {
       return { label: "異常・注意を見る", target: "障害履歴" };
@@ -245,8 +250,35 @@ export default function BeginnerHomeBridge() {
             <div><strong>迷ったらここから</strong><span>目的に近いボタンを押せばOKです</span></div>
             <button type="button" onClick={() => navigate("端末")}><b>端</b><span>端末を見る<small>入口・出口の状態</small></span></button>
             <button type="button" onClick={() => navigate("障害履歴")}><b>!</b><span>異常・注意<small>問題がある時</small></span></button>
-            <button type="button" onClick={() => navigate("AI管制")}><b>AI</b><span>AIに聞く<small>何を見ればいいか迷った時</small></span></button>
+            <button type="button" onClick={() => navigate("AI管制")}><b>AI</b><span>AIに聞く<small>試験機能・疑似AI</small></span></button>
             <button type="button" onClick={() => navigate("分析")}><b>分</b><span>分析を見る<small>来場者数や傾向</small></span></button>
+          </div>
+
+          <div className="beginner-home-guides" aria-label="使い方・訓練">
+            <div className="beginner-home-guides-heading">
+              <div>
+                <small>GUIDE & TRAINING</small>
+                <strong>使い方を実物で確認</strong>
+                <span>画面の実物を光らせながら、役割と見るポイントを順番に説明します。</span>
+              </div>
+            </div>
+            <div className="beginner-home-guide-grid">
+              <button type="button" className="basic" onClick={() => startTutorial("basic")}>
+                <b>?</b>
+                <span><strong>基本操作ガイド</strong><small>ライブ運行・端末・障害履歴</small></span>
+                <em>START</em>
+              </button>
+              <button type="button" className="experimental" onClick={() => startTutorial("lab")}>
+                <b>試</b>
+                <span><strong>管制ラボ ガイド</strong><small>試験機能① · 自動運転</small></span>
+                <em>EXPERIMENT</em>
+              </button>
+              <button type="button" className="experimental" onClick={() => startTutorial("copilot")}>
+                <b>AI</b>
+                <span><strong>AI管制 ガイド</strong><small>試験機能② · 疑似AI</small></span>
+                <em>EXPERIMENT</em>
+              </button>
+            </div>
           </div>
         </section>,
         homeHost
