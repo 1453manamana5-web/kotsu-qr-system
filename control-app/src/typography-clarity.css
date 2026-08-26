@@ -1,0 +1,125 @@
+/* Readability pass for the control app.
+   Keep the information density, but prevent operational text from becoming too small on iPad. */
+
+.control-shell {
+  font-size: 15px;
+}
+
+/* Sidebar and persistent controls */
+.control-shell .sidebar nav button {
+  font-size: 15px;
+}
+
+.control-shell .sidebar-version {
+  font-size: 11px;
+}
+
+.control-shell .topbar small,
+.control-shell .panel-heading small,
+.control-shell .page-heading small,
+.control-shell .device-card-header small,
+.control-shell .live-panel-heading small,
+.control-shell .predictive-panel-heading small,
+.control-shell .copilot-bubble small,
+.control-shell .lab-section-intro small,
+.control-shell .notification-center-heading small,
+.control-shell .anomaly-notification-copy small {
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.control-shell .topbar-meta,
+.control-shell .return-to-admin,
+.control-shell .operation-pill,
+.control-shell .status-badge,
+.control-shell .firebase-chip {
+  font-size: 13px;
+}
+
+/* Main operational cards */
+.control-shell .summary-grid small,
+.control-shell .device-details dt,
+.control-shell .status-list,
+.control-shell .status-list p,
+.control-shell .live-map-footer,
+.control-shell .forecast-values,
+.control-shell .forecast-explanation,
+.control-shell .predictive-disclaimer,
+.control-shell .predictive-evidence-list,
+.control-shell .copilot-bubble p,
+.control-shell .copilot-bubble li,
+.control-shell .lab-section-intro p {
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.control-shell .device-details dd {
+  font-size: 14px;
+}
+
+.control-shell .device-card-open,
+.control-shell .mode-pill,
+.control-shell .primary-alert p,
+.control-shell .primary-alert button,
+.control-shell .copilot-action,
+.control-shell .notification-center-filters button,
+.control-shell .notification-center-read-all,
+.control-shell .anomaly-notification-open {
+  font-size: 12px;
+}
+
+.control-shell .primary-alert strong {
+  font-size: 15px;
+}
+
+.control-shell .panel-heading h2,
+.control-shell .page-heading h2,
+.control-shell .live-panel-heading h2,
+.control-shell .predictive-panel-heading h2 {
+  font-size: 20px;
+}
+
+/* Notification center: important during live operation, so make it especially easy to scan. */
+.control-shell .anomaly-notification-copy strong {
+  font-size: 14px;
+}
+
+.control-shell .anomaly-notification-copy p {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.control-shell .notification-center-heading strong {
+  font-size: 17px;
+}
+
+.control-shell .notification-center-heading span,
+.control-shell .notification-center-item {
+  font-size: 12px;
+}
+
+/* Generic safety net for text-heavy panels added by bridge components. */
+.control-shell main article p,
+.control-shell main section p,
+.control-shell main article li,
+.control-shell main section li {
+  line-height: 1.55;
+}
+
+@media (max-width: 900px) {
+  .control-shell {
+    font-size: 15px;
+  }
+
+  .control-shell .sidebar nav button {
+    font-size: 14px;
+  }
+
+  .control-shell .topbar-meta,
+  .control-shell .return-to-admin,
+  .control-shell .operation-pill,
+  .control-shell .status-badge,
+  .control-shell .firebase-chip {
+    font-size: 12px;
+  }
+}
