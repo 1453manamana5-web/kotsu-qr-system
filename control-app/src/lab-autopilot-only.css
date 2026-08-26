@@ -16,3 +16,8 @@
 .lab-page.lab-focus-autopilot > .correlation-panel {
   margin-top: 12px;
 }
+
+/* Terminal study and research log now contain one primary panel each. */
+.lab-single-panel-grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
