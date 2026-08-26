@@ -16,6 +16,7 @@ import OperationsManagementBridge from "./OperationsManagementBridge";
 import SidebarClarityBridge from "./SidebarClarityBridge";
 import AdminOpsBridge from "./AdminOpsBridge";
 import MaintenanceDataBridge from "./MaintenanceDataBridge";
+import CopilotLearningBridge from "./CopilotLearningBridge";
 import CopilotLanguageExpansionBridge from "./CopilotLanguageExpansionBridge";
 import CopilotConversationMemoryBridge from "./CopilotConversationMemoryBridge";
 import CopilotRemoteCommandBridge from "./CopilotRemoteCommandBridge";
@@ -43,6 +44,7 @@ import "./copilot-simplified.css";
 import "./anomaly-notifications.css";
 import "./topbar-clarity.css";
 import "./typography-clarity.css";
+import "./copilot-learning.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -63,6 +65,7 @@ createRoot(document.getElementById("root")!).render(
         <SidebarClarityBridge />
         <AdminOpsBridge database={db} />
         <MaintenanceDataBridge database={db} />
+        <CopilotLearningBridge />
         <CopilotLanguageExpansionBridge />
         <CopilotConversationMemoryBridge />
         <CopilotRemoteCommandBridge database={db} />
