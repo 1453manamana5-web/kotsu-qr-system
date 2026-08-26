@@ -17,6 +17,7 @@ import SidebarClarityBridge from "./SidebarClarityBridge";
 import AdminOpsBridge from "./AdminOpsBridge";
 import MaintenanceDataBridge from "./MaintenanceDataBridge";
 import CopilotLanguageExpansionBridge from "./CopilotLanguageExpansionBridge";
+import CopilotConversationMemoryBridge from "./CopilotConversationMemoryBridge";
 import CopilotRemoteCommandBridge from "./CopilotRemoteCommandBridge";
 import CopilotCapabilityBridge from "./CopilotCapabilityBridge";
 import CopilotSimplificationBridge from "./CopilotSimplificationBridge";
@@ -61,6 +62,7 @@ createRoot(document.getElementById("root")!).render(
         <AdminOpsBridge database={db} />
         <MaintenanceDataBridge database={db} />
         <CopilotLanguageExpansionBridge />
+        <CopilotConversationMemoryBridge />
         <CopilotRemoteCommandBridge database={db} />
         <CopilotCapabilityBridge database={db} />
         <CopilotSimplificationBridge />
