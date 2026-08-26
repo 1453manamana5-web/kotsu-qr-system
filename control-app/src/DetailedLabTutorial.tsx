@@ -61,6 +61,20 @@ const LAB_STEPS: readonly LabStep[] = [
   },
   {
     kind: "explain",
+    selector: ".predictive-radar-panel",
+    title: "異常予兆レーダー：障害になる前の変化を見る",
+    body: "異常予兆レーダーは、いま故障しているかだけを見るのではなく、直近約5分の通信遅延・通信速度・同期待ち・端末の応答間隔などの変化をまとめて、悪化の兆候を早めに見つけるための表示です。スコアが上がっている端末ほど、先に状態を確認する優先度が高いと考えます。",
+    note: "このリスクスコアは『故障する確率』ではありません。観測値の悪化傾向をまとめた注意指標なので、急に上がった時や高い状態が続く時に重点確認します。",
+  },
+  {
+    kind: "explain",
+    selector: ".correlation-panel",
+    title: "異常相関分析：複数の症状をつないで原因を絞る",
+    body: "異常相関分析は、入口と出口の通信・同期・カメラなどを横断して比べます。たとえば入口と出口が同じ時間帯に悪化していれば共通Wi-FiやFirebaseなどの共通経路を疑い、片側だけならその端末固有の問題を優先して疑います。症状を1件ずつ見るのではなく、『何から確認すべきか』を絞るための機能です。",
+    note: "相関が強いからといって原因を100%断定するものではありません。表示された推定と根拠を見て、共通障害か端末固有かを切り分けるために使います。",
+  },
+  {
+    kind: "explain",
     selector: ".lab-guardrail-grid article:nth-child(1)",
     title: "自動実行してよい範囲",
     body: "自動化するのは、失敗しても受付全体を止めにくい復旧操作に限定しています。現在はカメラ再起動と、未送信データの再同期が主な対象です。",
@@ -211,7 +225,7 @@ export default function DetailedLabTutorial() {
           <>
             <div className="lab-tutorial-meta"><span>CONTROL LAB TRAINING</span><span>{LAB_STEPS.length} / {LAB_STEPS.length}</span></div>
             <h2>管制ラボの考え方まで確認できました</h2>
-            <p>レベルの違いだけでなく、自動実行できる範囲、人が承認する範囲、通信断時の限界、緊急停止の意味まで確認しました。</p>
+            <p>レベルの違いに加えて、現在の判断、異常予兆レーダー、異常相関分析、自動実行できる範囲、人が承認する範囲、通信断時の限界、緊急停止の意味まで確認しました。</p>
             <div className="lab-tutorial-progress"><span style={{ width: "100%" }} /></div>
             <div className="lab-tutorial-actions"><button type="button" onClick={restart}>もう一度</button><button type="button" className="primary" onClick={close}>終了</button></div>
           </>
