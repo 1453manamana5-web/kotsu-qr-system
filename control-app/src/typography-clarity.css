@@ -29,7 +29,6 @@
 }
 
 .control-shell .topbar-meta,
-.control-shell .return-to-admin,
 .control-shell .operation-pill,
 .control-shell .status-badge,
 .control-shell .firebase-chip {
@@ -62,8 +61,6 @@
 .control-shell .primary-alert p,
 .control-shell .primary-alert button,
 .control-shell .copilot-action,
-.control-shell .notification-center-filters button,
-.control-shell .notification-center-read-all,
 .control-shell .anomaly-notification-open {
   font-size: 12px;
 }
@@ -79,7 +76,146 @@
   font-size: 20px;
 }
 
-/* Notification center: important during live operation, so make it especially easy to scan. */
+/* The control room and reception manager are separate operating surfaces.
+   Do not expose a casual cross-navigation shortcut in the live top bar. */
+.control-shell .return-to-admin {
+  display: none !important;
+}
+
+/* Notification center: large enough to scan quickly on an iPad during live operation. */
+.control-shell .control-notification-bell {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+
+.control-shell .control-notification-bell svg {
+  width: 21px;
+  height: 21px;
+}
+
+.control-shell .notification-center-panel {
+  width: min(560px, calc(100vw - 32px));
+  border-radius: 19px;
+}
+
+.control-shell .notification-center-heading {
+  gap: 16px;
+  padding: 19px 20px 16px;
+}
+
+.control-shell .notification-center-heading small {
+  font-size: 11px;
+}
+
+.control-shell .notification-center-heading strong {
+  font-size: 20px;
+}
+
+.control-shell .notification-center-heading span {
+  margin-left: 9px;
+  font-size: 12px;
+}
+
+.control-shell .notification-center-heading > button {
+  width: 34px;
+  height: 34px;
+  font-size: 20px;
+}
+
+.control-shell .notification-center-toolbar {
+  gap: 11px;
+  padding: 12px 15px;
+}
+
+.control-shell .notification-center-filters {
+  gap: 7px;
+}
+
+.control-shell .notification-center-filters button,
+.control-shell .notification-center-read-all {
+  min-height: 34px;
+  padding-inline: 11px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.control-shell .notification-center-list {
+  max-height: min(640px, calc(100vh - 190px));
+}
+
+.control-shell .notification-center-item {
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 16px 16px;
+  font-size: 13px;
+}
+
+.control-shell .notification-center-item.is-unread::before {
+  top: 22px;
+  left: 5px;
+  width: 6px;
+  height: 6px;
+}
+
+.control-shell .notification-center-item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  font-size: 17px;
+}
+
+.control-shell .notification-level,
+.control-shell .notification-state,
+.control-shell .notification-center-item-copy > div > i {
+  min-height: 21px;
+  padding-inline: 7px;
+  font-size: 10px;
+}
+
+.control-shell .notification-center-item-copy > strong {
+  margin-top: 7px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.control-shell .notification-center-item-copy > p {
+  margin-top: 5px;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.control-shell .notification-center-item-copy > small {
+  margin-top: 7px;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.control-shell .notification-center-item > button {
+  min-height: 36px;
+  padding-inline: 12px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.control-shell .notification-center-empty {
+  min-height: 230px;
+}
+
+.control-shell .notification-center-empty > span {
+  width: 48px;
+  height: 48px;
+  font-size: 21px;
+}
+
+.control-shell .notification-center-empty strong {
+  font-size: 14px;
+}
+
+.control-shell .notification-center-empty p {
+  font-size: 11px;
+}
+
 .control-shell .anomaly-notification-copy strong {
   font-size: 14px;
 }
@@ -87,15 +223,6 @@
 .control-shell .anomaly-notification-copy p {
   font-size: 12px;
   line-height: 1.5;
-}
-
-.control-shell .notification-center-heading strong {
-  font-size: 17px;
-}
-
-.control-shell .notification-center-heading span,
-.control-shell .notification-center-item {
-  font-size: 12px;
 }
 
 /* Generic safety net for text-heavy panels added by bridge components. */
@@ -116,10 +243,28 @@
   }
 
   .control-shell .topbar-meta,
-  .control-shell .return-to-admin,
   .control-shell .operation-pill,
   .control-shell .status-badge,
   .control-shell .firebase-chip {
     font-size: 12px;
+  }
+
+  .control-shell .notification-center-panel {
+    width: min(540px, calc(100vw - 20px));
+  }
+}
+
+@media (max-width: 620px) {
+  .control-shell .notification-center-panel {
+    width: calc(100vw - 18px);
+  }
+
+  .control-shell .notification-center-item {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .control-shell .notification-center-item > button {
+    grid-column: 2;
+    justify-self: start;
   }
 }
