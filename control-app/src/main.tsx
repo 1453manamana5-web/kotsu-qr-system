@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import DeviceAccessGate from "./DeviceAccessGate";
-import StandaloneTutorialGuideV2 from "./StandaloneTutorialGuideV2";
+import StandaloneTutorialGuideV3 from "./StandaloneTutorialGuideV3";
 import PredictiveOpsOverlay from "./PredictiveOpsOverlay";
 import AnomalyNotificationBridge from "./AnomalyNotificationBridge";
 import ExperimentalLabBridge from "./ExperimentalLabBridge";
@@ -52,7 +52,7 @@ createRoot(document.getElementById("root")!).render(
     <DeviceAccessGate>
       <>
         <App database={db} />
-        <StandaloneTutorialGuideV2 />
+        <StandaloneTutorialGuideV3 />
         <AssistPersistenceBridge />
         <PredictiveOpsOverlay database={db} />
         <AnomalyNotificationBridge database={db} />
