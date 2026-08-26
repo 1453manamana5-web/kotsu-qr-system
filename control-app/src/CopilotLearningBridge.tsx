@@ -15,6 +15,7 @@ type LearnedMapping = {
 type TeachingState = {
   question: string;
   token: string;
+  detectedAt: number;
 };
 
 type LearningFeedback = {
@@ -51,6 +52,15 @@ function normalize(text: string) {
     .toLowerCase()
     .normalize("NFKC")
     .replace(/[\s\u3000。、！？!?「」『』（）()・:：,，.．\-ー]/g, "");
+}
+
+function stableHash(value: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
 }
 
 function bigrams(value: string) {
@@ -219,8 +229,9 @@ export default function CopilotLearningBridge() {
         handledFallbacksRef.current.add(latest);
         const question = lastQuestionRef.current.trim();
         if (question === "") return;
+        const detectedAt = Date.now();
         setFeedback(null);
-        setTeaching({ question, token: `${Date.now()}-${question}` });
+        setTeaching({ question, detectedAt, token: `${detectedAt}-${stableHash(question)}` });
       });
     };
 
@@ -239,9 +250,9 @@ export default function CopilotLearningBridge() {
   const teach = (option: TeachOption) => {
     if (teaching === null) return;
     const normalizedExample = normalize(teaching.question);
-    const now = Date.now();
     const existing = mappingsRef.current.find((item) => item.normalizedExample === normalizedExample);
-    const mappingId = existing?.id ?? `learned-${now}-${Math.random().toString(36).slice(2, 8)}`;
+    const mappingId = existing?.id ?? `learned-${stableHash(normalizedExample)}`;
+    const learnedAt = teaching.detectedAt;
 
     setMappings((current) => {
       const withoutSame = current.filter((item) => item.normalizedExample !== normalizedExample);
@@ -252,8 +263,8 @@ export default function CopilotLearningBridge() {
           normalizedExample,
           canonical: option.canonical,
           label: option.label,
-          createdAt: existing?.createdAt ?? now,
-          lastUsedAt: now,
+          createdAt: existing?.createdAt ?? learnedAt,
+          lastUsedAt: learnedAt,
           uses: existing?.uses ?? 0,
         },
         ...withoutSame,
