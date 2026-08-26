@@ -47,6 +47,11 @@ function syncSimpleCopy() {
   }
 
   const status = page.querySelector(".copilot-status-strip");
+  const evidenceLabel = status?.querySelector("dl > div:nth-child(2) dt");
+  if (evidenceLabel !== null && evidenceLabel !== undefined && evidenceLabel.textContent !== "判断材料") {
+    evidenceLabel.textContent = "判断材料";
+  }
+
   const decision = status?.querySelector("dl > div:last-child dd")?.textContent?.trim() ?? "";
   const statusTitle = status?.querySelector("div:nth-child(2) > strong");
   const nextStatus = decision.includes("要確認")
@@ -84,22 +89,8 @@ function SimplePrompts() {
   );
 }
 
-function CopilotHeadingSummary() {
-  return (
-    <div className="copilot-heading-summary" aria-label="管制コパイロットの役割">
-      <p>会場・受付端末・障害のライブ情報をまとめ、状況確認と次の対応判断を支援します。</p>
-      <div>
-        <span>ライブ状態を読む</span>
-        <span>確認先を絞る</span>
-        <span>操作前に確認</span>
-      </div>
-    </div>
-  );
-}
-
 export default function CopilotSimplificationBridge() {
   const [promptTarget, setPromptTarget] = useState<Element | null>(null);
-  const [headingTarget, setHeadingTarget] = useState<Element | null>(null);
 
   useEffect(() => {
     let scheduled = false;
@@ -109,9 +100,7 @@ export default function CopilotSimplificationBridge() {
       window.requestAnimationFrame(() => {
         scheduled = false;
         const nextPrompt = document.querySelector(".copilot-page .copilot-quick-prompts");
-        const nextHeading = document.querySelector(".copilot-page .copilot-page-heading > div");
         setPromptTarget((current) => current === nextPrompt ? current : nextPrompt);
-        setHeadingTarget((current) => current === nextHeading ? current : nextHeading);
         syncSimpleCopy();
       });
     };
@@ -127,10 +116,5 @@ export default function CopilotSimplificationBridge() {
     return () => observer.disconnect();
   }, []);
 
-  return (
-    <>
-      {headingTarget !== null && createPortal(<CopilotHeadingSummary />, headingTarget)}
-      {promptTarget !== null && createPortal(<SimplePrompts />, promptTarget)}
-    </>
-  );
+  return promptTarget === null ? null : createPortal(<SimplePrompts />, promptTarget);
 }
