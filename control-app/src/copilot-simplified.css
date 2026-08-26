@@ -1,76 +1,29 @@
-.copilot-page .copilot-page-heading {
-  align-items: flex-start;
-  padding-bottom: 12px;
-}
-
-.copilot-page .copilot-page-heading > div {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
 .copilot-page .copilot-page-heading > div > small {
   letter-spacing: .08em;
 }
 
 .copilot-page .copilot-page-heading > span {
-  flex: 0 0 auto;
   color: #65738a;
   background: #f1f4f8;
-}
-
-.copilot-heading-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.copilot-heading-summary p {
-  max-width: 620px;
-  margin: 0;
-  color: #66758d;
-  font-size: 11px;
-  line-height: 1.55;
-}
-
-.copilot-heading-summary > div {
-  display: flex;
-  flex: 0 0 auto;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 5px;
-}
-
-.copilot-heading-summary span {
-  display: inline-flex;
-  align-items: center;
-  min-height: 25px;
-  padding: 0 8px;
-  border: 1px solid #dce2ef;
-  border-radius: 999px;
-  color: #53627a;
-  background: #f8faff;
-  font-size: 8px;
-  font-weight: 850;
-  white-space: nowrap;
 }
 
 .copilot-page .copilot-status-strip {
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 14px;
-  margin-top: 12px;
   padding: 14px 16px;
 }
 
 .copilot-page .copilot-status-strip > div:nth-child(2) > small,
-.copilot-page .copilot-status-strip > div:nth-child(2) > p,
-.copilot-page .copilot-status-strip dl > div:nth-child(2) {
+.copilot-page .copilot-status-strip > div:nth-child(2) > p {
   display: none !important;
 }
 
 .copilot-page .copilot-status-strip > div:nth-child(2) > strong {
   font-size: 18px;
+}
+
+.copilot-page .copilot-status-strip dl {
+  min-width: 330px;
 }
 
 .copilot-page .copilot-quick-prompts > button {
@@ -121,17 +74,6 @@
   font-size: 13px;
 }
 
-@media (max-width: 1050px) {
-  .copilot-heading-summary {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .copilot-heading-summary > div {
-    justify-content: flex-start;
-  }
-}
-
 @media (max-width: 900px) {
   .copilot-page .copilot-status-strip {
     grid-template-columns: auto minmax(0, 1fr);
@@ -139,5 +81,6 @@
 
   .copilot-page .copilot-status-strip dl {
     grid-column: 1 / -1;
+    min-width: 0;
   }
 }
