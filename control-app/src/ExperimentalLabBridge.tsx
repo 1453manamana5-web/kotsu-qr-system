@@ -10,13 +10,10 @@ import {
 
 type ReceptionMode = "entry" | "exit";
 type CameraState = "starting" | "ready" | "error";
-type FaultScenario = "none" | "entry-network" | "shared-network" | "camera" | "sync";
-type LabSection = "overview" | "autopilot" | "simulation" | "terminal" | "research";
+type LabSection = "overview" | "autopilot" | "terminal" | "research";
 
 type LabEvent = {
-  id: string;
   dataDocumentId: string;
-  capacity: number;
 };
 
 type LabDevice = {
@@ -31,16 +28,6 @@ type LabDevice = {
   receptionPaused: boolean;
 };
 
-type Activity = {
-  type: "ticket-entry" | "ticket-exit" | "member-entry" | "member-exit";
-  timestamp: number;
-};
-
-type Analytics = {
-  currentInside: number;
-  currentMembersInside: number;
-};
-
 type LabLog = {
   id: string;
   at: number;
@@ -49,43 +36,13 @@ type LabLog = {
   kind: "info" | "watch" | "warning";
 };
 
-const DEFAULT_CAPACITY = 200;
-
 const LAB_SECTIONS: ReadonlyArray<{
   id: Exclude<LabSection, "overview">;
   label: string;
-  eyebrow: string;
-  description: string;
-  safety: string;
 }> = [
-  {
-    id: "autopilot",
-    label: "自動運転",
-    eyebrow: "OPERATIONS",
-    description: "判断支援と自動復旧レベルを設定",
-    safety: "実端末へ操作する場合あり",
-  },
-  {
-    id: "simulation",
-    label: "シミュレーション",
-    eyebrow: "SIMULATION",
-    description: "会場流量と仮想障害を試す",
-    safety: "実端末には影響しない",
-  },
-  {
-    id: "terminal",
-    label: "端末研究",
-    eyebrow: "TERMINAL STUDY",
-    description: "予防保全と対応候補を比較",
-    safety: "表示・比較のみ",
-  },
-  {
-    id: "research",
-    label: "研究ログ",
-    eyebrow: "RESEARCH",
-    description: "試験結果と判断履歴を確認",
-    safety: "記録・状態確認のみ",
-  },
+  { id: "autopilot", label: "自動運転" },
+  { id: "terminal", label: "端末研究" },
+  { id: "research", label: "研究ログ" },
 ];
 
 function readNumber(value: unknown) {
@@ -115,7 +72,7 @@ function readDevice(id: string, data: DocumentData): LabDevice | null {
     id,
     mode,
     name: typeof data.deviceName === "string" && data.deviceName.trim() !== ""
-      ? data.deviceName
+      ? data.deviceName.trim()
       : `${mode === "entry" ? "入口" : "出口"}受付端末`,
     lastSeenAt: timestampToMilliseconds(data.updatedAt) || readNumber(data.lastSeenAt),
     pendingCount: Math.floor(readNumber(data.pendingCount)),
@@ -124,29 +81,6 @@ function readDevice(id: string, data: DocumentData): LabDevice | null {
     cameraState,
     receptionPaused: data.receptionPaused === true,
   };
-}
-
-function readActivity(data: DocumentData): Activity | null {
-  if (
-    data.type !== "ticket-entry" &&
-    data.type !== "ticket-exit" &&
-    data.type !== "member-entry" &&
-    data.type !== "member-exit"
-  ) return null;
-  if (typeof data.timestamp !== "string") return null;
-  const timestamp = new Date(data.timestamp).getTime();
-  return Number.isFinite(timestamp) ? { type: data.type, timestamp } : null;
-}
-
-function isEntry(activity: Activity) {
-  return activity.type === "ticket-entry" || activity.type === "member-entry";
-}
-
-function rate(activities: Activity[], now: number, predicate: (activity: Activity) => boolean) {
-  const start = now - 10 * 60_000;
-  return activities.filter(
-    (activity) => activity.timestamp > start && activity.timestamp <= now && predicate(activity)
-  ).length / 10;
 }
 
 function baseDeviceRisk(device: LabDevice, now: number) {
@@ -162,6 +96,7 @@ function baseDeviceRisk(device: LabDevice, now: number) {
   else if (device.firebaseLatencyMs >= 500) score += 7;
   if (device.downloadMbps > 0 && device.downloadMbps < 1) score += 18;
   else if (device.downloadMbps > 0 && device.downloadMbps < 3) score += 8;
+  if (device.receptionPaused) score += 5;
   return Math.min(100, Math.round(score));
 }
 
@@ -213,12 +148,7 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
   const [section, setSection] = useState<LabSection>("overview");
   const [event, setEvent] = useState<LabEvent | null>(null);
   const [devices, setDevices] = useState<LabDevice[]>([]);
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [analytics, setAnalytics] = useState<Analytics>({ currentInside: 0, currentMembersInside: 0 });
   const [now, setNow] = useState(() => Date.now());
-  const [entryMultiplier, setEntryMultiplier] = useState(100);
-  const [exitMultiplier, setExitMultiplier] = useState(100);
-  const [scenario, setScenario] = useState<FaultScenario>("none");
   const [logs, setLogs] = useState<LabLog[]>([]);
   const previousSignatureRef = useRef("");
 
@@ -250,7 +180,6 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
     page.classList.remove(
       "lab-focus-overview",
       "lab-focus-autopilot",
-      "lab-focus-simulation",
       "lab-focus-terminal",
       "lab-focus-research"
     );
@@ -260,7 +189,6 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
       page.classList.remove(
         "lab-focus-overview",
         "lab-focus-autopilot",
-        "lab-focus-simulation",
         "lab-focus-terminal",
         "lab-focus-research"
       );
@@ -290,11 +218,9 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
         const data = eventSnapshot.data();
         const name = typeof data.name === "string" ? data.name.trim() : "event-not-set";
         setEvent({
-          id: eventId,
           dataDocumentId: typeof data.dataDocumentId === "string" && data.dataDocumentId !== ""
             ? data.dataDocumentId
             : encodeURIComponent(name || "event-not-set"),
-          capacity: Math.max(1, Math.floor(readNumber(data.capacity) || DEFAULT_CAPACITY)),
         });
       });
     });
@@ -308,71 +234,31 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
   useEffect(() => {
     if (event === null) return undefined;
 
-    const base = ["event-data", event.dataDocumentId] as const;
-    const unsubscribeDevices = onSnapshot(collection(database, ...base, "reception-devices"), (snapshot) => {
-      setDevices(snapshot.docs
-        .map((item) => readDevice(item.id, item.data()))
-        .filter((item): item is LabDevice => item !== null));
-    });
-    const unsubscribeActivity = onSnapshot(collection(database, ...base, "activity"), (snapshot) => {
-      setActivities(snapshot.docs
-        .map((item) => readActivity(item.data()))
-        .filter((item): item is Activity => item !== null));
-    });
-    const unsubscribeAnalytics = onSnapshot(doc(database, ...base, "analytics", "summary"), (snapshot) => {
-      const data = snapshot.exists() ? snapshot.data() : {};
-      setAnalytics({
-        currentInside: Math.floor(readNumber(data.currentInside)),
-        currentMembersInside: Math.floor(readNumber(data.currentMembersInside)),
-      });
-    });
+    const unsubscribeDevices = onSnapshot(
+      collection(database, "event-data", event.dataDocumentId, "reception-devices"),
+      (snapshot) => {
+        setDevices(snapshot.docs
+          .map((item) => readDevice(item.id, item.data()))
+          .filter((item): item is LabDevice => item !== null));
+      }
+    );
 
-    return () => {
-      unsubscribeDevices();
-      unsubscribeActivity();
-      unsubscribeAnalytics();
-    };
+    return unsubscribeDevices;
   }, [database, event]);
-
-  const entryRate = useMemo(() => rate(activities, now, isEntry), [activities, now]);
-  const exitRate = useMemo(
-    () => rate(activities, now, (activity) => !isEntry(activity)),
-    [activities, now]
-  );
-  const currentOccupancy = analytics.currentInside + analytics.currentMembersInside;
 
   const deviceRisks = useMemo(() => devices
     .map((device) => ({ device, score: baseDeviceRisk(device, now) }))
     .sort((a, b) => b.score - a.score), [devices, now]);
 
-  const injectedRisk = scenario === "none" ? 0
-    : scenario === "entry-network" ? 26
-      : scenario === "shared-network" ? 42
-        : scenario === "camera" ? 34
-          : 30;
-
-  const baseRisk = deviceRisks[0]?.score ?? 0;
-  const simulatedRisk = Math.min(100, baseRisk + injectedRisk);
-  const simulatedEntryRate = entryRate * entryMultiplier / 100;
-  const simulatedExitRate = exitRate * exitMultiplier / 100;
-  const simulated15 = Math.max(
-    0,
-    Math.round(currentOccupancy + (simulatedEntryRate - simulatedExitRate) * 15)
-  );
-  const occupancyRatio = event === null ? 0 : simulated15 / event.capacity;
-
   const dataQuality = useMemo(() => {
-    let score = 20;
-    if (event !== null) score += 20;
+    let score = event === null ? 10 : 35;
     score += Math.min(30, devices.length * 15);
-    const recent = activities.filter((activity) => now - activity.timestamp <= 10 * 60_000).length;
-    score += Math.min(20, recent * 2);
-    if (
-      devices.length > 0 &&
-      devices.every((device) => device.lastSeenAt > 0 && now - device.lastSeenAt < 15_000)
-    ) score += 10;
+    const freshDevices = devices.filter((device) => device.lastSeenAt > 0 && now - device.lastSeenAt < 15_000).length;
+    score += Math.min(20, freshDevices * 10);
+    const measuredDevices = devices.filter((device) => device.firebaseLatencyMs > 0 || device.downloadMbps > 0).length;
+    score += Math.min(15, measuredDevices * 8);
     return Math.min(100, score);
-  }, [activities, devices, event, now]);
+  }, [devices, event, now]);
 
   const preventive = useMemo(() => deviceRisks.map(({ device, score }) => {
     const index = Math.min(100, Math.round(
@@ -413,49 +299,39 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
     ];
   }, [deviceRisks]);
 
-  const signature = useMemo(() => [
-    scenario,
-    Math.round(baseRisk / 10),
-    Math.round(entryRate * 10),
-    Math.round(exitRate * 10),
-    Math.round(currentOccupancy / 10),
-  ].join(":"), [baseRisk, currentOccupancy, entryRate, exitRate, scenario]);
+  const signature = useMemo(() => deviceRisks
+    .map(({ device, score }) => [device.id, Math.round(score / 10), device.pendingCount, device.cameraState].join(":"))
+    .join("|"), [deviceRisks]);
 
   useEffect(() => {
     if (target === null || signature === previousSignatureRef.current) return;
     previousSignatureRef.current = signature;
     const highest = deviceRisks[0];
 
-    const next: LabLog = scenario !== "none"
+    const next: LabLog = highest !== undefined && highest.score >= 25
       ? {
           id: `${Date.now()}-${signature}`,
           at: Date.now(),
-          title: "仮想障害シナリオを再計算",
-          detail: `シミュレーション上の最大リスクは${simulatedRisk}/100です。実端末には反映していません。`,
-          kind: simulatedRisk >= 75 ? "warning" : "watch",
+          title: `${highest.device.name}を重点監視`,
+          detail: `ライブ指標のリスクは${highest.score}/100。${riskLabel(highest.score)}として追跡します。`,
+          kind: highest.score >= 50 ? "warning" : "watch",
         }
-      : highest !== undefined && highest.score >= 25
-        ? {
-            id: `${Date.now()}-${signature}`,
-            at: Date.now(),
-            title: `${highest.device.name}を重点監視`,
-            detail: `ライブ指標のリスクは${highest.score}/100。${riskLabel(highest.score)}として追跡します。`,
-            kind: highest.score >= 50 ? "warning" : "watch",
-          }
-        : {
-            id: `${Date.now()}-${signature}`,
-            at: Date.now(),
-            title: "ラボ判断エンジン更新",
-            detail: "強い異常兆候はありません。試験用の評価値を更新しました。",
-            kind: "info",
-          };
+      : {
+          id: `${Date.now()}-${signature || "stable"}`,
+          at: Date.now(),
+          title: "ラボ判断エンジン更新",
+          detail: "強い異常兆候はありません。端末のライブ指標を更新しました。",
+          kind: "info",
+        };
 
     setLogs((current) => [next, ...current].slice(0, 8));
-  }, [deviceRisks, scenario, signature, simulatedRisk, target]);
+  }, [deviceRisks, signature, target]);
 
   if (target === null) return null;
 
   const highestPreventive = preventive[0]?.index ?? 0;
+  const highestRisk = deviceRisks[0]?.score ?? 0;
+  const watchedDevice = deviceRisks[0]?.device.name ?? "なし";
 
   return createPortal(
     <section className="experimental-lab-extension">
@@ -495,7 +371,7 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
             <div>
               <small>CONTROL LAB · EXPERIMENTAL</small>
               <h3>試したい内容を1つ選択</h3>
-              <p>機能を4カテゴリに整理しました。必要な画面だけ開くため、他の試験情報は同時に表示しません。</p>
+              <p>必要な機能だけ3カテゴリに整理しています。通常運用では開かなくても問題ありません。</p>
             </div>
             <span>通常運用では開かなくてもOK</span>
           </div>
@@ -508,17 +384,6 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
                 <strong>自動運転</strong>
                 <p>判断支援と復旧レベルを設定します。</p>
                 <em>実端末へ操作する場合あり</em>
-              </div>
-              <b aria-hidden="true">→</b>
-            </button>
-
-            <button type="button" onClick={() => setSection("simulation")}>
-              <span className="lab-category-icon" aria-hidden="true">仮</span>
-              <div>
-                <small>SIMULATION</small>
-                <strong>シミュレーション</strong>
-                <p>会場流量や仮想障害を安全に試します。</p>
-                <em>実端末には影響しない</em>
               </div>
               <b aria-hidden="true">→</b>
             </button>
@@ -539,7 +404,7 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
               <div>
                 <small>RESEARCH</small>
                 <strong>研究ログ</strong>
-                <p>ラボの判断履歴と試験状態を確認します。</p>
+                <p>ラボの判断履歴と現在の評価状態を確認します。</p>
                 <em>記録 {logs.length}件 · 品質 {dataQuality}/100</em>
               </div>
               <b aria-hidden="true">→</b>
@@ -548,7 +413,7 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
 
           <div className="lab-overview-note">
             <strong>実運用への影響</strong>
-            <span>「自動運転」だけが設定に応じて実端末へ操作します。ほか3カテゴリは計算・表示のみです。</span>
+            <span>「自動運転」だけが設定に応じて実端末へ操作します。端末研究と研究ログは表示・分析のみです。</span>
           </div>
         </>
       )}
@@ -564,91 +429,13 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
         </div>
       )}
 
-      {section === "simulation" && (
-        <>
-          <div className="lab-section-intro">
-            <div>
-              <small>SIMULATION</small>
-              <strong>会場・障害シミュレーション</strong>
-              <p>すべて仮想計算です。ここで設定した値は受付端末や本番データを変更しません。</p>
-            </div>
-            <span>SIMULATION ONLY</span>
-          </div>
-
-          <div className="lab-experiment-grid">
-            <article className="lab-digital-twin">
-              <div className="lab-card-heading">
-                <div><small>DIGITAL TWIN</small><strong>会場デジタルツイン</strong></div>
-                <span>{simulated15}人</span>
-              </div>
-              <p>直近10分の入退場を基準に、流量を変えた場合の15分後を仮想計算します。</p>
-              <label>
-                <span>入場流量 <b>{entryMultiplier}%</b></span>
-                <input
-                  type="range"
-                  min="40"
-                  max="200"
-                  step="10"
-                  value={entryMultiplier}
-                  onChange={(e) => setEntryMultiplier(Number(e.target.value))}
-                />
-              </label>
-              <label>
-                <span>退出流量 <b>{exitMultiplier}%</b></span>
-                <input
-                  type="range"
-                  min="40"
-                  max="200"
-                  step="10"
-                  value={exitMultiplier}
-                  onChange={(e) => setExitMultiplier(Number(e.target.value))}
-                />
-              </label>
-              <dl>
-                <div><dt>現在</dt><dd>{currentOccupancy}人</dd></div>
-                <div><dt>ライブ流量</dt><dd>入 {entryRate.toFixed(1)} / 出 {exitRate.toFixed(1)} 人/分</dd></div>
-                <div><dt>15分後</dt><dd>{simulated15}人</dd></div>
-                <div>
-                  <dt>定員比</dt>
-                  <dd className={occupancyRatio >= 1 ? "is-danger" : occupancyRatio >= 0.8 ? "is-watch" : ""}>
-                    {Math.round(occupancyRatio * 100)}%
-                  </dd>
-                </div>
-              </dl>
-            </article>
-
-            <article className="lab-fault-injection">
-              <div className="lab-card-heading">
-                <div><small>VIRTUAL FAULT</small><strong>障害注入シミュレーション</strong></div>
-                <span className={simulatedRisk >= 75 ? "danger" : simulatedRisk >= 50 ? "warning" : "normal"}>
-                  {simulatedRisk}
-                </span>
-              </div>
-              <p>実機を壊さず、仮想的な故障条件を足して判断エンジンの反応を確認します。</p>
-              <div className="lab-scenario-buttons">
-                <button className={scenario === "none" ? "active" : ""} onClick={() => setScenario("none")}>通常</button>
-                <button className={scenario === "entry-network" ? "active" : ""} onClick={() => setScenario("entry-network")}>入口通信悪化</button>
-                <button className={scenario === "shared-network" ? "active" : ""} onClick={() => setScenario("shared-network")}>共通回線悪化</button>
-                <button className={scenario === "camera" ? "active" : ""} onClick={() => setScenario("camera")}>カメラ異常</button>
-                <button className={scenario === "sync" ? "active" : ""} onClick={() => setScenario("sync")}>同期詰まり</button>
-              </div>
-              <div className="lab-simulation-result">
-                <span>ライブ値</span><strong>{baseRisk}/100</strong><i>→</i>
-                <span>仮想値</span><strong>{simulatedRisk}/100</strong>
-              </div>
-              <small className="lab-virtual-note">SIMULATION ONLY · 実端末への遠隔操作なし</small>
-            </article>
-          </div>
-        </>
-      )}
-
       {section === "terminal" && (
         <>
           <div className="lab-section-intro">
             <div>
               <small>TERMINAL STUDY</small>
               <strong>端末の予防保全・対応比較</strong>
-              <p>端末のライブ指標を研究用にまとめ、何を先に確認する価値が高いか比較します。</p>
+              <p>端末のライブ指標をまとめ、何を先に確認する価値が高いか比較します。</p>
             </div>
             <span>表示・比較のみ</span>
           </div>
@@ -700,8 +487,8 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
           <div className="lab-section-intro">
             <div>
               <small>RESEARCH</small>
-              <strong>研究ログ・試験状態</strong>
-              <p>日常の管制には不要な技術情報をこのカテゴリへまとめました。</p>
+              <strong>研究ログ・評価状態</strong>
+              <p>ラボの判断履歴と、判断に使えるデータの状態だけをまとめています。</p>
             </div>
             <span>{logs.length}件の履歴</span>
           </div>
@@ -726,16 +513,16 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
 
             <article className="lab-research-score">
               <div className="lab-card-heading">
-                <div><small>RESEARCH STATUS</small><strong>試験エンジン状態</strong></div>
-                <span>ACTIVE</span>
+                <div><small>RESEARCH STATUS</small><strong>現在の評価状態</strong></div>
+                <span>LIVE</span>
               </div>
               <dl>
                 <div><dt>データ品質</dt><dd>{dataQuality}/100</dd></div>
-                <div><dt>最大ライブリスク</dt><dd>{baseRisk}/100</dd></div>
-                <div><dt>仮想シナリオ</dt><dd>{scenario === "none" ? "なし" : "注入中"}</dd></div>
-                <div><dt>デジタルツイン</dt><dd>{entryMultiplier}% / {exitMultiplier}%</dd></div>
+                <div><dt>最大ライブリスク</dt><dd>{highestRisk}/100</dd></div>
+                <div><dt>受信中の端末</dt><dd>{devices.length}台</dd></div>
+                <div><dt>重点監視</dt><dd>{watchedDevice}</dd></div>
               </dl>
-              <p>シミュレーション結果は自動運転Lv.3の実行条件には使わず、試験表示だけに隔離しています。</p>
+              <p>ここに表示する値はライブ端末状態の評価だけに限定しています。</p>
             </article>
           </div>
         </>
