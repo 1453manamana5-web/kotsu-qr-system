@@ -125,7 +125,7 @@ function setControlledInputValue(input: HTMLInputElement, value: string) {
 
 function clickNavigation(destination: Destination) {
   const labels: Record<Destination, string[]> = {
-    overview: ["ホーム", "ライブ運行"],
+    overview: ["ライブ運行"],
     devices: ["端末"],
     incidents: ["障害履歴"],
     diagnostics: ["通信診断"],
