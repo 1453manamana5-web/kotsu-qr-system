@@ -7,6 +7,7 @@ import ExperimentalLabBridge from "./ExperimentalLabBridge";
 import TicketControlBridge from "./TicketControlBridge";
 import MemberControlBridge from "./MemberControlBridge";
 import HybridTicketInventoryForecastBridge from "./HybridTicketInventoryForecastBridge";
+import AssistPersistenceBridge from "./AssistPersistenceBridge";
 import AuthenticatedPersonalizedControlBridge from "./AuthenticatedPersonalizedControlBridge";
 import BeginnerHomeBridge from "./BeginnerHomeBridge";
 import OperationsManagementBridge from "./OperationsManagementBridge";
@@ -38,6 +39,7 @@ createRoot(document.getElementById("root")!).render(
     <DeviceAccessGate>
       <>
         <App database={db} />
+        <AssistPersistenceBridge />
         <PredictiveOpsOverlay database={db} />
         <ExperimentalLabBridge database={db} />
         <TicketControlBridge database={db} />
