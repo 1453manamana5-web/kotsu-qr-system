@@ -1,0 +1,224 @@
+.copilot-learning-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid #d8e1ef;
+  border-radius: 11px;
+  color: #4a5d80;
+  background: #f8faff;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.copilot-learning-status > span {
+  display: grid;
+  width: 21px;
+  height: 21px;
+  place-items: center;
+  border-radius: 7px;
+  color: #fff;
+  background: linear-gradient(145deg, #625df5, #4052d9);
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.copilot-learning-status small {
+  color: #7e8ca4;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.copilot-learning-region {
+  display: grid;
+  gap: 10px;
+  margin: 8px 0 2px;
+}
+
+.copilot-teaching-card,
+.copilot-learning-complete {
+  border: 1px solid #dbe3f2;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fbfcff 0%, #f7f9ff 100%);
+  box-shadow: 0 9px 24px rgba(38, 54, 98, .07);
+}
+
+.copilot-teaching-card {
+  padding: 15px;
+}
+
+.copilot-teaching-heading {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: start;
+  gap: 11px;
+}
+
+.copilot-teaching-heading > span {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 11px;
+  color: #fff;
+  background: linear-gradient(145deg, #635ff4, #3f51d9);
+  font-size: 15px;
+  font-weight: 950;
+  box-shadow: 0 8px 18px rgba(73, 78, 210, .2);
+}
+
+.copilot-teaching-heading small {
+  display: block;
+  color: #7f8da6;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .09em;
+}
+
+.copilot-teaching-heading strong {
+  display: block;
+  margin-top: 3px;
+  color: #263a60;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.copilot-teaching-heading p {
+  margin: 5px 0 0;
+  color: #4f6080;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.copilot-teaching-note {
+  margin: 11px 0 10px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  color: #687792;
+  background: #eef2f8;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.copilot-teaching-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.copilot-teaching-options button {
+  display: grid;
+  min-height: 64px;
+  align-content: center;
+  gap: 3px;
+  padding: 9px 11px;
+  border: 1px solid #d9e1f0;
+  border-radius: 11px;
+  color: #34486e;
+  background: #fff;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+.copilot-teaching-options button:hover,
+.copilot-teaching-options button:focus-visible {
+  transform: translateY(-1px);
+  border-color: #939ee9;
+  box-shadow: 0 7px 16px rgba(55, 67, 147, .1);
+  outline: 0;
+}
+
+.copilot-teaching-options strong {
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.copilot-teaching-options small {
+  color: #7c899e;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.copilot-teaching-skip {
+  margin-top: 10px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 9px;
+  color: #75829a;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.copilot-teaching-skip:hover {
+  background: #edf1f7;
+}
+
+.copilot-learning-complete {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border-color: #bfe1cf;
+  background: #f1fbf6;
+}
+
+.copilot-learning-complete > span {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 10px;
+  color: #fff;
+  background: #21a565;
+  font-weight: 950;
+}
+
+.copilot-learning-complete strong {
+  display: block;
+  color: #176740;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.copilot-learning-complete p {
+  margin: 3px 0 0;
+  color: #5e7b6c;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.copilot-learning-complete button {
+  min-height: 31px;
+  padding: 0 9px;
+  border: 1px solid #bedbcb;
+  border-radius: 9px;
+  color: #347055;
+  background: #fff;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .copilot-teaching-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .copilot-learning-complete {
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+
+  .copilot-learning-complete button {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
