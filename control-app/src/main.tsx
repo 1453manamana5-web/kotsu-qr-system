@@ -19,6 +19,7 @@ import MaintenanceDataBridge from "./MaintenanceDataBridge";
 import CopilotLanguageExpansionBridge from "./CopilotLanguageExpansionBridge";
 import CopilotRemoteCommandBridge from "./CopilotRemoteCommandBridge";
 import CopilotCapabilityBridge from "./CopilotCapabilityBridge";
+import CopilotSimplificationBridge from "./CopilotSimplificationBridge";
 import PredictiveCorrelationMemory from "./PredictiveCorrelationMemory";
 import PredictiveChatBridge from "./PredictiveChatBridge";
 import { db } from "./firebase";
@@ -37,6 +38,7 @@ import "./lab-autopilot-only.css";
 import "./lab-no-simulation.css";
 import "./operations-management.css";
 import "./sidebar-clarity.css";
+import "./copilot-simplified.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -60,6 +62,7 @@ createRoot(document.getElementById("root")!).render(
         <CopilotLanguageExpansionBridge />
         <CopilotRemoteCommandBridge database={db} />
         <CopilotCapabilityBridge database={db} />
+        <CopilotSimplificationBridge />
         <PredictiveCorrelationMemory database={db} />
         <PredictiveChatBridge database={db} />
       </>
