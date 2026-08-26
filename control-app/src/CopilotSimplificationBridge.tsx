@@ -20,7 +20,7 @@ function setControlledInputValue(input: HTMLInputElement, value: string) {
 function submitPrompt(prompt: string) {
   const form = document.querySelector<HTMLFormElement>(".copilot-page .copilot-input");
   const input = form?.querySelector<HTMLInputElement>('input[type="text"]');
-  if (form === null || input === null) return;
+  if (form === null || input == null) return;
 
   setControlledInputValue(input, prompt);
   window.requestAnimationFrame(() => form.requestSubmit());
