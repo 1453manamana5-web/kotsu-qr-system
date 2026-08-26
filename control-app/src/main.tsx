@@ -4,6 +4,7 @@ import App from "./App";
 import DeviceAccessGate from "./DeviceAccessGate";
 import PredictiveOpsOverlay from "./PredictiveOpsOverlay";
 import ExperimentalLabBridge from "./ExperimentalLabBridge";
+import LabAutopilotVisibilityBridge from "./LabAutopilotVisibilityBridge";
 import TicketControlBridge from "./TicketControlBridge";
 import MemberControlBridge from "./MemberControlBridge";
 import HybridTicketInventoryForecastBridge from "./HybridTicketInventoryForecastBridge";
@@ -43,6 +44,7 @@ createRoot(document.getElementById("root")!).render(
         <AssistPersistenceBridge />
         <PredictiveOpsOverlay database={db} />
         <ExperimentalLabBridge database={db} />
+        <LabAutopilotVisibilityBridge />
         <TicketControlBridge database={db} />
         <MemberControlBridge database={db} />
         <HybridTicketInventoryForecastBridge database={db} />
