@@ -234,7 +234,7 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
   useEffect(() => {
     if (event === null) return undefined;
 
-    const unsubscribeDevices = onSnapshot(
+    return onSnapshot(
       collection(database, "event-data", event.dataDocumentId, "reception-devices"),
       (snapshot) => {
         setDevices(snapshot.docs
@@ -242,8 +242,6 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
           .filter((item): item is LabDevice => item !== null));
       }
     );
-
-    return unsubscribeDevices;
   }, [database, event]);
 
   const deviceRisks = useMemo(() => devices
@@ -476,7 +474,7 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
                       </div>
                     ))}
               </div>
-              <small className="lab-virtual-note">数値は成功率ではなく、現在症状との適合度です。</small>
+              <small className="lab-study-note">数値は成功率ではなく、現在症状との適合度です。</small>
             </article>
           </div>
         </>
