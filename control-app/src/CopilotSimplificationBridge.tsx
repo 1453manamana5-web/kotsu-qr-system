@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 const SIMPLE_PROMPTS = [
-  "今どうなってる？",
-  "一番確認すべきことは？",
-  "入口は大丈夫？",
-  "出口は大丈夫？",
+  "30秒ブリーフ",
+  "今なにすればいい？",
   "このあと混む？",
+  "入口と出口どっちが悪い？",
+  "どう対応すればいい？",
+  "今どうなってる？",
 ] as const;
 
 function setControlledInputValue(input: HTMLInputElement, value: string) {
