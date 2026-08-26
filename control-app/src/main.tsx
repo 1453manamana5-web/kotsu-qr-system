@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import DeviceAccessGate from "./DeviceAccessGate";
 import PredictiveOpsOverlay from "./PredictiveOpsOverlay";
+import AnomalyNotificationBridge from "./AnomalyNotificationBridge";
 import ExperimentalLabBridge from "./ExperimentalLabBridge";
 import LabAutopilotVisibilityBridge from "./LabAutopilotVisibilityBridge";
 import TicketControlBridge from "./TicketControlBridge";
@@ -39,6 +40,7 @@ import "./lab-autopilot-only.css";
 import "./operations-management.css";
 import "./sidebar-clarity.css";
 import "./copilot-simplified.css";
+import "./anomaly-notifications.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -47,6 +49,7 @@ createRoot(document.getElementById("root")!).render(
         <App database={db} />
         <AssistPersistenceBridge />
         <PredictiveOpsOverlay database={db} />
+        <AnomalyNotificationBridge database={db} />
         <ExperimentalLabBridge database={db} />
         <LabAutopilotVisibilityBridge />
         <TicketControlBridge database={db} />
