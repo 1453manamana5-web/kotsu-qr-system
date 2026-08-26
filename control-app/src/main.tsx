@@ -5,7 +5,6 @@ import DeviceAccessGate from "./DeviceAccessGate";
 import PredictiveOpsOverlay from "./PredictiveOpsOverlay";
 import ExperimentalLabBridge from "./ExperimentalLabBridge";
 import LabAutopilotVisibilityBridge from "./LabAutopilotVisibilityBridge";
-import LabSimulationRemovalBridge from "./LabSimulationRemovalBridge";
 import TicketControlBridge from "./TicketControlBridge";
 import MemberControlBridge from "./MemberControlBridge";
 import HybridTicketInventoryForecastBridge from "./HybridTicketInventoryForecastBridge";
@@ -37,7 +36,6 @@ import "./ticket-inventory-forecast.css";
 import "./maintenance-data.css";
 import "./experimental-lab-extensions.css";
 import "./lab-autopilot-only.css";
-import "./lab-no-simulation.css";
 import "./operations-management.css";
 import "./sidebar-clarity.css";
 import "./copilot-simplified.css";
@@ -51,7 +49,6 @@ createRoot(document.getElementById("root")!).render(
         <PredictiveOpsOverlay database={db} />
         <ExperimentalLabBridge database={db} />
         <LabAutopilotVisibilityBridge />
-        <LabSimulationRemovalBridge />
         <TicketControlBridge database={db} />
         <MemberControlBridge database={db} />
         <HybridTicketInventoryForecastBridge database={db} />
