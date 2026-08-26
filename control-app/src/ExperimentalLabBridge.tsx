@@ -147,9 +147,11 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
   const previousSignatureRef = useRef("");
 
   useEffect(() => {
+    if (target === null) return undefined;
+    setNow(Date.now());
     const timer = window.setInterval(() => setNow(Date.now()), 1_000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [target]);
 
   useEffect(() => {
     const refresh = () => {
@@ -226,7 +228,7 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
   }, [database]);
 
   useEffect(() => {
-    if (event === null) return undefined;
+    if (event === null || target === null) return undefined;
 
     return onSnapshot(
       collection(database, "event-data", event.dataDocumentId, "reception-devices"),
@@ -236,7 +238,7 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
           .filter((item): item is LabDevice => item !== null));
       }
     );
-  }, [database, event]);
+  }, [database, event, target]);
 
   const deviceRisks = useMemo(() => devices
     .map((device) => ({ device, score: baseDeviceRisk(device, now) }))
