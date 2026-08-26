@@ -1,0 +1,18 @@
+/* Keep predictive anomaly/correlation panels inside the lab's Autopilot category only. */
+.lab-page > .predictive-radar-panel,
+.lab-page > .correlation-panel {
+  display: none !important;
+}
+
+.lab-page.lab-focus-autopilot > .predictive-radar-panel,
+.lab-page.lab-focus-autopilot > .correlation-panel {
+  display: block !important;
+}
+
+.lab-page.lab-focus-autopilot > .predictive-radar-panel {
+  margin-top: 14px;
+}
+
+.lab-page.lab-focus-autopilot > .correlation-panel {
+  margin-top: 12px;
+}
