@@ -31,6 +31,7 @@ import "./member-control.css";
 import "./ticket-inventory-forecast.css";
 import "./maintenance-data.css";
 import "./experimental-lab-extensions.css";
+import "./lab-autopilot-only.css";
 import "./operations-management.css";
 import "./sidebar-clarity.css";
 
