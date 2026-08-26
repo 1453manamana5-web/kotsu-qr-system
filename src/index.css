@@ -1,0 +1,4 @@
+/* Reception management and the control room are intentionally separate operating surfaces. */
+.admin-control-button {
+  display: none !important;
+}
