@@ -148,7 +148,6 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
 
   useEffect(() => {
     if (target === null) return undefined;
-    setNow(Date.now());
     const timer = window.setInterval(() => setNow(Date.now()), 1_000);
     return () => window.clearInterval(timer);
   }, [target]);
