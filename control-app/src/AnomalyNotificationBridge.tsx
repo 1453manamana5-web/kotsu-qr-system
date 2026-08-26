@@ -265,7 +265,7 @@ export default function AnomalyNotificationBridge({ database }: { database: Fire
   }, [devices, now]);
 
   useEffect(() => {
-    if (eventDataId === null || devices.length === 0) return;
+    if (eventDataId === null || devices.length === 0) return undefined;
 
     const currentSets: Record<string, Set<string>> = {};
     for (const device of devices) {
@@ -275,7 +275,7 @@ export default function AnomalyNotificationBridge({ database }: { database: Fire
     if (!baselineReadyRef.current) {
       previousAlertsRef.current = currentSets;
       baselineReadyRef.current = true;
-      return;
+      return undefined;
     }
 
     const nextNotices: NotificationItem[] = [];
@@ -294,12 +294,15 @@ export default function AnomalyNotificationBridge({ database }: { database: Fire
     }
 
     previousAlertsRef.current = currentSets;
-    if (nextNotices.length === 0) return;
+    if (nextNotices.length === 0) return undefined;
 
-    setNotifications((current) => [
-      ...nextNotices.sort((a, b) => severityRank(b.level) - severityRank(a.level)),
-      ...current,
-    ].slice(0, 3));
+    const scheduled = window.setTimeout(() => {
+      setNotifications((current) => [
+        ...nextNotices.sort((a, b) => severityRank(b.level) - severityRank(a.level)),
+        ...current,
+      ].slice(0, 3));
+    }, 0);
+    return () => window.clearTimeout(scheduled);
   }, [alertsByDevice, devices, eventDataId]);
 
   if (notifications.length === 0) return null;
