@@ -1,0 +1,21 @@
+.lab-page .lab-page-heading > span::after {
+  content: "試験機能 · 3カテゴリ";
+}
+
+.lab-hub-tabs {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lab-category-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lab-research-score dl {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 960px) {
+  .lab-category-grid {
+    grid-template-columns: 1fr;
+  }
+}
