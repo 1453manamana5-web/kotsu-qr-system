@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   collection,
@@ -208,9 +208,6 @@ function DecisionMessages({ messages }: { messages: DecisionMessage[] }) {
 
 export default function CopilotDecisionSupportBridge({ database }: { database: Firestore }) {
   const [currentEvent, setCurrentEvent] = useState<EventIdentity | null>(null);
-  const [summary, setSummary] = useState<LiveSummary | null>(null);
-  const [devices, setDevices] = useState<LiveDevice[]>([]);
-  const [activities, setActivities] = useState<LiveActivity[]>([]);
   const [messageTarget, setMessageTarget] = useState<Element | null>(null);
   const [messages, setMessages] = useState<DecisionMessage[]>([]);
   const eventRef = useRef<EventIdentity | null>(null);
@@ -251,32 +248,23 @@ export default function CopilotDecisionSupportBridge({ database }: { database: F
     summaryRef.current = null;
     devicesRef.current = [];
     activitiesRef.current = [];
-    setSummary(null);
-    setDevices([]);
-    setActivities([]);
     if (currentEvent === null) return undefined;
 
     const base = ["event-data", currentEvent.dataDocumentId] as const;
     const unsubscribeSummary = onSnapshot(doc(database, ...base, "analytics", "summary"), (snapshot) => {
       const data = snapshot.exists() ? snapshot.data() : {};
-      const next = snapshot.exists() ? {
+      summaryRef.current = snapshot.exists() ? {
         totalVisitors: Math.floor(readNumber(data.totalVisitors)),
         currentInside: Math.floor(readNumber(data.currentInside)),
         currentMembersInside: Math.floor(readNumber(data.currentMembersInside)),
       } : null;
-      summaryRef.current = next;
-      setSummary(next);
     });
     const unsubscribeDevices = onSnapshot(collection(database, ...base, "reception-devices"), (snapshot) => {
-      const next = snapshot.docs.map((item) => readDevice(item.id, item.data())).filter((item): item is LiveDevice => item !== null);
-      devicesRef.current = next;
-      setDevices(next);
+      devicesRef.current = snapshot.docs.map((item) => readDevice(item.id, item.data())).filter((item): item is LiveDevice => item !== null);
     });
     const activityQuery = query(collection(database, ...base, "activity"), orderBy("timestamp", "desc"), limit(180));
     const unsubscribeActivities = onSnapshot(activityQuery, (snapshot) => {
-      const next = snapshot.docs.map((item) => readActivity(item.data())).filter((item): item is LiveActivity => item !== null);
-      activitiesRef.current = next;
-      setActivities(next);
+      activitiesRef.current = snapshot.docs.map((item) => readActivity(item.data())).filter((item): item is LiveActivity => item !== null);
     });
     return () => {
       unsubscribeSummary();
@@ -433,9 +421,6 @@ export default function CopilotDecisionSupportBridge({ database }: { database: F
     document.addEventListener("submit", handleSubmit, true);
     return () => document.removeEventListener("submit", handleSubmit, true);
   }, [buildReply]);
-
-  const statusFingerprint = useMemo(() => `${currentEvent?.id ?? ""}:${summary?.currentInside ?? 0}:${summary?.currentMembersInside ?? 0}:${devices.length}:${activities.length}`, [activities.length, currentEvent?.id, devices.length, summary?.currentInside, summary?.currentMembersInside]);
-  void statusFingerprint;
 
   return messageTarget === null ? null : createPortal(<DecisionMessages messages={messages} />, messageTarget);
 }
