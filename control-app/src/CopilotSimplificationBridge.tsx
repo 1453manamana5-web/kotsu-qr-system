@@ -36,11 +36,11 @@ function syncSimpleCopy() {
   const title = heading?.querySelector("h2");
   const badge = heading?.querySelector("span");
 
-  if (eyebrow !== null && eyebrow !== undefined && eyebrow.textContent !== "CONTROL AI") {
-    eyebrow.textContent = "CONTROL AI";
+  if (eyebrow !== null && eyebrow !== undefined && eyebrow.textContent !== "EXPERIMENTAL 02") {
+    eyebrow.textContent = "EXPERIMENTAL 02";
   }
-  if (title !== null && title !== undefined && title.textContent !== "AI管制") {
-    title.textContent = "AI管制";
+  if (title !== null && title !== undefined && title.textContent !== "管制コパイロット") {
+    title.textContent = "管制コパイロット";
   }
   if (badge !== null && badge !== undefined && badge.textContent !== "状況確認・操作支援") {
     badge.textContent = "状況確認・操作支援";
@@ -84,8 +84,22 @@ function SimplePrompts() {
   );
 }
 
+function CopilotHeadingSummary() {
+  return (
+    <div className="copilot-heading-summary" aria-label="管制コパイロットの役割">
+      <p>会場・受付端末・障害のライブ情報をまとめ、状況確認と次の対応判断を支援します。</p>
+      <div>
+        <span>ライブ状態を読む</span>
+        <span>確認先を絞る</span>
+        <span>操作前に確認</span>
+      </div>
+    </div>
+  );
+}
+
 export default function CopilotSimplificationBridge() {
   const [promptTarget, setPromptTarget] = useState<Element | null>(null);
+  const [headingTarget, setHeadingTarget] = useState<Element | null>(null);
 
   useEffect(() => {
     let scheduled = false;
@@ -94,8 +108,10 @@ export default function CopilotSimplificationBridge() {
       scheduled = true;
       window.requestAnimationFrame(() => {
         scheduled = false;
-        const next = document.querySelector(".copilot-page .copilot-quick-prompts");
-        setPromptTarget((current) => current === next ? current : next);
+        const nextPrompt = document.querySelector(".copilot-page .copilot-quick-prompts");
+        const nextHeading = document.querySelector(".copilot-page .copilot-page-heading > div");
+        setPromptTarget((current) => current === nextPrompt ? current : nextPrompt);
+        setHeadingTarget((current) => current === nextHeading ? current : nextHeading);
         syncSimpleCopy();
       });
     };
@@ -111,5 +127,10 @@ export default function CopilotSimplificationBridge() {
     return () => observer.disconnect();
   }, []);
 
-  return promptTarget === null ? null : createPortal(<SimplePrompts />, promptTarget);
+  return (
+    <>
+      {headingTarget !== null && createPortal(<CopilotHeadingSummary />, headingTarget)}
+      {promptTarget !== null && createPortal(<SimplePrompts />, promptTarget)}
+    </>
+  );
 }
