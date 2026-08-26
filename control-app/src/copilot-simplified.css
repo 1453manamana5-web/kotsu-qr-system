@@ -1,0 +1,82 @@
+.copilot-page .copilot-page-heading > div > small {
+  letter-spacing: .08em;
+}
+
+.copilot-page .copilot-page-heading > span {
+  color: #65738a;
+  background: #f1f4f8;
+}
+
+.copilot-page .copilot-status-strip {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  padding: 14px 16px;
+}
+
+.copilot-page .copilot-status-strip > div:nth-child(2) > small,
+.copilot-page .copilot-status-strip > div:nth-child(2) > p,
+.copilot-page .copilot-status-strip dl > div:nth-child(2) {
+  display: none !important;
+}
+
+.copilot-page .copilot-status-strip > div:nth-child(2) > strong {
+  font-size: 18px;
+}
+
+.copilot-page .copilot-quick-prompts > button {
+  display: none !important;
+}
+
+.copilot-simple-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  width: 100%;
+}
+
+.copilot-simple-prompts button {
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid #d8e0eb;
+  border-radius: 999px;
+  color: #40506c;
+  background: #fff;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.copilot-simple-prompts button:hover {
+  border-color: #aebbe0;
+  color: #3446b5;
+  background: #f5f7ff;
+}
+
+.copilot-page .copilot-context-note,
+.copilot-page > .copilot-capability-wrap,
+.copilot-page > .copilot-memory-panel {
+  display: none !important;
+}
+
+.copilot-page .copilot-context-heading small {
+  display: none;
+}
+
+.copilot-page .copilot-context-heading strong {
+  font-size: 13px;
+}
+
+.copilot-page .copilot-input input {
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .copilot-page .copilot-status-strip {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .copilot-page .copilot-status-strip dl {
+    grid-column: 1 / -1;
+  }
+}
