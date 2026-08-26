@@ -20,6 +20,7 @@ import CopilotLanguageExpansionBridge from "./CopilotLanguageExpansionBridge";
 import CopilotRemoteCommandBridge from "./CopilotRemoteCommandBridge";
 import CopilotCapabilityBridge from "./CopilotCapabilityBridge";
 import CopilotSimplificationBridge from "./CopilotSimplificationBridge";
+import CopilotDecisionSupportBridge from "./CopilotDecisionSupportBridge";
 import PredictiveCorrelationMemory from "./PredictiveCorrelationMemory";
 import PredictiveChatBridge from "./PredictiveChatBridge";
 import { db } from "./firebase";
@@ -63,6 +64,7 @@ createRoot(document.getElementById("root")!).render(
         <CopilotRemoteCommandBridge database={db} />
         <CopilotCapabilityBridge database={db} />
         <CopilotSimplificationBridge />
+        <CopilotDecisionSupportBridge database={db} />
         <PredictiveCorrelationMemory database={db} />
         <PredictiveChatBridge database={db} />
       </>
