@@ -107,12 +107,6 @@ function riskLabel(score: number) {
   return "安定";
 }
 
-function effectLabel(value: number) {
-  if (value >= 70) return "高";
-  if (value >= 40) return "中";
-  return "低";
-}
-
 function formatClock(value: number) {
   return new Intl.DateTimeFormat("ja-JP", {
     hour: "2-digit",
@@ -275,28 +269,6 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
     return { device, index, action };
   }), [deviceRisks]);
 
-  const actionEffects = useMemo(() => {
-    const highest = deviceRisks[0];
-    if (highest === undefined) return [];
-
-    const camera = highest.device.cameraState === "error"
-      ? 88
-      : highest.device.cameraState === "starting" ? 55 : 18;
-    const sync = highest.device.pendingCount > 0
-      ? Math.min(92, 55 + highest.device.pendingCount * 7)
-      : 16;
-    const network = highest.device.firebaseLatencyMs >= 900 ||
-      (highest.device.downloadMbps > 0 && highest.device.downloadMbps < 3)
-      ? 76
-      : 28;
-
-    return [
-      { name: "カメラ再起動", score: camera, note: "カメラ系の症状に対する期待効果" },
-      { name: "未送信再同期", score: sync, note: "同期詰まりに対する期待効果" },
-      { name: "現地でWi-Fi確認", score: network, note: "通信悪化に対する期待効果" },
-    ];
-  }, [deviceRisks]);
-
   const signature = useMemo(() => deviceRisks
     .map(({ device, score }) => [device.id, Math.round(score / 10), device.pendingCount, device.cameraState].join(":"))
     .join("|"), [deviceRisks]);
@@ -328,8 +300,6 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
   if (target === null) return null;
 
   const highestPreventive = preventive[0]?.index ?? 0;
-  const highestRisk = deviceRisks[0]?.score ?? 0;
-  const watchedDevice = deviceRisks[0]?.device.name ?? "なし";
 
   return createPortal(
     <section className="experimental-lab-extension">
@@ -391,7 +361,7 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
               <div>
                 <small>TERMINAL STUDY</small>
                 <strong>端末研究</strong>
-                <p>端末状態から先回りの確認候補を比較します。</p>
+                <p>端末状態から先回りして確認する端末を見つけます。</p>
                 <em>現在の最大指数 {highestPreventive}</em>
               </div>
               <b aria-hidden="true">→</b>
@@ -402,8 +372,8 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
               <div>
                 <small>RESEARCH</small>
                 <strong>研究ログ</strong>
-                <p>ラボの判断履歴と現在の評価状態を確認します。</p>
-                <em>記録 {logs.length}件 · 品質 {dataQuality}/100</em>
+                <p>ラボがどの端末を重点監視したか確認します。</p>
+                <em>記録 {logs.length}件</em>
               </div>
               <b aria-hidden="true">→</b>
             </button>
@@ -432,13 +402,13 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
           <div className="lab-section-intro">
             <div>
               <small>TERMINAL STUDY</small>
-              <strong>端末の予防保全・対応比較</strong>
-              <p>端末のライブ指標をまとめ、何を先に確認する価値が高いか比較します。</p>
+              <strong>端末の予防保全</strong>
+              <p>端末のライブ指標から、問題になる前に確認しておく価値が高い端末を表示します。</p>
             </div>
-            <span>表示・比較のみ</span>
+            <span>表示・分析のみ</span>
           </div>
 
-          <div className="lab-experiment-grid">
+          <div className="lab-experiment-grid lab-single-panel-grid">
             <article className="lab-preventive">
               <div className="lab-card-heading">
                 <div><small>PREVENTIVE MAINTENANCE</small><strong>予防保全インデックス</strong></div>
@@ -457,25 +427,6 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
                     ))}
               </div>
             </article>
-
-            <article className="lab-action-outcome">
-              <div className="lab-card-heading">
-                <div><small>ACTION OUTCOME</small><strong>対応結果予測</strong></div>
-                <span>β</span>
-              </div>
-              <p>現在の症状と操作の相性から、どの対応を先に試す価値が高いか比較します。</p>
-              <div className="lab-effect-list">
-                {actionEffects.length === 0
-                  ? <span className="lab-empty">端末データ待機中</span>
-                  : actionEffects.map((item) => (
-                      <div key={item.name}>
-                        <span><strong>{item.name}</strong><small>{item.note}</small></span>
-                        <b className={`effect-${effectLabel(item.score)}`}>{effectLabel(item.score)} · {item.score}</b>
-                      </div>
-                    ))}
-              </div>
-              <small className="lab-study-note">数値は成功率ではなく、現在症状との適合度です。</small>
-            </article>
           </div>
         </>
       )}
@@ -485,13 +436,13 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
           <div className="lab-section-intro">
             <div>
               <small>RESEARCH</small>
-              <strong>研究ログ・評価状態</strong>
-              <p>ラボの判断履歴と、判断に使えるデータの状態だけをまとめています。</p>
+              <strong>判断ログ</strong>
+              <p>ラボがどの端末を重点監視したか、その判断履歴だけを確認できます。</p>
             </div>
             <span>{logs.length}件の履歴</span>
           </div>
 
-          <div className="lab-lower-grid">
+          <div className="lab-lower-grid lab-single-panel-grid">
             <article className="lab-decision-log">
               <div className="lab-card-heading">
                 <div><small>DECISION TRACE</small><strong>判断ログ</strong></div>
@@ -507,20 +458,6 @@ export default function ExperimentalLabBridge({ database }: { database: Firestor
                       </div>
                     ))}
               </div>
-            </article>
-
-            <article className="lab-research-score">
-              <div className="lab-card-heading">
-                <div><small>RESEARCH STATUS</small><strong>現在の評価状態</strong></div>
-                <span>LIVE</span>
-              </div>
-              <dl>
-                <div><dt>データ品質</dt><dd>{dataQuality}/100</dd></div>
-                <div><dt>最大ライブリスク</dt><dd>{highestRisk}/100</dd></div>
-                <div><dt>受信中の端末</dt><dd>{devices.length}台</dd></div>
-                <div><dt>重点監視</dt><dd>{watchedDevice}</dd></div>
-              </dl>
-              <p>ここに表示する値はライブ端末状態の評価だけに限定しています。</p>
             </article>
           </div>
         </>
