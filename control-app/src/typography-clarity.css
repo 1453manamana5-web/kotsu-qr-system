@@ -21,9 +21,7 @@
 .control-shell .live-panel-heading small,
 .control-shell .predictive-panel-heading small,
 .control-shell .copilot-bubble small,
-.control-shell .lab-section-intro small,
-.control-shell .notification-center-heading small,
-.control-shell .anomaly-notification-copy small {
+.control-shell .lab-section-intro small {
   font-size: 10px;
   line-height: 1.35;
 }
@@ -60,8 +58,7 @@
 .control-shell .mode-pill,
 .control-shell .primary-alert p,
 .control-shell .primary-alert button,
-.control-shell .copilot-action,
-.control-shell .anomaly-notification-open {
+.control-shell .copilot-action {
   font-size: 12px;
 }
 
@@ -82,7 +79,7 @@
   display: none !important;
 }
 
-/* Notification center: large enough to scan quickly on an iPad during live operation. */
+/* Notification bell stays in the top bar, so it can use the control-shell scope. */
 .control-shell .control-notification-bell {
   width: 42px;
   height: 42px;
@@ -94,135 +91,176 @@
   height: 21px;
 }
 
-.control-shell .notification-center-panel {
+/* Notifications are rendered through a portal next to the control app, not inside it.
+   These selectors intentionally have no .control-shell prefix. */
+.anomaly-notification-stack {
+  width: min(620px, calc(100vw - 32px));
+  gap: 11px;
+}
+
+.anomaly-notification {
+  grid-template-columns: 44px minmax(0, 1fr) auto 32px;
+  gap: 12px;
+  min-height: 90px;
+  padding: 14px 12px 16px 14px;
+  border-radius: 18px;
+}
+
+.anomaly-notification-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  font-size: 19px;
+}
+
+.anomaly-notification-copy small {
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.anomaly-notification-copy strong {
+  margin-top: 4px;
+  font-size: 15px;
+}
+
+.anomaly-notification-copy p {
+  margin-top: 5px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.anomaly-notification-open {
+  min-height: 38px;
+  padding-inline: 14px;
+  font-size: 12px;
+}
+
+.anomaly-notification-close {
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+}
+
+.notification-center-panel {
   width: min(560px, calc(100vw - 32px));
   border-radius: 19px;
 }
 
-.control-shell .notification-center-heading {
+.notification-center-heading {
   gap: 16px;
   padding: 19px 20px 16px;
 }
 
-.control-shell .notification-center-heading small {
+.notification-center-heading small {
   font-size: 11px;
 }
 
-.control-shell .notification-center-heading strong {
+.notification-center-heading strong {
   font-size: 20px;
 }
 
-.control-shell .notification-center-heading span {
+.notification-center-heading span {
   margin-left: 9px;
   font-size: 12px;
 }
 
-.control-shell .notification-center-heading > button {
+.notification-center-heading > button {
   width: 34px;
   height: 34px;
   font-size: 20px;
 }
 
-.control-shell .notification-center-toolbar {
+.notification-center-toolbar {
   gap: 11px;
   padding: 12px 15px;
 }
 
-.control-shell .notification-center-filters {
+.notification-center-filters {
   gap: 7px;
 }
 
-.control-shell .notification-center-filters button,
-.control-shell .notification-center-read-all {
+.notification-center-filters button,
+.notification-center-read-all {
   min-height: 34px;
   padding-inline: 11px;
   border-radius: 10px;
   font-size: 12px;
 }
 
-.control-shell .notification-center-list {
+.notification-center-list {
   max-height: min(640px, calc(100vh - 190px));
 }
 
-.control-shell .notification-center-item {
+.notification-center-item {
   grid-template-columns: 42px minmax(0, 1fr) auto;
   gap: 12px;
-  padding: 16px 16px;
+  padding: 16px;
   font-size: 13px;
 }
 
-.control-shell .notification-center-item.is-unread::before {
+.notification-center-item.is-unread::before {
   top: 22px;
   left: 5px;
   width: 6px;
   height: 6px;
 }
 
-.control-shell .notification-center-item-icon {
+.notification-center-item-icon {
   width: 40px;
   height: 40px;
   border-radius: 12px;
   font-size: 17px;
 }
 
-.control-shell .notification-level,
-.control-shell .notification-state,
-.control-shell .notification-center-item-copy > div > i {
+.notification-level,
+.notification-state,
+.notification-center-item-copy > div > i {
   min-height: 21px;
   padding-inline: 7px;
   font-size: 10px;
 }
 
-.control-shell .notification-center-item-copy > strong {
+.notification-center-item-copy > strong {
   margin-top: 7px;
   font-size: 14px;
   line-height: 1.4;
 }
 
-.control-shell .notification-center-item-copy > p {
+.notification-center-item-copy > p {
   margin-top: 5px;
   font-size: 12px;
   line-height: 1.55;
 }
 
-.control-shell .notification-center-item-copy > small {
+.notification-center-item-copy > small {
   margin-top: 7px;
   font-size: 10px;
   line-height: 1.4;
 }
 
-.control-shell .notification-center-item > button {
+.notification-center-item > button {
   min-height: 36px;
   padding-inline: 12px;
   border-radius: 10px;
   font-size: 12px;
 }
 
-.control-shell .notification-center-empty {
+.notification-center-empty {
   min-height: 230px;
 }
 
-.control-shell .notification-center-empty > span {
+.notification-center-empty > span {
   width: 48px;
   height: 48px;
   font-size: 21px;
 }
 
-.control-shell .notification-center-empty strong {
+.notification-center-empty strong {
   font-size: 14px;
 }
 
-.control-shell .notification-center-empty p {
+.notification-center-empty p {
   font-size: 11px;
-}
-
-.control-shell .anomaly-notification-copy strong {
-  font-size: 14px;
-}
-
-.control-shell .anomaly-notification-copy p {
-  font-size: 12px;
-  line-height: 1.5;
 }
 
 /* Generic safety net for text-heavy panels added by bridge components. */
@@ -249,21 +287,41 @@
     font-size: 12px;
   }
 
-  .control-shell .notification-center-panel {
+  .notification-center-panel {
     width: min(540px, calc(100vw - 20px));
   }
 }
 
 @media (max-width: 620px) {
-  .control-shell .notification-center-panel {
+  .anomaly-notification-stack {
     width: calc(100vw - 18px);
   }
 
-  .control-shell .notification-center-item {
+  .anomaly-notification {
+    grid-template-columns: 40px minmax(0, 1fr) 30px;
+    min-height: 0;
+    padding: 12px 10px 14px 12px;
+  }
+
+  .anomaly-notification-open {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .anomaly-notification-close {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .notification-center-panel {
+    width: calc(100vw - 18px);
+  }
+
+  .notification-center-item {
     grid-template-columns: 40px minmax(0, 1fr);
   }
 
-  .control-shell .notification-center-item > button {
+  .notification-center-item > button {
     grid-column: 2;
     justify-self: start;
   }
