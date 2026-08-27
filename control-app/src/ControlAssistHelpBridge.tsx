@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-function assistIsEnabled() {
-  return document.querySelector<HTMLButtonElement>(".control-assist-toggle")?.getAttribute("aria-pressed") === "true";
-}
-
 export default function ControlAssistHelpBridge() {
   const [open, setOpen] = useState(false);
   const [enabled, setEnabled] = useState(false);
