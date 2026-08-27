@@ -25,7 +25,7 @@ const NAV_ITEMS: ReadonlyArray<{
   { key: "devices", match: "端末", description: "入口・出口端末を確認" },
   { key: "incidents", match: "障害履歴", description: "異常や注意項目を確認" },
   { key: "diagnostics", match: "通信診断", description: "ネットワーク状態を確認" },
-  { key: "settings", match: "設定", description: "管制アシスト・データ管理" },
+  { key: "settings", match: "設定", description: "バックアップ・データ管理" },
   { key: "lab", match: "管制ラボ", description: "試験中の高度な管制機能" },
   { key: "copilot", match: "AI管制", description: "試験中の管制アシスト" },
 ];
