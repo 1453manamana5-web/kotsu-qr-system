@@ -75,23 +75,6 @@ function createPairingCode() {
   ).join("");
 }
 
-function readTimestampMillis(value: unknown) {
-  if (
-    typeof value === "object" &&
-    value !== null &&
-    "toMillis" in value &&
-    typeof value.toMillis === "function"
-  ) {
-    try {
-      return value.toMillis();
-    } catch {
-      return 0;
-    }
-  }
-
-  return 0;
-}
-
 function AccessCard({ children }: { children: ReactNode }) {
   return (
     <main className="access-page">
@@ -108,7 +91,6 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
   const [state, setState] = useState<AccessState>("auth");
   const [error, setError] = useState("");
   const [pairingCode, setPairingCode] = useState("");
-  const [pairingExpiresAt, setPairingExpiresAt] = useState(0);
   const [pairingBusy, setPairingBusy] = useState(false);
   const [pairingError, setPairingError] = useState("");
 
@@ -139,13 +121,11 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
     let requestStatus = "";
     let requestedRole = "";
     let requestPairingCode = "";
-    let requestPairingExpiresAt = 0;
 
     const decide = () => {
       if (!deviceKnown || !requestKnown) return;
 
       setPairingCode(requestPairingCode);
-      setPairingExpiresAt(requestPairingExpiresAt);
 
       if (
         device?.active === true &&
@@ -188,9 +168,6 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
       requestPairingCode = requestData !== null && typeof requestData.pairingCode === "string"
         ? requestData.pairingCode
         : "";
-      requestPairingExpiresAt = requestData === null
-        ? 0
-        : readTimestampMillis(requestData.pairingExpiresAt);
       requestKnown = true;
       decide();
     }, onError);
@@ -241,7 +218,6 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
 
       await batch.commit();
       setPairingCode(nextCode);
-      setPairingExpiresAt(expiresAt.toMillis());
     } catch (requestError) {
       console.error("管制アプリの連携コードを発行できませんでした。", requestError);
       setPairingError(
@@ -262,7 +238,6 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
 
   if (state === "pending") {
     const hasPairingCode = pairingCode !== "";
-    const isExpired = pairingExpiresAt > 0 && pairingExpiresAt <= Date.now();
 
     return (
       <AccessCard>
@@ -286,7 +261,7 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
             >
               {pairingCode.slice(0, 4)}-{pairingCode.slice(4)}
             </div>
-            <p>{isExpired ? "このコードは期限切れです。新しいコードを発行してください。" : "連携コードは約8分間有効です。"}</p>
+            <p>連携コードは約8分間有効です。通らない場合は新しいコードを再発行してください。</p>
             {pairingError !== "" && <p className="access-error" role="alert">{pairingError}</p>}
             <button
               type="button"
@@ -295,7 +270,7 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
                 void createControlPairingRequest();
               }}
             >
-              {pairingBusy ? "発行しています…" : isExpired ? "新しいコードを発行" : "コードを再発行"}
+              {pairingBusy ? "発行しています…" : "コードを再発行"}
             </button>
           </>
         ) : (
