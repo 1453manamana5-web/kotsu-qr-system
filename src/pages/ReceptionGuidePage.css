@@ -1,0 +1,243 @@
+.reception-guide-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 620px;
+  overflow: hidden;
+  padding: clamp(20px, 2.8vh, 30px) clamp(22px, 3.4vw, 48px) max(clamp(18px, 2.6vh, 28px), env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  color: #172033;
+  background:
+    radial-gradient(circle at 95% 0%, rgba(182, 207, 255, .42), transparent 30%),
+    linear-gradient(145deg, #f8fafc 0%, #f1f4f8 58%, #f7f8fb 100%);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", sans-serif;
+}
+
+.reception-guide-page *,
+.reception-guide-page *::before,
+.reception-guide-page *::after { box-sizing: border-box; }
+
+.reception-guide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  flex-shrink: 0;
+}
+
+.reception-guide-header > div:first-child { min-width: 0; }
+.reception-guide-eyebrow {
+  display: block;
+  margin-bottom: 4px;
+  color: #5b7fc8;
+  font-size: clamp(10px, .9vw, 13px);
+  font-weight: 900;
+  letter-spacing: .16em;
+}
+
+.reception-guide-header h1 {
+  margin: 0;
+  font-size: clamp(30px, 3.4vw, 50px);
+  line-height: 1.05;
+  letter-spacing: -.045em;
+}
+
+.reception-guide-header p {
+  margin: 9px 0 0;
+  color: #667085;
+  font-size: clamp(13px, 1.25vw, 17px);
+  font-weight: 650;
+}
+
+.reception-guide-header-side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.reception-guide-event {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 330px;
+  padding: 7px 12px;
+  border: 1px solid #dce5f2;
+  border-radius: 999px;
+  background: rgba(255,255,255,.82);
+}
+
+.reception-guide-event small {
+  color: #7082a3;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+.reception-guide-event strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(12px, 1.1vw, 15px);
+}
+
+.reception-guide-main {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 2px 12px;
+}
+
+.reception-guide-intro {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: clamp(16px, 2vw, 22px);
+  border: 1px solid rgba(255,255,255,.95);
+  border-radius: 26px;
+  background: linear-gradient(135deg, rgba(255,255,255,.96), rgba(241,246,255,.93));
+  box-shadow: 0 14px 34px rgba(45, 61, 91, .10);
+}
+
+.reception-guide-intro-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 18px;
+  color: #3e67b4;
+  background: #e3edff;
+}
+
+.reception-guide-intro-icon svg { width: 39px; height: 39px; }
+.reception-guide-intro small {
+  color: #6681b7;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .16em;
+}
+.reception-guide-intro h2 {
+  margin: 3px 0 0;
+  font-size: clamp(20px, 2vw, 29px);
+  letter-spacing: -.03em;
+}
+.reception-guide-intro p {
+  margin: 6px 0 0;
+  color: #667085;
+  font-size: clamp(12px, 1.1vw, 15px);
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.reception-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.reception-guide-card {
+  padding: clamp(16px, 1.8vw, 22px);
+  border: 1px solid rgba(255,255,255,.94);
+  border-radius: 23px;
+  background: rgba(255,255,255,.88);
+  box-shadow: 0 12px 28px rgba(48, 58, 82, .08);
+}
+
+.reception-guide-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reception-guide-card-head > span {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.reception-guide-card h2 {
+  margin: 0;
+  font-size: clamp(18px, 1.7vw, 24px);
+  letter-spacing: -.03em;
+}
+
+.reception-guide-card > p {
+  margin: 10px 0 0;
+  color: #536176;
+  font-size: clamp(12px, 1.05vw, 15px);
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.reception-guide-card ul {
+  display: grid;
+  gap: 7px;
+  margin: 12px 0 0;
+  padding-left: 20px;
+  color: #667085;
+  font-size: clamp(11px, 1vw, 14px);
+  line-height: 1.55;
+}
+
+.reception-guide-card li::marker { color: currentColor; }
+.reception-guide-card.blue .reception-guide-card-head > span { color: #2f66b8; background: #e5efff; }
+.reception-guide-card.green .reception-guide-card-head > span { color: #27804c; background: #e2f4e9; }
+.reception-guide-card.orange .reception-guide-card-head > span { color: #9a6615; background: #fff0d2; }
+.reception-guide-card.purple .reception-guide-card-head > span { color: #6f4bb8; background: #eee7fb; }
+.reception-guide-card.gray .reception-guide-card-head > span { color: #566273; background: #edf0f4; }
+.reception-guide-card.red .reception-guide-card-head > span { color: #b44343; background: #fde5e5; }
+
+.reception-guide-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-shrink: 0;
+  padding-top: 10px;
+}
+
+.reception-guide-footer button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 9px 18px;
+  border: 1px solid #d7dde7;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #334155;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.reception-guide-footer button span {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+}
+.reception-guide-footer button svg { width: 100%; height: 100%; }
+.reception-guide-footer p {
+  margin: 0;
+  color: #8490a2;
+  font-size: 11px;
+  font-weight: 650;
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .reception-guide-grid { grid-template-columns: 1fr; }
+  .reception-guide-header { flex-direction: column; gap: 12px; }
+  .reception-guide-header-side { width: 100%; justify-content: space-between; }
+  .reception-guide-footer p { display: none; }
+}
