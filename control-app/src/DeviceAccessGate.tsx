@@ -9,8 +9,12 @@ import {
   type User,
 } from "firebase/auth";
 import {
+  collection,
   doc,
   onSnapshot,
+  serverTimestamp,
+  Timestamp,
+  writeBatch,
   type DocumentData,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
@@ -29,6 +33,8 @@ type AuthorizedDevice = {
   deviceName: string;
 };
 
+const PAIRING_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
 function readDevice(data: DocumentData): AuthorizedDevice | null {
   if (typeof data.role !== "string" || typeof data.active !== "boolean") {
     return null;
@@ -39,6 +45,51 @@ function readDevice(data: DocumentData): AuthorizedDevice | null {
     active: data.active,
     deviceName: typeof data.deviceName === "string" ? data.deviceName : "部員端末",
   };
+}
+
+function detectDeviceType() {
+  const userAgent = navigator.userAgent.toLowerCase();
+  const platform = navigator.platform.toLowerCase();
+
+  if (
+    userAgent.includes("ipad") ||
+    (platform === "macintel" && navigator.maxTouchPoints > 1)
+  ) {
+    return "ipad";
+  }
+
+  if (userAgent.includes("iphone")) return "iphone";
+  if (userAgent.includes("android")) return "android";
+  if (userAgent.includes("windows")) return "windows";
+  if (userAgent.includes("macintosh") || platform.includes("mac")) return "mac";
+  return userAgent === "" ? "unknown" : "other";
+}
+
+function createPairingCode() {
+  const randomValues = new Uint32Array(8);
+  crypto.getRandomValues(randomValues);
+
+  return Array.from(
+    randomValues,
+    (value) => PAIRING_ALPHABET[value % PAIRING_ALPHABET.length]
+  ).join("");
+}
+
+function readTimestampMillis(value: unknown) {
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "toMillis" in value &&
+    typeof value.toMillis === "function"
+  ) {
+    try {
+      return value.toMillis();
+    } catch {
+      return 0;
+    }
+  }
+
+  return 0;
 }
 
 function AccessCard({ children }: { children: ReactNode }) {
@@ -56,6 +107,10 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
   const [user, setUser] = useState<User | null>(null);
   const [state, setState] = useState<AccessState>("auth");
   const [error, setError] = useState("");
+  const [pairingCode, setPairingCode] = useState("");
+  const [pairingExpiresAt, setPairingExpiresAt] = useState(0);
+  const [pairingBusy, setPairingBusy] = useState(false);
+  const [pairingError, setPairingError] = useState("");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
@@ -83,9 +138,14 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
     let device: AuthorizedDevice | null = null;
     let requestStatus = "";
     let requestedRole = "";
+    let requestPairingCode = "";
+    let requestPairingExpiresAt = 0;
 
     const decide = () => {
       if (!deviceKnown || !requestKnown) return;
+
+      setPairingCode(requestPairingCode);
+      setPairingExpiresAt(requestPairingExpiresAt);
 
       if (
         device?.active === true &&
@@ -125,6 +185,12 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
       requestedRole = requestData !== null && typeof requestData.requestedRole === "string"
         ? requestData.requestedRole
         : "";
+      requestPairingCode = requestData !== null && typeof requestData.pairingCode === "string"
+        ? requestData.pairingCode
+        : "";
+      requestPairingExpiresAt = requestData === null
+        ? 0
+        : readTimestampMillis(requestData.pairingExpiresAt);
       requestKnown = true;
       decide();
     }, onError);
@@ -135,6 +201,59 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
     };
   }, [user]);
 
+  const createControlPairingRequest = async () => {
+    if (user === null || pairingBusy) return;
+
+    setPairingBusy(true);
+    setPairingError("");
+
+    try {
+      const nextCode = createPairingCode();
+      const expiresAt = Timestamp.fromMillis(Date.now() + 8 * 60 * 1000);
+      const requestRef = doc(db, "system", "device-access", "requests", user.uid);
+      const auditRef = doc(collection(db, "system", "device-access", "audit"));
+      const batch = writeBatch(db);
+
+      batch.set(requestRef, {
+        requestType: "initial",
+        requestedRole: "member",
+        displayName: "管制アプリ",
+        deviceName: "管制アプリ",
+        deviceType: detectDeviceType(),
+        status: "pending",
+        requestedAt: serverTimestamp(),
+        decidedAt: null,
+        decidedByUid: "",
+        decidedByName: "",
+        pairingCode: nextCode,
+        pairingExpiresAt: expiresAt,
+      });
+
+      batch.set(auditRef, {
+        action: "request-created",
+        actorUid: user.uid,
+        actorName: "管制アプリ",
+        targetUid: user.uid,
+        targetName: "管制アプリ",
+        role: "member",
+        createdAt: serverTimestamp(),
+      });
+
+      await batch.commit();
+      setPairingCode(nextCode);
+      setPairingExpiresAt(expiresAt.toMillis());
+    } catch (requestError) {
+      console.error("管制アプリの連携コードを発行できませんでした。", requestError);
+      setPairingError(
+        requestError instanceof Error
+          ? requestError.message
+          : "連携コードを発行できませんでした。通信状態を確認してください。"
+      );
+    } finally {
+      setPairingBusy(false);
+    }
+  };
+
   if (state === "ready") return children;
 
   if (state === "auth" || state === "checking") {
@@ -142,13 +261,48 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
   }
 
   if (state === "pending") {
+    const hasPairingCode = pairingCode !== "";
+    const isExpired = pairingExpiresAt > 0 && pairingExpiresAt <= Date.now();
+
     return (
       <AccessCard>
-        <span className="access-badge">承認待ち</span>
-        <h1>端末申請を確認中です</h1>
-        <p>QR受付アプリから送信した申請を、登録済みの部員端末で承認してください。承認されると、この画面から自動で管制システムへ進みます。</p>
+        <span className="access-badge">{hasPairingCode ? "連携待ち" : "承認待ち"}</span>
+        <h1>{hasPairingCode ? "QR受付システムと連携" : "端末申請を確認中です"}</h1>
+        {hasPairingCode ? (
+          <>
+            <p>QR受付アプリの「管理モード → 端末管理」で、下の8文字を入力してください。承認されると自動で管制システムへ進みます。</p>
+            <div
+              style={{
+                margin: "18px 0",
+                padding: "18px 16px",
+                border: "1px solid #c9d8ef",
+                borderRadius: 16,
+                background: "#f5f9ff",
+                fontSize: "clamp(28px, 7vw, 44px)",
+                fontWeight: 900,
+                letterSpacing: ".14em",
+                textAlign: "center",
+              }}
+            >
+              {pairingCode.slice(0, 4)}-{pairingCode.slice(4)}
+            </div>
+            <p>{isExpired ? "このコードは期限切れです。新しいコードを発行してください。" : "連携コードは約8分間有効です。"}</p>
+            {pairingError !== "" && <p className="access-error" role="alert">{pairingError}</p>}
+            <button
+              type="button"
+              disabled={pairingBusy}
+              onClick={() => {
+                void createControlPairingRequest();
+              }}
+            >
+              {pairingBusy ? "発行しています…" : isExpired ? "新しいコードを発行" : "コードを再発行"}
+            </button>
+          </>
+        ) : (
+          <p>QR受付アプリから送信した申請を、登録済みの部員端末で承認してください。承認されると、この画面から自動で管制システムへ進みます。</p>
+        )}
         <button type="button" onClick={() => window.location.assign("/qr-system/")}>
-          QR受付アプリへ戻る
+          QR受付アプリを開く
         </button>
       </AccessCard>
     );
@@ -160,10 +314,19 @@ export default function DeviceAccessGate({ children }: { children: ReactNode }) 
 
   return (
     <AccessCard>
-      <span className="access-badge">未登録端末</span>
-      <h1>先にQR受付アプリで申請してください</h1>
-      <p>この管制アプリからは端末申請できません。QR受付アプリを開いて部員端末として申請し、登録済みの部員端末で承認してください。</p>
-      {error !== "" && <p className="access-error" role="alert">{error}</p>}
+      <span className="access-badge">未連携</span>
+      <h1>QR受付システムと連携</h1>
+      <p>この管制アプリを部員端末として連携します。連携コードを発行して、QR受付アプリの端末管理に入力してください。</p>
+      {pairingError !== "" && <p className="access-error" role="alert">{pairingError}</p>}
+      <button
+        type="button"
+        disabled={pairingBusy}
+        onClick={() => {
+          void createControlPairingRequest();
+        }}
+      >
+        {pairingBusy ? "発行しています…" : "連携コードを発行"}
+      </button>
       <button type="button" onClick={() => window.location.assign("/qr-system/")}>
         QR受付アプリを開く
       </button>
