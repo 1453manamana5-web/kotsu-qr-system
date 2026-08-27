@@ -1,6 +1,5 @@
 import { type ChangeEvent, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   deleteDoc,
@@ -13,71 +12,8 @@ import {
 } from "firebase/firestore";
 import { APP_VERSION } from "../../src/appVersion";
 import type { FullBackupFile } from "../../src/backupRestore";
-import { auth } from "./firebase";
 
 const DELETE_BATCH_SIZE = 400;
-const ASSIST_SETTING_PREFIX = "qr-control-personalized-assist-enabled-v1:uid:";
-const PERSONALIZATION_PROFILE_PREFIX = "qr-control-personalization-v2:uid:";
-
-function assistSettingKey(uid: string) {
-  return `${ASSIST_SETTING_PREFIX}${uid}`;
-}
-
-function personalizationProfileKey(uid: string) {
-  return `${PERSONALIZATION_PROFILE_PREFIX}${uid}`;
-}
-
-function readAssistEnabled(uid: string) {
-  return window.localStorage.getItem(assistSettingKey(uid)) !== "0";
-}
-
-function writeAssistEnabled(uid: string, enabled: boolean) {
-  window.localStorage.setItem(assistSettingKey(uid), enabled ? "1" : "0");
-
-  const profileKey = personalizationProfileKey(uid);
-  try {
-    const raw = window.localStorage.getItem(profileKey);
-    const parsed = raw === null ? null : JSON.parse(raw) as Record<string, unknown>;
-    const events = Array.isArray(parsed?.events) ? parsed.events : [];
-    window.localStorage.setItem(profileKey, JSON.stringify({
-      ...(parsed ?? {}),
-      version: 2,
-      paused: !enabled,
-      events,
-    }));
-  } catch {
-    window.localStorage.setItem(profileKey, JSON.stringify({
-      version: 2,
-      paused: !enabled,
-      events: [],
-    }));
-  }
-}
-
-function syncAssistRuntime(enabled: boolean) {
-  const shell = document.querySelector(".control-shell");
-  if (shell instanceof HTMLElement) {
-    shell.classList.toggle("personalized-assist-disabled", !enabled);
-  }
-
-  const button = Array.from(document.querySelectorAll<HTMLButtonElement>(".personalized-control-actions button"))
-    .find((item) => {
-      const text = (item.textContent ?? "").trim();
-      return enabled ? text === "学習を再開" : text === "学習を一時停止";
-    });
-  button?.click();
-}
-
-function hideLegacyAssistPauseButton() {
-  for (const button of document.querySelectorAll<HTMLButtonElement>(".personalized-control-actions button")) {
-    const text = (button.textContent ?? "").trim();
-    if (text === "学習を一時停止" || text === "学習を再開") {
-      button.hidden = true;
-      button.setAttribute("aria-hidden", "true");
-      button.tabIndex = -1;
-    }
-  }
-}
 
 function downloadBackup(backup: FullBackupFile, fileNamePrefix: string) {
   const blob = new Blob([JSON.stringify(backup, null, 2)], {
@@ -167,13 +103,6 @@ export default function MaintenanceDataBridge({ database }: { database: Firestor
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
-  const [operatorUid, setOperatorUid] = useState<string | null>(null);
-  const [assistEnabled, setAssistEnabled] = useState(true);
-
-  useEffect(() => onAuthStateChanged(auth, (user) => {
-    setOperatorUid(user?.uid ?? null);
-    setAssistEnabled(user === null ? true : readAssistEnabled(user.uid));
-  }), []);
 
   useEffect(() => {
     const updateTargets = () => {
@@ -185,7 +114,6 @@ export default function MaintenanceDataBridge({ database }: { database: Firestor
         const next = document.querySelector(".control-shell main");
         return current === next ? current : next;
       });
-      hideLegacyAssistPauseButton();
     };
 
     const initial = window.setTimeout(updateTargets, 0);
@@ -205,11 +133,6 @@ export default function MaintenanceDataBridge({ database }: { database: Firestor
   }, [open]);
 
   useEffect(() => {
-    if (operatorUid === null) return;
-    syncAssistRuntime(assistEnabled);
-  }, [assistEnabled, operatorUid]);
-
-  useEffect(() => {
     if (navTarget === null) return undefined;
     const closeWhenAnotherViewOpens = (event: Event) => {
       const target = event.target;
@@ -221,13 +144,6 @@ export default function MaintenanceDataBridge({ database }: { database: Firestor
     navTarget.addEventListener("click", closeWhenAnotherViewOpens);
     return () => navTarget.removeEventListener("click", closeWhenAnotherViewOpens);
   }, [navTarget]);
-
-  const toggleAssist = () => {
-    if (operatorUid === null) return;
-    const nextEnabled = !assistEnabled;
-    writeAssistEnabled(operatorUid, nextEnabled);
-    setAssistEnabled(nextEnabled);
-  };
 
   const exportData = async () => {
     if (busy) return;
@@ -359,43 +275,12 @@ export default function MaintenanceDataBridge({ database }: { database: Firestor
               <small>CONTROL SETTINGS</small>
               <h2>設定</h2>
             </div>
-            <span>{busy ? "処理中" : "この部員の設定"}</span>
+            <span>{busy ? "処理中" : "データ管理"}</span>
           </div>
 
           <p className="maintenance-page-intro">
-            管制画面の使い方と、バックアップなどのデータ管理をここで設定します。
+            バックアップ・復元・初期化など、管制システムのデータ管理を行います。管制アシストのON/OFFは画面上部から切り替えます。
           </p>
-
-          <section className="control-settings-section" aria-labelledby="assist-setting-title">
-            <div className="control-settings-section-heading">
-              <div><small>ASSIST</small><h3 id="assist-setting-title">管制アシスト</h3></div>
-              <span className={assistEnabled ? "is-on" : "is-off"}>{assistEnabled ? "ON" : "OFF"}</span>
-            </div>
-            <div className="assist-setting-row">
-              <div>
-                <strong>あなた向けの管制アシストを使う</strong>
-                <p>操作傾向から「次に使いそうな機能」と「よく使う機能」を表示します。OFFにしても学習済みデータは消えません。</p>
-              </div>
-              <button
-                type="button"
-                className={`settings-toggle${assistEnabled ? " is-on" : ""}`}
-                onClick={toggleAssist}
-                disabled={operatorUid === null}
-                role="switch"
-                aria-checked={assistEnabled}
-                aria-label="管制アシストをオン・オフ"
-              >
-                <span />
-              </button>
-            </div>
-            <p className="assist-setting-note">
-              {operatorUid === null
-                ? "受付アプリの端末認証を確認しています。"
-                : assistEnabled
-                  ? "現在ONです。ライブ運行で個人向け候補を表示し、操作傾向を学習します。"
-                  : "現在OFFです。個人向け表示と操作学習を停止しています。"}
-            </p>
-          </section>
 
           <div className="settings-section-title">
             <div><small>DATA MANAGEMENT</small><strong>データ管理</strong></div>
