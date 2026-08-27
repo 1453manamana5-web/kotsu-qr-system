@@ -12,6 +12,7 @@ import TicketControlBridge from "./TicketControlBridge";
 import MemberControlBridge from "./MemberControlBridge";
 import HybridTicketInventoryForecastBridge from "./HybridTicketInventoryForecastBridge";
 import ControlAssistBridge from "./ControlAssistBridge";
+import ControlAssistHelpBridge from "./ControlAssistHelpBridge";
 import BeginnerHomeBridge from "./BeginnerHomeBridge";
 import OperationsManagementBridge from "./OperationsManagementBridge";
 import SidebarClarityBridge from "./SidebarClarityBridge";
@@ -63,6 +64,7 @@ createRoot(document.getElementById("root")!).render(
         <MemberControlBridge database={db} />
         <HybridTicketInventoryForecastBridge database={db} />
         <ControlAssistBridge database={db} />
+        <ControlAssistHelpBridge />
         <BeginnerHomeBridge />
         <OperationsManagementBridge />
         <SidebarClarityBridge />
