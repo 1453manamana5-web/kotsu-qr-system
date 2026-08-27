@@ -11,8 +11,7 @@ import LabAutopilotVisibilityBridge from "./LabAutopilotVisibilityBridge";
 import TicketControlBridge from "./TicketControlBridge";
 import MemberControlBridge from "./MemberControlBridge";
 import HybridTicketInventoryForecastBridge from "./HybridTicketInventoryForecastBridge";
-import AssistPersistenceBridge from "./AssistPersistenceBridge";
-import AuthenticatedPersonalizedControlBridge from "./AuthenticatedPersonalizedControlBridge";
+import ControlAssistBridge from "./ControlAssistBridge";
 import BeginnerHomeBridge from "./BeginnerHomeBridge";
 import OperationsManagementBridge from "./OperationsManagementBridge";
 import SidebarClarityBridge from "./SidebarClarityBridge";
@@ -56,7 +55,6 @@ createRoot(document.getElementById("root")!).render(
         <App database={db} />
         <DetailedLabTutorial />
         <StandaloneTutorialGuideV3 />
-        <AssistPersistenceBridge />
         <PredictiveOpsOverlay database={db} />
         <AnomalyNotificationBridge database={db} />
         <ExperimentalLabBridge database={db} />
@@ -64,7 +62,7 @@ createRoot(document.getElementById("root")!).render(
         <TicketControlBridge database={db} />
         <MemberControlBridge database={db} />
         <HybridTicketInventoryForecastBridge database={db} />
-        <AuthenticatedPersonalizedControlBridge />
+        <ControlAssistBridge database={db} />
         <BeginnerHomeBridge />
         <OperationsManagementBridge />
         <SidebarClarityBridge />
