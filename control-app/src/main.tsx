@@ -27,6 +27,7 @@ import CopilotSimplificationBridge from "./CopilotSimplificationBridge";
 import CopilotDecisionSupportBridge from "./CopilotDecisionSupportBridge";
 import PredictiveCorrelationMemory from "./PredictiveCorrelationMemory";
 import PredictiveChatBridge from "./PredictiveChatBridge";
+import TutorialHighlightOverlayBridge from "../../src/TutorialHighlightOverlayBridge";
 import { db } from "./firebase";
 import "./index.css";
 import "./experimental-nav.css";
@@ -78,6 +79,7 @@ createRoot(document.getElementById("root")!).render(
         <CopilotDecisionSupportBridge database={db} />
         <PredictiveCorrelationMemory database={db} />
         <PredictiveChatBridge database={db} />
+        <TutorialHighlightOverlayBridge />
       </>
     </DeviceAccessGate>
   </StrictMode>
