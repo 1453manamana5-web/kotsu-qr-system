@@ -8,6 +8,7 @@ import AppSplashScreen from "./AppSplashScreen";
 
 import DeviceAuthGate from "./DeviceAuthGate";
 import EventDeletionCleanup from "./EventDeletionCleanup";
+import ReceptionGuideBridge from "./ReceptionGuideBridge";
 
 const DeviceAccessGate = lazy(() =>
   import("./DeviceAccessGate")
@@ -84,6 +85,7 @@ function AppRoot() {
             <>
               <App />
               <EventDeletionCleanup />
+              <ReceptionGuideBridge />
             </>
           </DeviceAccessGate>
         </Suspense>
