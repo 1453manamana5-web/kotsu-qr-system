@@ -5,7 +5,6 @@ import {
   doc,
   getDoc,
   getDocs,
-  serverTimestamp,
   writeBatch,
 } from "firebase/firestore";
 
@@ -15,7 +14,7 @@ import { useDeviceAccess } from "./deviceAccessContext";
 
 const ROOT_COLLECTION = "system";
 const ROOT_DOCUMENT = "device-access";
-const MAX_BATCH_DELETE_COUNT = 450;
+const MAX_FULL_RESET_WRITES = 480;
 
 function getConfigDocument() {
   return doc(db, ROOT_COLLECTION, ROOT_DOCUMENT);
@@ -33,7 +32,7 @@ function getAuditCollection() {
   return collection(db, ROOT_COLLECTION, ROOT_DOCUMENT, "audit");
 }
 
-async function resetDeviceManagementKeepingCurrentMember() {
+async function resetDeviceManagementCompletely() {
   const uid = auth.currentUser?.uid;
 
   if (uid === undefined) {
@@ -50,7 +49,7 @@ async function resetDeviceManagementKeepingCurrentMember() {
   const currentDevice = currentDeviceSnapshot.data();
 
   if (currentDevice.active !== true || currentDevice.role !== "member") {
-    throw new Error("端末管理のリセットは、登録済みの部員端末から実行してください。");
+    throw new Error("端末管理の完全リセットは、登録済みの部員端末から実行してください。");
   }
 
   const [devicesSnapshot, requestsSnapshot, auditSnapshot] = await Promise.all([
@@ -59,36 +58,29 @@ async function resetDeviceManagementKeepingCurrentMember() {
     getDocs(getAuditCollection()),
   ]);
 
-  const deleteTargets = [
-    ...devicesSnapshot.docs.filter((item) => item.id !== uid).map((item) => item.ref),
-    ...requestsSnapshot.docs.map((item) => item.ref),
-    ...auditSnapshot.docs.map((item) => item.ref),
-  ];
+  const totalWrites =
+    devicesSnapshot.size +
+    requestsSnapshot.size +
+    auditSnapshot.size +
+    1;
 
-  for (let index = 0; index < deleteTargets.length; index += MAX_BATCH_DELETE_COUNT) {
-    const batch = writeBatch(db);
-
-    deleteTargets
-      .slice(index, index + MAX_BATCH_DELETE_COUNT)
-      .forEach((reference) => batch.delete(reference));
-
-    await batch.commit();
+  if (totalWrites > MAX_FULL_RESET_WRITES) {
+    throw new Error(
+      `端末管理の記録が多すぎるため一括リセットできません（${totalWrites}件）。操作履歴を整理してからもう一度実行してください。`
+    );
   }
 
-  const configBatch = writeBatch(db);
-  configBatch.set(
-    getConfigDocument(),
-    {
-      initialized: true,
-      memberDeviceCount: 1,
-      updatedAt: serverTimestamp(),
-    },
-    { merge: true }
-  );
-  await configBatch.commit();
+  const batch = writeBatch(db);
+
+  devicesSnapshot.docs.forEach((item) => batch.delete(item.ref));
+  requestsSnapshot.docs.forEach((item) => batch.delete(item.ref));
+  auditSnapshot.docs.forEach((item) => batch.delete(item.ref));
+  batch.delete(getConfigDocument());
+
+  await batch.commit();
 
   return {
-    deletedDeviceCount: Math.max(0, devicesSnapshot.size - 1),
+    deletedDeviceCount: devicesSnapshot.size,
     deletedRequestCount: requestsSnapshot.size,
     deletedAuditCount: auditSnapshot.size,
   };
@@ -125,10 +117,13 @@ export default function DeviceManagementResetBridge() {
 
     const confirmed = window.confirm(
       [
-        "端末管理を連携し直すためにリセットしますか？",
+        "端末管理を完全に初期状態へ戻しますか？",
         "",
-        "残すもの：現在使用中のこの部員端末",
-        "削除するもの：その他の登録済み端末・すべての利用申請・操作履歴",
+        "削除するもの：",
+        "・現在使用中のこの端末を含む、すべての登録済み端末",
+        "・すべての利用申請",
+        "・すべての端末操作履歴",
+        "・端末管理の初期設定",
         "",
         "イベント、チケット、部員、受付履歴など他のデータは削除しません。",
       ].join("\n")
@@ -137,7 +132,14 @@ export default function DeviceManagementResetBridge() {
     if (!confirmed) return;
 
     const finalConfirmed = window.confirm(
-      "端末管理の接続情報を初期状態に戻します。\nこの端末以外は再度申請・連携が必要になります。\n本当に実行しますか？"
+      [
+        "この端末自身の登録も削除します。",
+        "",
+        "実行後は『最初の部員端末を登録』画面へ戻り、この端末からもう一度登録し直します。",
+        "その後、管制アプリとの連携も最初からやり直してください。",
+        "",
+        "本当に完全リセットしますか？",
+      ].join("\n")
     );
 
     if (!finalConfirmed) return;
@@ -145,27 +147,29 @@ export default function DeviceManagementResetBridge() {
     setBusy(true);
 
     try {
-      const result = await resetDeviceManagementKeepingCurrentMember();
+      const result = await resetDeviceManagementCompletely();
 
-      alert(
+      window.alert(
         [
-          "端末管理をリセットしました。",
+          "端末管理を完全リセットしました。",
           "",
           `登録済み端末：${result.deletedDeviceCount}台削除`,
           `利用申請：${result.deletedRequestCount}件削除`,
           `操作履歴：${result.deletedAuditCount}件削除`,
           "",
-          "この部員端末だけを残しています。",
-          "次に管制アプリで新しい連携コードを発行して、端末管理から連携してください。",
+          "この端末も未登録状態に戻しました。",
+          "次の画面で最初の部員端末として登録し直してください。",
         ].join("\n")
       );
-    } catch (error) {
-      console.error("端末管理のリセットに失敗しました。", error);
 
-      alert(
+      window.location.reload();
+    } catch (error) {
+      console.error("端末管理の完全リセットに失敗しました。", error);
+
+      window.alert(
         error instanceof Error
-          ? `端末管理をリセットできませんでした。\n${error.message}`
-          : "端末管理をリセットできませんでした。通信状態を確認してください。"
+          ? `端末管理を完全リセットできませんでした。\n${error.message}`
+          : "端末管理を完全リセットできませんでした。通信状態を確認してください。"
       );
     } finally {
       setBusy(false);
@@ -189,7 +193,7 @@ export default function DeviceManagementResetBridge() {
           void handleReset();
         }}
       >
-        {busy ? "端末管理をリセット中…" : "端末管理だけリセット"}
+        {busy ? "端末管理を完全リセット中…" : "端末管理を完全リセット"}
       </button>
     </>,
     footerTarget
