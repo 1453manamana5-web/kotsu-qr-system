@@ -2,10 +2,18 @@ import OnlineStatus from "./OnlineStatus";
 
 import "./ReceptionGuidePage.css";
 
+export type AdminGuideMode =
+  | "events"
+  | "members"
+  | "tickets"
+  | "settings"
+  | "devices";
+
 type ReceptionGuidePageProps = {
   setPage: (page: string) => void;
   eventName: string;
   onStartTutorial: () => void;
+  onStartAdminGuide: (mode: AdminGuideMode) => void;
 };
 
 type GuideItem = {
@@ -14,6 +22,13 @@ type GuideItem = {
   lead: string;
   points: string[];
   tone: "blue" | "green" | "orange" | "purple" | "red" | "gray";
+};
+
+type AdminGuideItem = {
+  mode: AdminGuideMode;
+  title: string;
+  description: string;
+  requiresEvent: boolean;
 };
 
 const GUIDE_ITEMS: readonly GuideItem[] = [
@@ -85,6 +100,39 @@ const GUIDE_ITEMS: readonly GuideItem[] = [
   },
 ];
 
+const ADMIN_GUIDE_ITEMS: readonly AdminGuideItem[] = [
+  {
+    mode: "events",
+    title: "イベント管理",
+    description: "作成・現在イベント設定・終了・削除",
+    requiresEvent: false,
+  },
+  {
+    mode: "members",
+    title: "部員管理",
+    description: "部員QR・名前・状態・印刷",
+    requiresEvent: true,
+  },
+  {
+    mode: "tickets",
+    title: "チケット管理",
+    description: "発行・印刷・状態確認・無効化",
+    requiresEvent: true,
+  },
+  {
+    mode: "settings",
+    title: "設定",
+    description: "端末設定・バックアップ・初期化",
+    requiresEvent: false,
+  },
+  {
+    mode: "devices",
+    title: "端末管理",
+    description: "利用申請・登録端末・操作履歴",
+    requiresEvent: false,
+  },
+];
+
 function BackIcon() {
   return (
     <svg viewBox="0 0 32 32" aria-hidden="true">
@@ -118,6 +166,7 @@ function ReceptionGuidePage({
   setPage,
   eventName,
   onStartTutorial,
+  onStartAdminGuide,
 }: ReceptionGuidePageProps) {
   const canPractice = eventName.trim() !== "";
 
@@ -155,9 +204,42 @@ function ReceptionGuidePage({
               onClick={onStartTutorial}
             >
               <span><PracticeIcon /></span>
-              <strong>実際の画面で練習</strong>
-              <small>{canPractice ? "実物を光らせながら確認" : "イベント設定後に利用できます"}</small>
+              <strong>受付を実際の画面で練習</strong>
+              <small>{canPractice ? "入口・出口・管理者認証を確認" : "イベント設定後に利用できます"}</small>
             </button>
+          </div>
+        </section>
+
+        <section className="reception-admin-guide-section">
+          <div className="reception-admin-guide-heading">
+            <div>
+              <small>ADMIN MODE TRAINING</small>
+              <h2>管理モードの使い方を実物で確認</h2>
+            </div>
+            <p>危険な操作は実行せず、場所と意味だけを確認します。</p>
+          </div>
+
+          <div className="reception-admin-guide-grid">
+            {ADMIN_GUIDE_ITEMS.map((item) => {
+              const disabled = item.requiresEvent && !canPractice;
+
+              return (
+                <button
+                  type="button"
+                  key={item.mode}
+                  className={`reception-admin-guide-button reception-admin-guide-${item.mode}`}
+                  disabled={disabled}
+                  onClick={() => onStartAdminGuide(item.mode)}
+                >
+                  <span className="reception-admin-guide-icon"><PracticeIcon /></span>
+                  <span className="reception-admin-guide-copy">
+                    <strong>{item.title}</strong>
+                    <small>{disabled ? "イベント設定後に利用できます" : item.description}</small>
+                  </span>
+                  <span className="reception-admin-guide-arrow">→</span>
+                </button>
+              );
+            })}
           </div>
         </section>
 
