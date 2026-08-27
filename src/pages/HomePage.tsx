@@ -12,6 +12,76 @@ type HomePageProps = {
   eventName: string;
 };
 
+type StoredCurrentEvent = {
+  date?: unknown;
+  startTime?: unknown;
+  endTime?: unknown;
+  status?: unknown;
+  endedAt?: unknown;
+};
+
+const LEGACY_CURRENT_EVENT_KEY =
+  "qr-management-current-event";
+
+function isCurrentEventActive() {
+  try {
+    const storedEvent =
+      localStorage.getItem(
+        LEGACY_CURRENT_EVENT_KEY
+      );
+
+    if (storedEvent === null) {
+      return false;
+    }
+
+    const event =
+      JSON.parse(
+        storedEvent
+      ) as StoredCurrentEvent;
+
+    if (
+      event.status === "ended" ||
+      typeof event.endedAt === "string" ||
+      typeof event.date !== "string" ||
+      typeof event.startTime !== "string" ||
+      typeof event.endTime !== "string"
+    ) {
+      return false;
+    }
+
+    const startTime =
+      new Date(
+        `${event.date}T${event.startTime}`
+      ).getTime();
+
+    const endTime =
+      new Date(
+        `${event.date}T${event.endTime}`
+      ).getTime();
+
+    if (
+      !Number.isFinite(startTime) ||
+      !Number.isFinite(endTime)
+    ) {
+      return false;
+    }
+
+    const now = Date.now();
+
+    return (
+      now >= startTime &&
+      now < endTime
+    );
+  } catch (error) {
+    console.warn(
+      "開催中イベントの判定に失敗しました。",
+      error
+    );
+
+    return false;
+  }
+}
+
 function EntryIcon() {
   return (
     <svg viewBox="0 0 64 64" aria-hidden="true">
@@ -203,6 +273,23 @@ function HomePage({
 
   const goToAdmin = () => {
     void unlockReceptionSound();
+
+    if (
+      eventConfigured &&
+      isCurrentEventActive()
+    ) {
+      /*
+        1回目の遷移でApp側の管理画面の戻り先を
+        「ホーム」に更新し、同じクリック内の2回目で
+        実際の表示先を管理者QR認証へ切り替えます。
+        Reactのイベント内更新はまとめて反映されるため、
+        管理画面が途中で表示されることはありません。
+      */
+      setPage("admin");
+      setPage("admin-auth");
+
+      return;
+    }
 
     setPage("admin");
   };
