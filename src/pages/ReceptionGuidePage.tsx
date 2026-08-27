@@ -13,7 +13,6 @@ type ReceptionGuidePageProps = {
   setPage: (page: string) => void;
   eventName: string;
   onStartTutorial: () => void;
-  onStartAdminGuide: (mode: AdminGuideMode) => void;
 };
 
 type GuideItem = {
@@ -166,9 +165,20 @@ function ReceptionGuidePage({
   setPage,
   eventName,
   onStartTutorial,
-  onStartAdminGuide,
 }: ReceptionGuidePageProps) {
   const canPractice = eventName.trim() !== "";
+
+  const startAdminGuide = (mode: AdminGuideMode) => {
+    setPage("admin");
+
+    window.setTimeout(() => {
+      window.dispatchEvent(
+        new CustomEvent<AdminGuideMode>("admin-guide:start", {
+          detail: mode,
+        })
+      );
+    }, 100);
+  };
 
   return (
     <div className="reception-guide-page">
@@ -229,7 +239,7 @@ function ReceptionGuidePage({
                   key={item.mode}
                   className={`reception-admin-guide-button reception-admin-guide-${item.mode}`}
                   disabled={disabled}
-                  onClick={() => onStartAdminGuide(item.mode)}
+                  onClick={() => startAdminGuide(item.mode)}
                 >
                   <span className="reception-admin-guide-icon"><PracticeIcon /></span>
                   <span className="reception-admin-guide-copy">
