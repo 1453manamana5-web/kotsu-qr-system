@@ -1,0 +1,150 @@
+.admin-mode-tutorial-card {
+  position: fixed;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(14px, env(safe-area-inset-bottom));
+  z-index: 2147483646;
+  width: min(500px, calc(100vw - 28px));
+  max-height: min(72dvh, 680px);
+  overflow: auto;
+  padding: 19px;
+  border: 1px solid rgba(255, 255, 255, .96);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, .987);
+  color: #172033;
+  box-shadow: 0 25px 72px rgba(31, 45, 73, .34);
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", sans-serif;
+}
+
+.admin-mode-tutorial-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #496fbd;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.admin-mode-tutorial-card h2 {
+  margin: 8px 0 0;
+  font-size: 22px;
+  line-height: 1.32;
+}
+
+.admin-mode-tutorial-card > p {
+  margin: 9px 0 0;
+  color: #566176;
+  font-size: 13px;
+  line-height: 1.68;
+}
+
+.admin-mode-tutorial-note,
+.admin-mode-tutorial-caution,
+.admin-mode-tutorial-missing,
+.admin-mode-tutorial-instruction {
+  padding: 9px 11px;
+  border-radius: 11px;
+  font-size: 12px !important;
+  font-weight: 750;
+}
+
+.admin-mode-tutorial-note {
+  background: #edf4ff;
+  color: #3f619e !important;
+}
+
+.admin-mode-tutorial-caution {
+  background: #fff0df;
+  color: #855000 !important;
+}
+
+.admin-mode-tutorial-missing {
+  background: #fff7e8;
+  color: #805600 !important;
+}
+
+.admin-mode-tutorial-instruction {
+  border-left: 4px solid #5079c8;
+  background: #f5f8fd;
+  color: #313849 !important;
+  font-weight: 850 !important;
+}
+
+.admin-mode-tutorial-progress {
+  height: 7px;
+  margin-top: 13px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8edf6;
+}
+
+.admin-mode-tutorial-progress > span {
+  display: block;
+  height: 100%;
+  background: #5079c8;
+}
+
+.admin-mode-tutorial-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 13px;
+}
+
+.admin-mode-tutorial-actions button {
+  min-height: 40px;
+  padding: 8px 13px;
+  border: 1px solid #d5dce9;
+  border-radius: 11px;
+  background: #f5f7fa;
+  color: #3e4654;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.admin-mode-tutorial-actions .primary {
+  border-color: #5079c8;
+  background: #5079c8;
+  color: #ffffff;
+}
+
+.admin-mode-tutorial-actions button:disabled {
+  opacity: .5;
+  cursor: default;
+}
+
+.admin-mode-tutorial-highlight {
+  position: relative !important;
+  z-index: 2147483000 !important;
+  outline: 4px solid #66a0ff !important;
+  outline-offset: 5px !important;
+  box-shadow:
+    0 0 0 10px rgba(85, 145, 239, .16),
+    0 0 38px rgba(70, 120, 205, .68) !important;
+  animation: adminModeTutorialPulse 1.05s ease-in-out infinite !important;
+}
+
+@keyframes adminModeTutorialPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 8px rgba(85, 145, 239, .13),
+      0 0 24px rgba(70, 120, 205, .42);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 13px rgba(85, 145, 239, .06),
+      0 0 42px rgba(70, 120, 205, .72);
+  }
+}
+
+@media (max-width: 760px) {
+  .admin-mode-tutorial-card {
+    right: 10px;
+    bottom: 10px;
+    width: calc(100vw - 20px);
+    max-height: 76dvh;
+  }
+}
