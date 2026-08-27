@@ -409,7 +409,9 @@ service cloud.firestore {
         && request.resource.data.memberDeviceCount >= 1
         && request.resource.data.updatedAt == request.time;
 
-      allow delete: if false;
+      // 端末管理の完全リセット時だけ、現在の部員端末も同じ一括処理で削除します。
+      allow delete: if memberDevice()
+        && !existsAfter(devicePath(currentUid()));
 
       match /devices/{deviceId} {
         allow read: if memberDevice() || (signedIn() && deviceId == currentUid());
@@ -458,14 +460,22 @@ service cloud.firestore {
           );
 
         allow delete: if memberDevice()
-          && deviceId != currentUid()
           && (
-            resource.data.role != 'member'
-            || resource.data.active != true
+            (
+              deviceId != currentUid()
+              && (
+                resource.data.role != 'member'
+                || resource.data.active != true
+                || (
+                  getAfter(configPath()).data.memberDeviceCount
+                    == get(configPath()).data.memberDeviceCount - 1
+                  && getAfter(configPath()).data.memberDeviceCount >= 1
+                )
+              )
+            )
             || (
-              getAfter(configPath()).data.memberDeviceCount
-                == get(configPath()).data.memberDeviceCount - 1
-              && getAfter(configPath()).data.memberDeviceCount >= 1
+              !existsAfter(configPath())
+              && !existsAfter(devicePath(currentUid()))
             )
           );
       }
@@ -475,7 +485,9 @@ service cloud.firestore {
         allow create: if validPendingRequest(request.resource.data, requestUid);
         allow update: if validPendingRequest(request.resource.data, requestUid)
           || (memberDevice() && requestUid != currentUid() && validDecision(request.resource.data));
-        allow delete: if false;
+        allow delete: if memberDevice()
+          && !existsAfter(configPath())
+          && !existsAfter(devicePath(currentUid()));
       }
 
       match /audit/{auditId} {
@@ -498,7 +510,10 @@ service cloud.firestore {
               && getAfter(configPath()).data.initialized == true
             )
           );
-        allow update, delete: if false;
+        allow update: if false;
+        allow delete: if memberDevice()
+          && !existsAfter(configPath())
+          && !existsAfter(devicePath(currentUid()));
       }
     }
 
