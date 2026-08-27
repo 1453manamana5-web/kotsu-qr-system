@@ -7,6 +7,7 @@ import {
 import AppSplashScreen from "./AppSplashScreen";
 
 import AdminModeGuideBridge from "./AdminModeGuideBridge";
+import ControlPairingBridge from "./ControlPairingBridge";
 import DeviceAuthGate from "./DeviceAuthGate";
 import DeviceManagementResetBridge from "./DeviceManagementResetBridge";
 import EventDeletionCleanup from "./EventDeletionCleanup";
@@ -90,6 +91,7 @@ function AppRoot() {
               <ReceptionGuideBridge />
               <AdminModeGuideBridge />
               <DeviceManagementResetBridge />
+              <ControlPairingBridge />
             </>
           </DeviceAccessGate>
         </Suspense>
