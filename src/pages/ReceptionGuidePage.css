@@ -1,4 +1,7 @@
 .reception-guide-page {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -18,6 +21,15 @@
 .reception-guide-page *,
 .reception-guide-page *::before,
 .reception-guide-page *::after { box-sizing: border-box; }
+
+.admin-guide-card {
+  background: linear-gradient(145deg, #e9edff, #dde4fb);
+}
+
+.admin-guide-card .admin-menu-card-icon {
+  background: #cfd8f8;
+  color: #4d62b2;
+}
 
 .reception-guide-header {
   display: flex;
