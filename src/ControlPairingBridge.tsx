@@ -31,7 +31,7 @@ export default function ControlPairingBridge() {
       window.requestAnimationFrame(() => {
         scheduled = false;
         const next = document.querySelector(
-          ".device-management-requests-panel"
+          ".settings-system-section"
         );
         setTarget((current) =>
           current === next ? current : next
@@ -149,7 +149,7 @@ export default function ControlPairingBridge() {
   return createPortal(
     <>
       <style>{`
-        .control-pairing-bridge{margin:0 18px 16px;padding:14px;border:1px solid #c9d8ef;border-radius:16px;background:#f5f9ff}.control-pairing-bridge-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.control-pairing-bridge-heading strong{font-size:15px}.control-pairing-bridge-heading small{color:#6d7d95;font-size:11px}.control-pairing-bridge-form{display:flex;gap:9px}.control-pairing-bridge-form input{min-width:0;flex:1;height:44px;padding:0 13px;border:1px solid #b9c8df;border-radius:11px;background:#fff;font:inherit;font-weight:850;letter-spacing:.1em;text-transform:uppercase}.control-pairing-bridge-form button{min-width:105px;border:0;border-radius:11px;background:#3f6fbd;color:#fff;font:inherit;font-weight:850;cursor:pointer}.control-pairing-bridge-form button:disabled{opacity:.55;cursor:wait}.control-pairing-bridge-error{margin:9px 0 0;color:#b13c3c;font-size:12px;font-weight:750}@media(max-width:760px){.control-pairing-bridge-form{flex-direction:column}.control-pairing-bridge-form button{min-height:44px}}
+        .control-pairing-bridge{margin:16px 0 0;padding:15px;border:1px solid #c9d8ef;border-radius:14px;background:#f5f9ff}.control-pairing-bridge-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.control-pairing-bridge-heading strong{font-size:15px}.control-pairing-bridge-heading small{color:#6d7d95;font-size:11px}.control-pairing-bridge-form{display:flex;gap:9px}.control-pairing-bridge-form input{min-width:0;flex:1;height:44px;padding:0 13px;border:1px solid #b9c8df;border-radius:11px;background:#fff;font:inherit;font-weight:850;letter-spacing:.1em;text-transform:uppercase}.control-pairing-bridge-form button{min-width:105px;border:0;border-radius:11px;background:#3f6fbd;color:#fff;font:inherit;font-weight:850;cursor:pointer}.control-pairing-bridge-form button:disabled{opacity:.55;cursor:wait}.control-pairing-bridge-error{margin:9px 0 0;color:#b13c3c;font-size:12px;font-weight:750}@media(max-width:760px){.control-pairing-bridge-heading{align-items:flex-start;flex-direction:column;gap:3px}.control-pairing-bridge-form{flex-direction:column}.control-pairing-bridge-form button{min-height:44px}}
       `}</style>
 
       <section className="control-pairing-bridge">
