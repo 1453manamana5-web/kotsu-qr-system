@@ -5,6 +5,7 @@ import "./ReceptionGuidePage.css";
 type ReceptionGuidePageProps = {
   setPage: (page: string) => void;
   eventName: string;
+  onStartTutorial: () => void;
 };
 
 type GuideItem = {
@@ -103,7 +104,23 @@ function GuideIcon() {
   );
 }
 
-function ReceptionGuidePage({ setPage, eventName }: ReceptionGuidePageProps) {
+function PracticeIcon() {
+  return (
+    <svg viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M7 7H25V25H7Z" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />
+      <path d="M11 12H21M11 17H18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M19 21L22 24L27 18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ReceptionGuidePage({
+  setPage,
+  eventName,
+  onStartTutorial,
+}: ReceptionGuidePageProps) {
+  const canPractice = eventName.trim() !== "";
+
   return (
     <div className="reception-guide-page">
       <header className="reception-guide-header">
@@ -125,10 +142,22 @@ function ReceptionGuidePage({ setPage, eventName }: ReceptionGuidePageProps) {
       <main className="reception-guide-main">
         <section className="reception-guide-intro">
           <div className="reception-guide-intro-icon"><GuideIcon /></div>
-          <div>
+          <div className="reception-guide-intro-copy">
             <small>START HERE</small>
             <h2>本番中は「結果を確認してから次の人へ」</h2>
             <p>QRが反応しても、成功・再入場・エラーのどれが表示されたかを確認してから次の受付へ進んでください。</p>
+          </div>
+          <div className="reception-guide-practice">
+            <button
+              type="button"
+              className="reception-guide-practice-button"
+              disabled={!canPractice}
+              onClick={onStartTutorial}
+            >
+              <span><PracticeIcon /></span>
+              <strong>実際の画面で練習</strong>
+              <small>{canPractice ? "実物を光らせながら確認" : "イベント設定後に利用できます"}</small>
+            </button>
           </div>
         </section>
 
@@ -153,7 +182,7 @@ function ReceptionGuidePage({ setPage, eventName }: ReceptionGuidePageProps) {
           <span><BackIcon /></span>
           管理メニューへ戻る
         </button>
-        <p>次の更新で、実際の受付画面を光らせながら操作できる練習ガイドにも拡張できます。</p>
+        <p>練習ガイドは受付データを変更せず、画面の場所と操作順だけを確認します。</p>
       </footer>
     </div>
   );
