@@ -74,6 +74,7 @@ export default function ControlPairingBridge() {
   const handleSubmit = async () => {
     if (busy) return;
 
+    const previousCode = linkCode;
     const normalizedCode = normalizePairingCode(linkCode);
 
     if (normalizedCode.length !== 8) {
@@ -104,15 +105,37 @@ export default function ControlPairingBridge() {
 
     setBusy(true);
     setError("");
+    setLinkCode("");
+
+    // 正しいコードを送信した時点で入力欄を先に消す。
+    // Firestoreへの保存に失敗した場合だけ元に戻す。
+    setRequests((current) =>
+      current.filter(
+        (item) => item.uid !== request.uid
+      )
+    );
 
     try {
       await approveDeviceAccessRequest(request.uid);
-      setLinkCode("");
     } catch (approveError) {
       console.error(
         "管制アプリの連携に失敗しました。",
         approveError
       );
+
+      setRequests((current) =>
+        current.some(
+          (item) => item.uid === request.uid
+        )
+          ? current
+          : [...current, request].sort(
+              (first, second) =>
+                first.requestedAt.localeCompare(
+                  second.requestedAt
+                )
+            )
+      );
+      setLinkCode(previousCode);
       setError(
         approveError instanceof Error
           ? approveError.message
