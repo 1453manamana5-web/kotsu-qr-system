@@ -147,7 +147,7 @@
 
 .reception-guide-practice {
   flex: 0 0 auto;
-  width: min(270px, 30vw);
+  width: min(300px, 32vw);
 }
 
 .reception-guide-practice-button {
@@ -198,6 +198,132 @@
   cursor: not-allowed;
   box-shadow: none;
 }
+
+.reception-admin-guide-section {
+  margin-top: 14px;
+  padding: clamp(16px, 1.9vw, 22px);
+  border: 1px solid rgba(255,255,255,.96);
+  border-radius: 24px;
+  background: rgba(255,255,255,.84);
+  box-shadow: 0 12px 30px rgba(48, 58, 82, .08);
+}
+
+.reception-admin-guide-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.reception-admin-guide-heading small {
+  display: block;
+  margin-bottom: 4px;
+  color: #6f78a8;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+
+.reception-admin-guide-heading h2 {
+  margin: 0;
+  font-size: clamp(20px, 2vw, 28px);
+  letter-spacing: -.035em;
+}
+
+.reception-admin-guide-heading p {
+  margin: 0;
+  color: #7b8596;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.reception-admin-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.reception-admin-guide-button {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  min-height: 72px;
+  padding: 11px 12px;
+  border: 1px solid #dde3ee;
+  border-radius: 16px;
+  background: #f8f9fc;
+  color: #344054;
+  text-align: left;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+
+.reception-admin-guide-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: #b9c6df;
+  box-shadow: 0 8px 18px rgba(61, 76, 109, .09);
+}
+
+.reception-admin-guide-button:disabled {
+  opacity: .52;
+  cursor: not-allowed;
+}
+
+.reception-admin-guide-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #e8edf7;
+  color: #5b6f9e;
+}
+
+.reception-admin-guide-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.reception-admin-guide-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 3px;
+}
+
+.reception-admin-guide-copy strong {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reception-admin-guide-copy small {
+  overflow: hidden;
+  color: #778195;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reception-admin-guide-arrow {
+  color: #8895aa;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.reception-admin-guide-events .reception-admin-guide-icon { background: #e5efff; color: #356ab4; }
+.reception-admin-guide-members .reception-admin-guide-icon { background: #e4f4eb; color: #2f8051; }
+.reception-admin-guide-tickets .reception-admin-guide-icon { background: #fff0d6; color: #996518; }
+.reception-admin-guide-settings .reception-admin-guide-icon { background: #eee9f8; color: #7055aa; }
+.reception-admin-guide-devices .reception-admin-guide-icon { background: #def1f1; color: #347a7e; }
 
 .reception-guide-grid {
   display: grid;
@@ -302,11 +428,22 @@
   text-align: right;
 }
 
+@media (max-width: 1150px) {
+  .reception-admin-guide-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
 @media (max-width: 900px) {
   .reception-guide-grid { grid-template-columns: 1fr; }
   .reception-guide-header { flex-direction: column; gap: 12px; }
   .reception-guide-header-side { width: 100%; justify-content: space-between; }
   .reception-guide-intro { align-items: flex-start; flex-wrap: wrap; }
   .reception-guide-practice { width: 100%; }
+  .reception-admin-guide-heading { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .reception-admin-guide-heading p { text-align: left; }
+  .reception-admin-guide-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .reception-guide-footer p { display: none; }
+}
+
+@media (max-width: 620px) {
+  .reception-admin-guide-grid { grid-template-columns: 1fr; }
 }
