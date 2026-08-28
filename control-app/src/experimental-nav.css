@@ -1,23 +1,4 @@
-/* Experimental feature navigation polish.
-   Keeps trial features visually separate from the core control workflow. */
-
-.sidebar nav button:nth-of-type(6) {
-  position: relative;
-  margin-top: 34px;
-}
-
-.sidebar nav button:nth-of-type(6)::before {
-  content: "試験機能";
-  position: absolute;
-  left: 4px;
-  top: -27px;
-  pointer-events: none;
-  color: #7f91b8;
-  font-size: 9px;
-  font-weight: 850;
-  letter-spacing: .14em;
-  line-height: 1;
-}
+/* Experimental feature navigation polish. */
 
 /*
  * AI control icon: an original, neutral network/circuit motif.
