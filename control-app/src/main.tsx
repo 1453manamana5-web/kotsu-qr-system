@@ -1,4 +1,4 @@
-import { lazy, StrictMode, Suspense, useEffect, useState } from "react";
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import DeviceAccessGate from "./DeviceAccessGate";
@@ -6,6 +6,7 @@ import ControlAssistBridge from "./ControlAssistBridge";
 import ControlAssistHelpBridge from "./ControlAssistHelpBridge";
 import BeginnerHomeBridge from "./BeginnerHomeBridge";
 import SidebarClarityBridge from "./SidebarClarityBridge";
+import DeferredFeaturesLoader from "./DeferredFeaturesLoader";
 import { db } from "./firebase";
 import "./index.css";
 import "./experimental-nav.css";
@@ -27,27 +28,6 @@ import "./topbar-clarity.css";
 import "./typography-clarity.css";
 import "./copilot-learning.css";
 
-const DeferredControlFeatures = lazy(() => import("./DeferredControlFeatures"));
-
-function DeferredFeaturesLoader() {
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    // 最初の画面と操作系を先に描画してから、
-    // 管制ラボ・AI管制・予測・保守などの補助機能を読み込む。
-    const timer = window.setTimeout(() => setReady(true), 700);
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  if (!ready) return null;
-
-  return (
-    <Suspense fallback={null}>
-      <DeferredControlFeatures database={db} />
-    </Suspense>
-  );
-}
-
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <DeviceAccessGate>
@@ -57,7 +37,7 @@ createRoot(document.getElementById("root")!).render(
         <ControlAssistHelpBridge />
         <BeginnerHomeBridge />
         <SidebarClarityBridge />
-        <DeferredFeaturesLoader />
+        <DeferredFeaturesLoader database={db} />
       </>
     </DeviceAccessGate>
   </StrictMode>
