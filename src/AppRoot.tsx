@@ -12,7 +12,6 @@ import DeviceAuthGate from "./DeviceAuthGate";
 import EventDeletionCleanup from "./EventDeletionCleanup";
 import ReceptionGuideBridge from "./ReceptionGuideBridge";
 import TutorialHighlightOverlayBridge from "./TutorialHighlightOverlayBridge";
-import UnifiedDeviceManagementBridge from "./UnifiedDeviceManagementBridge";
 
 const DeviceAccessGate = lazy(() =>
   import("./DeviceAccessGate")
@@ -92,7 +91,6 @@ function AppRoot() {
               <ReceptionGuideBridge />
               <AdminModeGuideBridge />
               <ControlPairingBridge />
-              <UnifiedDeviceManagementBridge />
               <TutorialHighlightOverlayBridge />
             </>
           </DeviceAccessGate>
