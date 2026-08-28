@@ -22,6 +22,21 @@ import PredictiveChatBridge from "./PredictiveChatBridge";
 import TutorialHighlightOverlayBridge from "../../src/TutorialHighlightOverlayBridge";
 import type { Firestore } from "firebase/firestore";
 
+import "./predictive-ops.css";
+import "./predictive-correlation.css";
+import "./copilot-capabilities.css";
+import "./admin-ops.css";
+import "./ticket-control.css";
+import "./member-control.css";
+import "./ticket-inventory-forecast.css";
+import "./maintenance-data.css";
+import "./experimental-lab-extensions.css";
+import "./lab-autopilot-only.css";
+import "./operations-management.css";
+import "./copilot-simplified.css";
+import "./anomaly-notifications.css";
+import "./copilot-learning.css";
+
 export default function DeferredControlFeatures({ database }: { database: Firestore }) {
   return (
     <>
