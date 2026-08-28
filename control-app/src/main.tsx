@@ -1,33 +1,11 @@
-import { StrictMode } from "react";
+import { lazy, StrictMode, Suspense, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import DeviceAccessGate from "./DeviceAccessGate";
-import DetailedLabTutorial from "./DetailedLabTutorial";
-import StandaloneTutorialGuideV3 from "./StandaloneTutorialGuideV3";
-import PredictiveOpsOverlay from "./PredictiveOpsOverlay";
-import AnomalyNotificationBridge from "./AnomalyNotificationBridge";
-import ExperimentalLabBridge from "./ExperimentalLabBridge";
-import LabAutopilotVisibilityBridge from "./LabAutopilotVisibilityBridge";
-import TicketControlBridge from "./TicketControlBridge";
-import MemberControlBridge from "./MemberControlBridge";
-import HybridTicketInventoryForecastBridge from "./HybridTicketInventoryForecastBridge";
 import ControlAssistBridge from "./ControlAssistBridge";
 import ControlAssistHelpBridge from "./ControlAssistHelpBridge";
 import BeginnerHomeBridge from "./BeginnerHomeBridge";
-import OperationsManagementBridge from "./OperationsManagementBridge";
 import SidebarClarityBridge from "./SidebarClarityBridge";
-import AdminOpsBridge from "./AdminOpsBridge";
-import MaintenanceDataBridge from "./MaintenanceDataBridge";
-import CopilotLearningBridge from "./CopilotLearningBridge";
-import CopilotLanguageExpansionBridge from "./CopilotLanguageExpansionBridge";
-import CopilotConversationMemoryBridge from "./CopilotConversationMemoryBridge";
-import CopilotRemoteCommandBridge from "./CopilotRemoteCommandBridge";
-import CopilotCapabilityBridge from "./CopilotCapabilityBridge";
-import CopilotSimplificationBridge from "./CopilotSimplificationBridge";
-import CopilotDecisionSupportBridge from "./CopilotDecisionSupportBridge";
-import PredictiveCorrelationMemory from "./PredictiveCorrelationMemory";
-import PredictiveChatBridge from "./PredictiveChatBridge";
-import TutorialHighlightOverlayBridge from "../../src/TutorialHighlightOverlayBridge";
 import { db } from "./firebase";
 import "./index.css";
 import "./experimental-nav.css";
@@ -49,37 +27,37 @@ import "./topbar-clarity.css";
 import "./typography-clarity.css";
 import "./copilot-learning.css";
 
+const DeferredControlFeatures = lazy(() => import("./DeferredControlFeatures"));
+
+function DeferredFeaturesLoader() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    // 最初の画面と操作系を先に描画してから、
+    // 管制ラボ・AI管制・予測・保守などの補助機能を読み込む。
+    const timer = window.setTimeout(() => setReady(true), 700);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  if (!ready) return null;
+
+  return (
+    <Suspense fallback={null}>
+      <DeferredControlFeatures database={db} />
+    </Suspense>
+  );
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <DeviceAccessGate>
       <>
         <App database={db} />
-        <DetailedLabTutorial />
-        <StandaloneTutorialGuideV3 />
-        <PredictiveOpsOverlay database={db} />
-        <AnomalyNotificationBridge database={db} />
-        <ExperimentalLabBridge database={db} />
-        <LabAutopilotVisibilityBridge />
-        <TicketControlBridge database={db} />
-        <MemberControlBridge database={db} />
-        <HybridTicketInventoryForecastBridge database={db} />
         <ControlAssistBridge database={db} />
         <ControlAssistHelpBridge />
         <BeginnerHomeBridge />
-        <OperationsManagementBridge />
         <SidebarClarityBridge />
-        <AdminOpsBridge database={db} />
-        <MaintenanceDataBridge database={db} />
-        <CopilotLearningBridge />
-        <CopilotLanguageExpansionBridge />
-        <CopilotConversationMemoryBridge />
-        <CopilotRemoteCommandBridge database={db} />
-        <CopilotCapabilityBridge database={db} />
-        <CopilotSimplificationBridge />
-        <CopilotDecisionSupportBridge database={db} />
-        <PredictiveCorrelationMemory database={db} />
-        <PredictiveChatBridge database={db} />
-        <TutorialHighlightOverlayBridge />
+        <DeferredFeaturesLoader />
       </>
     </DeviceAccessGate>
   </StrictMode>
