@@ -39,9 +39,7 @@ type OperationState = {
     | "delete";
 } | null;
 
-function getErrorMessage(
-  error: unknown
-) {
+function getErrorMessage(error: unknown) {
   if (
     error instanceof Error &&
     error.message.trim() !== ""
@@ -52,105 +50,66 @@ function getErrorMessage(
   return "操作を完了できませんでした。通信状態を確認してください。";
 }
 
-function getRoleLabel(
-  role: AuthorizedDevice["role"]
-) {
-  switch (role) {
-    case "member":
-      return "部員端末";
-
-    case "reception":
-      return "受付専用端末";
-
-    case "control":
-      return "部員端末";
-  }
+function getRoleLabel(role: AuthorizedDevice["role"]) {
+  return role === "reception"
+    ? "受付専用端末"
+    : "登録端末";
 }
 
-function getDeviceTypeLabel(
-  deviceType: DeviceType
-) {
+function getDeviceTypeLabel(deviceType: DeviceType) {
   switch (deviceType) {
     case "ipad":
       return "iPad";
-
     case "iphone":
       return "iPhone";
-
     case "android":
       return "Android";
-
     case "windows":
       return "Windows";
-
     case "mac":
       return "Mac";
-
     case "other":
       return "その他";
-
     case "unknown":
       return "端末種別不明";
   }
 }
 
-function formatDateTime(
-  value: string
-) {
+function formatDateTime(value: string) {
   if (value === "") {
     return "記録中";
   }
 
-  const date =
-    new Date(value);
+  const date = new Date(value);
 
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
+  if (Number.isNaN(date.getTime())) {
     return "記録中";
   }
 
-  return new Intl.DateTimeFormat(
-    "ja-JP",
-    {
-      month: "numeric",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }
-  ).format(date);
+  return new Intl.DateTimeFormat("ja-JP", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
 }
 
-function getAuditLabel(
-  entry: DeviceAccessAudit
-) {
+function getAuditLabel(entry: DeviceAccessAudit) {
   switch (entry.action) {
     case "bootstrap-member":
       return "最初の部員端末を登録";
-
     case "request-created":
-      if (entry.role === "member") {
-        return "部員端末を申請";
-      }
-
-      return entry.role === "control"
-        ? "部員端末を申請"
-        : "受付専用端末を申請";
-
+      return entry.role === "reception"
+        ? "受付専用端末を申請"
+        : "登録端末を申請";
     case "request-approved":
       return "端末申請を承認";
-
     case "request-rejected":
       return "端末申請を却下";
-
     case "device-disabled":
       return "端末を停止";
-
     case "device-renamed":
       return "端末名を変更";
-
     case "device-deleted":
       return "端末を削除";
   }
@@ -158,10 +117,7 @@ function getAuditLabel(
 
 function BackIcon() {
   return (
-    <svg
-      viewBox="0 0 32 32"
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 32 32" aria-hidden="true">
       <path
         d="M25 16H8"
         fill="none"
@@ -169,7 +125,6 @@ function BackIcon() {
         strokeWidth="3"
         strokeLinecap="round"
       />
-
       <path
         d="M14 9L7 16L14 23"
         fill="none"
@@ -184,10 +139,7 @@ function BackIcon() {
 
 function DeviceModeIcon() {
   return (
-    <svg
-      viewBox="0 0 64 64"
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 64 64" aria-hidden="true">
       <rect
         x="13"
         y="7"
@@ -198,7 +150,6 @@ function DeviceModeIcon() {
         stroke="currentColor"
         strokeWidth="4"
       />
-
       <path
         d="M25 48H39"
         fill="none"
@@ -206,7 +157,6 @@ function DeviceModeIcon() {
         strokeWidth="4"
         strokeLinecap="round"
       />
-
       <path
         d="M22 29L29 36L43 21"
         fill="none"
@@ -226,6 +176,7 @@ function DeviceManagementPage({
     uid,
     device: currentDevice,
   } = useDeviceAccess();
+
   const [devices, setDevices] =
     useState<AuthorizedDevice[]>([]);
   const [requests, setRequests] =
@@ -244,34 +195,23 @@ function DeviceManagementPage({
     useState<string | null>(null);
   const [editingName, setEditingName] =
     useState("");
-  const [linkCode, setLinkCode] =
-    useState("");
-  const [linkError, setLinkError] =
-    useState("");
 
   useEffect(() => {
     let deviceReady = false;
     let requestReady = false;
 
     const markReady = () => {
-      if (
-        deviceReady &&
-        requestReady
-      ) {
+      if (deviceReady && requestReady) {
         setLoading(false);
       }
     };
 
-    const onError = (
-      error: Error
-    ) => {
+    const onError = (error: Error) => {
       console.error(
         "端末管理データを読み込めませんでした。",
         error
       );
-      setLoadError(
-        getErrorMessage(error)
-      );
+      setLoadError(getErrorMessage(error));
       setLoading(false);
     };
 
@@ -284,6 +224,7 @@ function DeviceManagementPage({
         },
         onError
       );
+
     const unsubscribeRequests =
       subscribeToPendingDeviceRequests(
         (nextRequests) => {
@@ -293,6 +234,7 @@ function DeviceManagementPage({
         },
         onError
       );
+
     const unsubscribeAudit =
       subscribeToDeviceAccessAudit(
         setAudit,
@@ -311,112 +253,87 @@ function DeviceManagementPage({
     };
   }, []);
 
-  const activeDevices =
-    useMemo(
-      () =>
-        devices
-          .filter(
-            (device) =>
-              device.active
-          )
-          .sort((first, second) => {
-            if (first.uid === uid) {
-              return -1;
-            }
+  const activeDevices = useMemo(
+    () =>
+      devices
+        .filter((device) => device.active)
+        .sort((first, second) => {
+          if (first.uid === uid) return -1;
+          if (second.uid === uid) return 1;
 
-            if (second.uid === uid) {
-              return 1;
-            }
+          return first.deviceName.localeCompare(
+            second.deviceName,
+            "ja"
+          );
+        }),
+    [devices, uid]
+  );
 
-            return 0;
-          }),
-      [devices, uid]
-    );
-  const memberCount =
-    activeDevices.filter(
-      (device) =>
-        device.role === "member" ||
-        device.role === "control"
-    ).length;
-  const receptionCount =
-    activeDevices.filter(
-      (device) =>
-        device.role === "reception"
-    ).length;
-  const hasPendingControlPairing =
-    requests.some(
-      (request) =>
-        request.requestedRole === "control" &&
-        request.pairingCode !== ""
-    );
-  const runOperation =
-    async (
-      nextOperation:
-        Exclude<OperationState, null>,
-      action: () => Promise<void>
-    ) => {
-      setOperation(nextOperation);
-      setOperationError("");
+  // 旧control roleは過去データ互換としてだけ数える。
+  // 新しい管制アプリはmember roleで登録される。
+  const managerDeviceCount = activeDevices.filter(
+    (device) =>
+      device.role === "member" ||
+      device.role === "control"
+  ).length;
 
-      try {
-        await action();
-      } catch (error) {
-        console.error(
-          "端末管理の操作に失敗しました。",
-          error
-        );
-        setOperationError(
-          getErrorMessage(error)
-        );
-      } finally {
-        setOperation(null);
-      }
-    };
+  const runOperation = async (
+    nextOperation: Exclude<OperationState, null>,
+    action: () => Promise<void>
+  ) => {
+    setOperation(nextOperation);
+    setOperationError("");
+
+    try {
+      await action();
+    } catch (error) {
+      console.error(
+        "端末管理の操作に失敗しました。",
+        error
+      );
+      setOperationError(getErrorMessage(error));
+    } finally {
+      setOperation(null);
+    }
+  };
 
   const handleApprove = (
     request: DeviceAccessRequest
   ) => {
-    const previousDevice =
-      devices.find(
-        (device) =>
-          device.uid === request.uid
-      );
-    const optimisticDevice:
-      AuthorizedDevice = {
-        uid: request.uid,
-        role: request.requestedRole,
-        displayName:
-          request.pairingCode !== ""
-            ? currentDevice.displayName
-            : request.displayName,
-        deviceName:
-          request.pairingCode !== ""
-            ? `${currentDevice.displayName}の管制アプリ`
-            : request.deviceName,
-        deviceType:
-          request.deviceType,
-        active: true,
-        createdAt:
-          previousDevice?.createdAt ||
-          request.requestedAt,
-        approvedAt:
-          new Date().toISOString(),
-        approvedByUid: uid,
-        approvedByName:
-          currentDevice.displayName,
-      };
+    const previousDevice = devices.find(
+      (device) => device.uid === request.uid
+    );
 
-    // Firestoreの応答を待たず、承認結果を先に画面へ反映する。
+    const optimisticDevice: AuthorizedDevice = {
+      uid: request.uid,
+      role: request.requestedRole,
+      displayName:
+        request.pairingCode !== ""
+          ? currentDevice.displayName
+          : request.displayName,
+      deviceName:
+        request.pairingCode !== ""
+          ? `${currentDevice.displayName}の管制アプリ`
+          : request.deviceName,
+      deviceType: request.deviceType,
+      active: true,
+      createdAt:
+        previousDevice?.createdAt ||
+        request.requestedAt,
+      approvedAt: new Date().toISOString(),
+      approvedByUid: uid,
+      approvedByName: currentDevice.displayName,
+    };
+
     setRequests((current) =>
       current.filter(
-        (item) =>
-          item.uid !== request.uid
+        (item) => item.uid !== request.uid
       )
     );
+
     setDevices((current) => [
       ...current.filter(
-        (device) =>
-          device.uid !== request.uid
+        (device) => device.uid !== request.uid
       ),
       optimisticDevice,
     ]);
@@ -428,15 +345,11 @@ function DeviceManagementPage({
       },
       async () => {
         try {
-          await approveDeviceAccessRequest(
-            request.uid
-          );
+          await approveDeviceAccessRequest(request.uid);
         } catch (error) {
-          // 保存できなかった場合だけ、承認前の表示へ戻す。
           setRequests((current) =>
             current.some(
-              (item) =>
-                item.uid === request.uid
+              (item) => item.uid === request.uid
             )
               ? current
               : [...current, request].sort(
@@ -446,70 +359,22 @@ function DeviceManagementPage({
                     )
                 )
           );
-          setDevices((current) => {
-            const withoutTarget =
-              current.filter(
-                (device) =>
-                  device.uid !==
-                  request.uid
-              );
 
-            return previousDevice ===
-              undefined
+          setDevices((current) => {
+            const withoutTarget = current.filter(
+              (device) =>
+                device.uid !== request.uid
+            );
+
+            return previousDevice === undefined
               ? withoutTarget
-              : [
-                  ...withoutTarget,
-                  previousDevice,
-                ];
+              : [...withoutTarget, previousDevice];
           });
 
           throw error;
         }
       }
     );
-  };
-
-  const handleLinkControlApp = () => {
-    const normalizedCode =
-      linkCode
-        .toUpperCase()
-        .replace(/[^A-Z0-9]/g, "");
-    const request =
-      requests.find(
-        (item) =>
-          item.requestedRole === "control" &&
-          item.pairingCode === normalizedCode
-      );
-
-    if (normalizedCode.length !== 8) {
-      setLinkError(
-        "8文字の連携コードを入力してください。"
-      );
-      return;
-    }
-
-    if (request === undefined) {
-      setLinkError(
-        "一致する連携コードが見つかりません。管制アプリで新しいコードを発行してください。"
-      );
-      return;
-    }
-
-    if (
-      request.pairingExpiresAt !== "" &&
-      new Date(
-        request.pairingExpiresAt
-      ).getTime() <= Date.now()
-    ) {
-      setLinkError(
-        "この連携コードは期限切れです。管制アプリで新しいコードを発行してください。"
-      );
-      return;
-    }
-
-    setLinkError("");
-    setLinkCode("");
-    handleApprove(request);
   };
 
   const handleReject = (
@@ -528,18 +393,14 @@ function DeviceManagementPage({
         uid: request.uid,
         action: "reject",
       },
-      () =>
-        rejectDeviceAccessRequest(
-          request.uid
-        )
+      () => rejectDeviceAccessRequest(request.uid)
     );
   };
 
   const handleRename = (
     device: AuthorizedDevice
   ) => {
-    const cleanName =
-      editingName.trim();
+    const cleanName = editingName.trim();
 
     if (cleanName === "") {
       setOperationError(
@@ -580,10 +441,7 @@ function DeviceManagementPage({
         uid: device.uid,
         action: "delete",
       },
-      () =>
-        deleteAuthorizedDevice(
-          device.uid
-        )
+      () => deleteAuthorizedDevice(device.uid)
     );
   };
 
@@ -597,12 +455,10 @@ function DeviceManagementPage({
 
           <div className="device-management-header-status">
             <OnlineStatus />
-
             <span
               className="device-management-header-divider"
               aria-hidden="true"
             />
-
             <p>
               部員端末はすべて対等に申請を承認できます
             </p>
@@ -613,26 +469,23 @@ function DeviceManagementPage({
           <span className="device-management-mode-icon">
             <DeviceModeIcon />
           </span>
-
           <span className="device-management-mode-copy">
-            <small>
-              DEVICE MANAGEMENT
-            </small>
-
-            <strong>
-              端末管理
-            </strong>
+            <small>DEVICE MANAGEMENT</small>
+            <strong>端末管理</strong>
           </span>
         </div>
       </header>
 
       <main className="device-management-main">
-        <section className="device-management-summary">
+        <section
+          className="device-management-summary"
+          style={{
+            gridTemplateColumns:
+              "repeat(2, minmax(118px, .7fr)) minmax(220px, 1.5fr)",
+          }}
+        >
           <article>
-            <small>
-              承認待ち
-            </small>
-
+            <small>承認待ち</small>
             <strong>
               {requests.length}
               <span>件</span>
@@ -640,35 +493,16 @@ function DeviceManagementPage({
           </article>
 
           <article>
-            <small>
-              部員端末
-            </small>
-
+            <small>登録済み端末</small>
             <strong>
-              {memberCount}
-              <span>台</span>
-            </strong>
-          </article>
-
-          <article>
-            <small>
-              受付専用端末
-            </small>
-
-            <strong>
-              {receptionCount}
+              {activeDevices.length}
               <span>台</span>
             </strong>
           </article>
 
           <article className="device-management-current">
-            <small>
-              この端末
-            </small>
-
-            <strong>
-              {currentDevice.deviceName}
-            </strong>
+            <small>この端末</small>
+            <strong>{currentDevice.deviceName}</strong>
           </article>
         </section>
 
@@ -693,160 +527,101 @@ function DeviceManagementPage({
         <div className="device-management-columns">
           <div className="device-management-left-column">
             <section className="device-management-panel device-management-requests-panel">
-            <div className="device-management-panel-heading">
-              <div>
-                <span>REQUESTS</span>
-                <h2>利用申請</h2>
+              <div className="device-management-panel-heading">
+                <div>
+                  <span>REQUESTS</span>
+                  <h2>利用申請</h2>
+                </div>
+                <strong>{requests.length}</strong>
               </div>
 
-              <strong>
-                {requests.length}
-              </strong>
-            </div>
-
-            {!loading && hasPendingControlPairing && (
-              <>
-                <form
-                  className="device-management-link-form"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    handleLinkControlApp();
-                  }}
-                >
-                  <div>
-                    <strong>管制アプリを連携</strong>
-                    <small>管制アプリに表示された8文字を入力</small>
-                  </div>
-
-                  <input
-                    type="text"
-                    value={linkCode}
-                    maxLength={9}
-                    inputMode="text"
-                    autoCapitalize="characters"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    placeholder="ABCD-EFGH"
-                    aria-label="管制アプリの連携コード"
-                    onChange={(event) => {
-                      setLinkCode(
-                        event.target.value
-                          .toUpperCase()
-                      );
-                      setLinkError("");
-                    }}
-                  />
-
-                  <button type="submit">
-                    連携する
-                  </button>
-                </form>
-
-                {linkError !== "" && (
-                  <p
-                    className="device-management-link-error"
-                    role="alert"
-                  >
-                    {linkError}
+              <div className="device-management-list">
+                {loading ? (
+                  <p className="device-management-empty">
+                    読み込んでいます…
                   </p>
-                )}
-              </>
-            )}
+                ) : requests.length === 0 ? (
+                  <p className="device-management-empty">
+                    現在、承認待ちの申請はありません
+                  </p>
+                ) : (
+                  requests.map((request) => {
+                    const isOperating =
+                      operation?.uid === request.uid;
 
-            <div className="device-management-list">
-              {loading ? (
-                <p className="device-management-empty">
-                  読み込んでいます…
-                </p>
-              ) : requests.length === 0 ? (
-                <p className="device-management-empty">
-                  現在、承認待ちの申請はありません
-                </p>
-              ) : (
-                requests.map((request) => {
-                  const isOperating =
-                    operation?.uid ===
-                    request.uid;
-
-                  return (
-                    <article
-                      key={request.uid}
-                      className="device-management-request-card"
-                    >
-                      <div className="device-management-card-topline">
-                        <span
-                          className={`device-management-role device-management-role-${request.requestedRole}`}
-                        >
-                          {getRoleLabel(
-                            request.requestedRole
-                          )}
-                        </span>
-
-                        <span className="device-management-device-type">
-                          {getDeviceTypeLabel(
-                            request.deviceType
-                          )}
-                        </span>
-
-                        {request.requestType ===
-                          "upgrade" && (
-                          <span className="device-management-upgrade">
-                            変更申請
+                    return (
+                      <article
+                        key={request.uid}
+                        className="device-management-request-card"
+                      >
+                        <div className="device-management-card-topline">
+                          <span
+                            className={`device-management-role device-management-role-${request.requestedRole}`}
+                          >
+                            {getRoleLabel(
+                              request.requestedRole
+                            )}
                           </span>
-                        )}
-                      </div>
 
-                      <h3>
-                        {request.deviceName}
-                      </h3>
+                          <span className="device-management-device-type">
+                            {getDeviceTypeLabel(
+                              request.deviceType
+                            )}
+                          </span>
 
-                      <p>
-                        申請者：
-                        <strong>
-                          {request.displayName}
-                        </strong>
-                      </p>
+                          {request.requestType ===
+                            "upgrade" && (
+                            <span className="device-management-upgrade">
+                              変更申請
+                            </span>
+                          )}
+                        </div>
 
-                      <small>
-                        {formatDateTime(
-                          request.requestedAt
-                        )}
-                      </small>
+                        <h3>{request.deviceName}</h3>
 
-                      <div className="device-management-request-actions">
-                        <button
-                          type="button"
-                          className="device-management-reject"
-                          disabled={isOperating}
-                          onClick={() =>
-                            handleReject(
-                              request
-                            )
-                          }
-                        >
-                          却下
-                        </button>
+                        <p>
+                          申請者：
+                          <strong>
+                            {request.displayName}
+                          </strong>
+                        </p>
 
-                        <button
-                          type="button"
-                          className="device-management-approve"
-                          disabled={isOperating}
-                          onClick={() =>
-                            handleApprove(
-                              request
-                            )
-                          }
-                        >
-                          {isOperating
-                            ? "処理中…"
-                            : "承認"}
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })
-              )}
-            </div>
+                        <small>
+                          {formatDateTime(
+                            request.requestedAt
+                          )}
+                        </small>
+
+                        <div className="device-management-request-actions">
+                          <button
+                            type="button"
+                            className="device-management-reject"
+                            disabled={isOperating}
+                            onClick={() =>
+                              handleReject(request)
+                            }
+                          >
+                            却下
+                          </button>
+
+                          <button
+                            type="button"
+                            className="device-management-approve"
+                            disabled={isOperating}
+                            onClick={() =>
+                              handleApprove(request)
+                            }
+                          >
+                            {isOperating
+                              ? "処理中…"
+                              : "承認"}
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })
+                )}
+              </div>
             </section>
 
             <section className="device-management-panel device-management-audit-panel">
@@ -866,23 +641,16 @@ function DeviceManagementPage({
                   audit.map((entry) => (
                     <article key={entry.id}>
                       <span />
-
                       <div>
                         <strong>
-                          {getAuditLabel(
-                            entry
-                          )}
+                          {getAuditLabel(entry)}
                         </strong>
-
                         <p>
-                          {entry.actorName ||
-                            "端末"}
+                          {entry.actorName || "端末"}
                           {" → "}
-                          {entry.targetName ||
-                            "端末"}
+                          {entry.targetName || "端末"}
                         </p>
                       </div>
-
                       <time>
                         {formatDateTime(
                           entry.createdAt
@@ -901,37 +669,39 @@ function DeviceManagementPage({
                 <span>DEVICES</span>
                 <h2>登録済み端末</h2>
               </div>
-
-              <strong>
-                {activeDevices.length}
-              </strong>
+              <strong>{activeDevices.length}</strong>
             </div>
 
             <div className="device-management-list">
               {activeDevices.map((device) => {
-                const isCurrent =
-                  device.uid === uid;
+                const isCurrent = device.uid === uid;
                 const isOperating =
-                  operation?.uid ===
-                  device.uid;
+                  operation?.uid === device.uid;
+                const isLastManager =
+                  device.active &&
+                  (
+                    device.role === "member" ||
+                    device.role === "control"
+                  ) &&
+                  managerDeviceCount <= 1;
 
                 return (
                   <article
                     key={device.uid}
                     className={`device-management-device-card${
-                      isCurrent
-                        ? " is-current"
-                        : ""
+                      isCurrent ? " is-current" : ""
                     }`}
                   >
                     <div className="device-management-device-topline">
                       <div className="device-management-device-badges">
                         <span
-                          className={`device-management-role device-management-role-${device.role}`}
+                          className={`device-management-role device-management-role-${
+                            device.role === "control"
+                              ? "member"
+                              : device.role
+                          }`}
                         >
-                          {getRoleLabel(
-                            device.role
-                          )}
+                          {getRoleLabel(device.role)}
                         </span>
 
                         <span className="device-management-device-type">
@@ -945,7 +715,6 @@ function DeviceManagementPage({
                             この端末
                           </span>
                         )}
-
                       </div>
 
                       <div className="device-management-device-actions">
@@ -955,9 +724,7 @@ function DeviceManagementPage({
                             className="device-management-rename"
                             disabled={isOperating}
                             onClick={() => {
-                              setEditingUid(
-                                device.uid
-                              );
+                              setEditingUid(device.uid);
                               setEditingName(
                                 device.deviceName
                               );
@@ -974,23 +741,15 @@ function DeviceManagementPage({
                             className="device-management-delete"
                             disabled={
                               isOperating ||
-                              (
-                                device.active &&
-                                device.role ===
-                                  "member" &&
-                                memberCount <= 1
-                              )
+                              isLastManager
                             }
                             onClick={() =>
-                              handleDelete(
-                                device
-                              )
+                              handleDelete(device)
                             }
                           >
                             {operation?.uid ===
                               device.uid &&
-                            operation.action ===
-                              "delete"
+                            operation.action === "delete"
                               ? "削除中…"
                               : "削除"}
                           </button>
@@ -998,8 +757,7 @@ function DeviceManagementPage({
                       </div>
                     </div>
 
-                    {editingUid ===
-                    device.uid ? (
+                    {editingUid === device.uid ? (
                       <form
                         className="device-management-rename-form"
                         onSubmit={(event) => {
@@ -1041,22 +799,18 @@ function DeviceManagementPage({
                         </button>
                       </form>
                     ) : (
-                      <h3>
-                        {device.deviceName}
-                      </h3>
+                      <h3>{device.deviceName}</h3>
                     )}
 
                     <p>
                       {device.displayName ||
                         "部員名未設定"}
                     </p>
-
                   </article>
                 );
               })}
             </div>
           </section>
-
         </div>
       </main>
 
@@ -1064,9 +818,7 @@ function DeviceManagementPage({
         <button
           type="button"
           className="device-management-back"
-          onClick={() =>
-            setPage("admin")
-          }
+          onClick={() => setPage("admin")}
         >
           <BackIcon />
           管理画面へ戻る
