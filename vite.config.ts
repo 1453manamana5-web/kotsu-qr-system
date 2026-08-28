@@ -304,11 +304,12 @@ export default defineConfig({
         ],
 
         /*
-          PDF生成・QRデザイン・バックアップは管理画面で
-          操作したときだけ使います。受付に不要なチャンクを
-          初回のPWA保存から外し、必要時に読み込みます。
+          受付本番で最初に使わない管理・分析・印刷系は
+          初回PWA保存から外します。必要な画面を開いた時だけ
+          通常のブラウザキャッシュへ入り、受付・QR読取の起動を優先します。
 
-          受付に必要なカメラとFirestoreは引き続き保存します。
+          カメラ、React、Firebase、入口・出口など
+          受付に必要なチャンクは引き続き事前保存します。
         */
         globIgnores: [
           "**/html2canvas-*.js",
@@ -319,6 +320,18 @@ export default defineConfig({
           "**/MemberCardDesigner-*.js",
           "**/backupRestore-*.js",
           "**/manualPrintSupport-*.js",
+          "**/AnalysisPage-*.{js,css}",
+          "**/PastDataPage-*.{js,css}",
+          "**/SettingsPage-*.{js,css}",
+          "**/AdminPage-*.{js,css}",
+          "**/AdminAuthPage-*.{js,css}",
+          "**/DeviceManagementPage-*.{js,css}",
+          "**/CreateEventPage-*.{js,css}",
+          "**/EventManagementPage-*.{js,css}",
+          "**/MembersPage-*.{js,css}",
+          "**/TicketsPage-*.{js,css}",
+          "**/ControlPage-*.{js,css}",
+          "**/FirebaseTestPage-*.js",
         ],
 
         cleanupOutdatedCaches:
