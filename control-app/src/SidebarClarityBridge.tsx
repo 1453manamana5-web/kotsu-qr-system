@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect } from "react";
 
 type NavKey =
   | "home"
@@ -12,6 +11,12 @@ type NavKey =
   | "settings"
   | "lab"
   | "copilot";
+
+type SectionKey =
+  | "daily"
+  | "check"
+  | "settings"
+  | "experimental";
 
 const NAV_ITEMS: ReadonlyArray<{
   key: NavKey;
@@ -30,47 +35,188 @@ const NAV_ITEMS: ReadonlyArray<{
   { key: "copilot", match: "AI管制", description: "試験中の管制アシスト" },
 ];
 
+const NAV_SECTIONS: ReadonlyArray<{
+  key: SectionKey;
+  title: string;
+  description: string;
+  items: readonly NavKey[];
+}> = [
+  {
+    key: "daily",
+    title: "メイン",
+    description: "日常の運用",
+    items: ["home", "overview", "operations"],
+  },
+  {
+    key: "check",
+    title: "確認",
+    description: "状況を調べる",
+    items: ["analysis", "devices", "incidents", "diagnostics"],
+  },
+  {
+    key: "settings",
+    title: "システム",
+    description: "設定・管理",
+    items: ["settings"],
+  },
+  {
+    key: "experimental",
+    title: "試験機能",
+    description: "高度な機能",
+    items: ["lab", "copilot"],
+  },
+];
+
 function decorateNavigation(nav: Element) {
-  const buttons = Array.from(nav.querySelectorAll<HTMLButtonElement>(":scope > button"));
+  const buttons = Array.from(
+    nav.querySelectorAll<HTMLButtonElement>(":scope > button")
+  );
+
   for (const button of buttons) {
-    const text = (button.textContent ?? "").replace(/\s+/g, "").trim();
-    const item = NAV_ITEMS.find((candidate) => text.includes(candidate.match));
+    const text = (button.textContent ?? "")
+      .replace(/\s+/g, "")
+      .trim();
+    const item = NAV_ITEMS.find((candidate) =>
+      text.includes(candidate.match)
+    );
+
     if (item === undefined) continue;
+
     button.dataset.navKey = item.key;
     button.title = `${item.match} — ${item.description}`;
-    button.setAttribute("aria-label", `${item.match}。${item.description}`);
+    button.setAttribute(
+      "aria-label",
+      `${item.match}。${item.description}`
+    );
+  }
+}
+
+function createSectionLabel(
+  section: (typeof NAV_SECTIONS)[number]
+) {
+  const label = document.createElement("span");
+  label.className =
+    `sidebar-section-label sidebar-section-label-${section.key}`;
+  label.dataset.sidebarSection = section.key;
+  label.setAttribute("aria-hidden", "true");
+
+  const title = document.createElement("strong");
+  title.textContent = section.title;
+
+  const description = document.createElement("small");
+  description.textContent = section.description;
+
+  label.append(title, description);
+  return label;
+}
+
+function getSectionLabel(
+  nav: Element,
+  section: (typeof NAV_SECTIONS)[number]
+) {
+  const existing = nav.querySelector<HTMLElement>(
+    `:scope > [data-sidebar-section="${section.key}"]`
+  );
+
+  if (existing !== null) return existing;
+
+  return createSectionLabel(section);
+}
+
+function sameNodeOrder(
+  first: readonly Element[],
+  second: readonly Element[]
+) {
+  return (
+    first.length === second.length &&
+    first.every((node, index) => node === second[index])
+  );
+}
+
+function arrangeNavigation(nav: Element) {
+  decorateNavigation(nav);
+
+  // 以前のPortal版見出しが残っていても二重表示しない。
+  for (const oldLabel of nav.querySelectorAll<HTMLElement>(
+    ":scope > .sidebar-section-label:not([data-sidebar-section])"
+  )) {
+    oldLabel.remove();
+  }
+
+  const buttons = new Map<NavKey, HTMLButtonElement>();
+  for (const button of nav.querySelectorAll<HTMLButtonElement>(
+    ":scope > button[data-nav-key]"
+  )) {
+    const key = button.dataset.navKey as NavKey | undefined;
+    if (key !== undefined) buttons.set(key, button);
+  }
+
+  const desired: Element[] = [];
+
+  for (const section of NAV_SECTIONS) {
+    const sectionButtons = section.items
+      .map((key) => buttons.get(key))
+      .filter(
+        (button): button is HTMLButtonElement =>
+          button !== undefined
+      );
+
+    // 遅延読込前でまだボタンがない欄は、空見出しを出さない。
+    if (sectionButtons.length === 0) continue;
+
+    desired.push(
+      getSectionLabel(nav, section),
+      ...sectionButtons
+    );
+  }
+
+  const knownNodes = Array.from(nav.children).filter((node) =>
+    node instanceof HTMLElement &&
+    (
+      node.dataset.navKey !== undefined ||
+      node.dataset.sidebarSection !== undefined
+    )
+  );
+
+  if (sameNodeOrder(knownNodes, desired)) return;
+
+  // CSSのorderだけに頼らず、DOM上でも
+  // 「見出し → その欄のボタン」の順に固定する。
+  for (const node of desired) {
+    nav.append(node);
   }
 }
 
 export default function SidebarClarityBridge() {
-  const [navTarget, setNavTarget] = useState<Element | null>(null);
-
   useEffect(() => {
+    let frame = 0;
+
     const update = () => {
-      const next = document.querySelector(".sidebar nav");
-      setNavTarget((current) => current === next ? current : next);
-      if (next !== null) decorateNavigation(next);
+      if (frame !== 0) return;
+
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const nav = document.querySelector(".sidebar nav");
+        if (nav !== null) arrangeNavigation(nav);
+      });
     };
 
-    const initial = window.setTimeout(update, 0);
+    update();
+
     const observer = new MutationObserver(update);
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
 
     return () => {
-      window.clearTimeout(initial);
       observer.disconnect();
+      if (frame !== 0) {
+        window.cancelAnimationFrame(frame);
+      }
     };
   }, []);
 
-  if (navTarget === null) return null;
-
-  return createPortal(
-    <>
-      <span className="sidebar-section-label sidebar-section-label-daily"><strong>メイン</strong><small>日常の運用</small></span>
-      <span className="sidebar-section-label sidebar-section-label-check"><strong>確認</strong><small>状況を調べる</small></span>
-      <span className="sidebar-section-label sidebar-section-label-settings"><strong>システム</strong><small>設定・管理</small></span>
-      <span className="sidebar-section-label sidebar-section-label-experimental"><strong>試験機能</strong><small>高度な機能</small></span>
-    </>,
-    navTarget
-  );
+  return null;
 }
