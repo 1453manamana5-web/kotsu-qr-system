@@ -1,0 +1,68 @@
+name: Apply admin white-screen fix
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: ${{ !contains(github.event.head_commit.message, 'Apply admin white-screen fix') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fix admin entry loading
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          app = Path('src/App.tsx')
+          text = app.read_text()
+
+          old = '''const AdminPage = lazy(() =>\n  import("./pages/AdminPage")\n);\n\nconst AdminAuthPage = lazy(() =>\n  import("./pages/AdminAuthPage")\n);'''
+          new = '''import AdminPage from "./pages/AdminPage";\nimport AdminAuthPage from "./pages/AdminAuthPage";'''
+          if old not in text:
+              raise SystemExit('Expected admin lazy imports were not found in App.tsx')
+          text = text.replace(old, new, 1)
+          app.write_text(text)
+
+          auth = Path('src/pages/AdminAuthPage.tsx')
+          text = auth.read_text()
+
+          old = '''import {\n  lazy,\n  Suspense,\n  useCallback,\n  useEffect,\n  useState,\n} from "react";'''
+          new = '''import {\n  useCallback,\n  useEffect,\n  useState,\n} from "react";'''
+          if old not in text:
+              raise SystemExit('Expected React lazy/Suspense import was not found in AdminAuthPage.tsx')
+          text = text.replace(old, new, 1)
+
+          old = '''const CameraQrScanner = lazy(() =>\n  import("./CameraQrScanner")\n);'''
+          new = '''import CameraQrScanner from "./CameraQrScanner";'''
+          if old not in text:
+              raise SystemExit('Expected lazy CameraQrScanner declaration was not found')
+          text = text.replace(old, new, 1)
+
+          text = text.replace('''        {authState ===\n          "waiting" &&\n          !soundReady && (''', '''        {eventName.trim() === "" &&\n          authState === "waiting" && (\n          <section className="admin-auth-result-panel admin-auth-processing-result">\n            <div className="admin-auth-result-icon">\n              <AdminAuthModeIcon />\n            </div>\n\n            <span className="admin-auth-result-eyebrow">\n              EVENT NOT SET\n            </span>\n\n            <h2>\n              イベントが設定されていません\n            </h2>\n\n            <p className="admin-auth-result-primary">\n              先にイベントを作成してください\n            </p>\n\n            <p className="admin-auth-result-secondary">\n              イベント設定後、もう一度管理モードを開いてください\n            </p>\n          </section>\n        )}\n\n        {eventName.trim() !== "" &&\n          authState ===\n          "waiting" &&\n          !soundReady && (''', 1)
+
+          text = text.replace('''        {authState ===\n          "waiting" &&\n          soundReady && (''', '''        {eventName.trim() !== "" &&\n          authState ===\n          "waiting" &&\n          soundReady && (''', 1)
+
+          text = re.sub(r'''\n\s*<Suspense\n\s*fallback=\{\n\s*<div className="app-scanner-loading">.*?</div>\n\s*\}\n\s*>\n\s*<CameraQrScanner''', '\n                <CameraQrScanner', text, count=1, flags=re.S)
+          text = re.sub(r'''\n\s*</CameraQrScanner>\n\s*</Suspense>''', '\n                />', text, count=1, flags=re.S)
+
+          auth.write_text(text)
+          PY
+
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.tsx src/pages/AdminAuthPage.tsx .github/workflows/fix-admin-white-screen.yml
+          git commit -m "Apply admin white-screen fix" || exit 0
+          git push
