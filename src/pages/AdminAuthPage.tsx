@@ -705,7 +705,6 @@ function AdminAuthPage({
                       );
                     }}
                   />
-                </Suspense>
               </div>
             </div>
 
