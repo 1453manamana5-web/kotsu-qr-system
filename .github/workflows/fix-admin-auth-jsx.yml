@@ -1,0 +1,40 @@
+name: Fix admin auth JSX
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: ${{ !contains(github.event.head_commit.message, 'Fix admin auth JSX') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Remove stale Suspense closing tag
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('src/pages/AdminAuthPage.tsx')
+          text = path.read_text()
+          old = '''                  />\n                </Suspense>'''
+          new = '''                  />'''
+          if old not in text:
+              raise SystemExit('Expected stale Suspense closing tag was not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
+
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/AdminAuthPage.tsx
+          git commit -m "Fix admin auth JSX"
+          git push
