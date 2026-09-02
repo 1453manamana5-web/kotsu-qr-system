@@ -229,17 +229,17 @@ function AppRoot() {
     );
 
   return (
-    <AppSplashScreen
-      canFinish={
-        canFinishSplash
-      }
-    >
-      <DeviceAuthGate
-        onScreenStateChange={
-          setAuthState
+    <ChunkErrorBoundary>
+      <AppSplashScreen
+        canFinish={
+          canFinishSplash
         }
       >
-        <ChunkErrorBoundary>
+        <DeviceAuthGate
+          onScreenStateChange={
+            setAuthState
+          }
+        >
           <Suspense
             fallback={
               pageLoadingFallback
@@ -260,9 +260,9 @@ function AppRoot() {
               </>
             </DeviceAccessGate>
           </Suspense>
-        </ChunkErrorBoundary>
-      </DeviceAuthGate>
-    </AppSplashScreen>
+        </DeviceAuthGate>
+      </AppSplashScreen>
+    </ChunkErrorBoundary>
   );
 }
 
