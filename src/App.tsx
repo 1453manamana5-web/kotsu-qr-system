@@ -24,13 +24,8 @@ const ExitPage = lazy(
   loadExitPage
 );
 
-const AdminPage = lazy(() =>
-  import("./pages/AdminPage")
-);
-
-const AdminAuthPage = lazy(() =>
-  import("./pages/AdminAuthPage")
-);
+import AdminPage from "./pages/AdminPage";
+import AdminAuthPage from "./pages/AdminAuthPage";
 
 const EventManagementPage = lazy(() =>
   import("./pages/EventManagementPage")

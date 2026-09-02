@@ -1,6 +1,4 @@
 import {
-  lazy,
-  Suspense,
   useCallback,
   useEffect,
   useState,
@@ -8,9 +6,7 @@ import {
 
 import OnlineStatus from "./OnlineStatus";
 
-const CameraQrScanner = lazy(() =>
-  import("./CameraQrScanner")
-);
+import CameraQrScanner from "./CameraQrScanner";
 
 import {
   findMemberByQrInFirestore,
@@ -576,7 +572,33 @@ function AdminAuthPage({
           "processing"
         }
       >
-        {authState ===
+        {eventName.trim() === "" &&
+          authState === "waiting" && (
+          <section className="admin-auth-result-panel admin-auth-processing-result">
+            <div className="admin-auth-result-icon">
+              <AdminAuthModeIcon />
+            </div>
+
+            <span className="admin-auth-result-eyebrow">
+              EVENT NOT SET
+            </span>
+
+            <h2>
+              イベントが設定されていません
+            </h2>
+
+            <p className="admin-auth-result-primary">
+              先にイベントを作成してください
+            </p>
+
+            <p className="admin-auth-result-secondary">
+              イベント設定後、もう一度管理モードを開いてください
+            </p>
+          </section>
+        )}
+
+        {eventName.trim() !== "" &&
+          authState ===
           "waiting" &&
           !soundReady && (
           <section className="admin-auth-sound-start-panel">
@@ -636,7 +658,8 @@ function AdminAuthPage({
           </section>
         )}
 
-        {authState ===
+        {eventName.trim() !== "" &&
+          authState ===
           "waiting" &&
           soundReady && (
           <section className="admin-auth-waiting-panel">
@@ -669,21 +692,7 @@ function AdminAuthPage({
               </div>
 
               <div className="admin-auth-scanner-wrapper">
-                <Suspense
-                  fallback={
-                    <div className="app-scanner-loading">
-                      <span
-                        className="app-route-loading-spinner"
-                        aria-hidden="true"
-                      />
-
-                      <strong>
-                        カメラを準備しています
-                      </strong>
-                    </div>
-                  }
-                >
-                  <CameraQrScanner
+                <CameraQrScanner
                     key={
                       scannerSession
                     }
