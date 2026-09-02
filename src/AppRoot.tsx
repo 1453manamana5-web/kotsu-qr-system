@@ -3,7 +3,6 @@ import {
   lazy,
   Suspense,
   useState,
-  type ErrorInfo,
   type ReactNode,
 } from "react";
 
@@ -66,10 +65,7 @@ class ChunkErrorBoundary extends Component<
     errorMessage: "",
   };
 
-  componentDidCatch(
-    error: unknown,
-    _errorInfo: ErrorInfo
-  ) {
+  componentDidCatch(error: unknown) {
     const message =
       error instanceof Error
         ? error.message
