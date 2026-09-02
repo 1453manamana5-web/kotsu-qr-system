@@ -89,7 +89,6 @@ function speedTestAssetPlugin(): Plugin {
       serveSpeedTestAsset,
 
     generateBundle() {
-
       this.emitFile({
         type:
           "asset",
@@ -310,6 +309,10 @@ export default defineConfig({
 
           カメラ、React、Firebase、入口・出口など
           受付に必要なチャンクは引き続き事前保存します。
+
+          管理モードの入口となる認証画面と管理トップは、
+          学校ネットワークが不安定でも白画面にならないよう
+          PWAの初回キャッシュへ含めます。
         */
         globIgnores: [
           "**/html2canvas-*.js",
@@ -323,8 +326,6 @@ export default defineConfig({
           "**/AnalysisPage-*.{js,css}",
           "**/PastDataPage-*.{js,css}",
           "**/SettingsPage-*.{js,css}",
-          "**/AdminPage-*.{js,css}",
-          "**/AdminAuthPage-*.{js,css}",
           "**/DeviceManagementPage-*.{js,css}",
           "**/CreateEventPage-*.{js,css}",
           "**/EventManagementPage-*.{js,css}",
