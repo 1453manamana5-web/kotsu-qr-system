@@ -1789,23 +1789,19 @@ export default function App({ database, onReturn }: AppProps) {
 
   if (view === "analysis") {
     return (
-      <Suspense fallback={<AnalysisLoading label="分析画面を読み込んでいます" />}>
-        <AnalysisPage
-          setPage={handleAnalysisNavigation}
-          eventData={currentEvent}
-        />
-      </Suspense>
+      <AnalysisPage
+        setPage={handleAnalysisNavigation}
+        eventData={currentEvent}
+      />
     );
   }
 
   if (view === "past-data") {
     return (
-      <Suspense fallback={<AnalysisLoading label="過去データを読み込んでいます" />}>
-        <PastDataPage
-          setPage={handleAnalysisNavigation}
-          events={events}
-        />
-      </Suspense>
+      <PastDataPage
+        setPage={handleAnalysisNavigation}
+        events={events}
+      />
     );
   }
 
