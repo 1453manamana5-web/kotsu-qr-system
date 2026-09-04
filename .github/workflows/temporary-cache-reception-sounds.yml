@@ -1,0 +1,307 @@
+name: One-time reception sound cache migration
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch reception sound storage
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("src/receptionSound.ts")
+          text = path.read_text(encoding="utf-8")
+
+          old_paths = '''const QR_DETECTED_SOUND_PATH =
+  `${import.meta.env.BASE_URL}sounds/qr_scan_detected.wav?v=20260816-v1`;
+
+const RECORDED_SUCCESS_SOUND_PATH =
+  `${import.meta.env.BASE_URL}sounds/qr_result_chime.wav?v=20260816-v1`;
+
+const RECORDED_ERROR_SOUND_PATH =
+  `${import.meta.env.BASE_URL}sounds/qr_gate_error_chime_v1.wav?v=20260816-v1`;'''
+
+          new_paths = '''const QR_DETECTED_SOUND_PATH =
+  `${import.meta.env.BASE_URL}sounds/qr_scan_detected.wav?v=20260904-v2`;
+
+const RECORDED_SUCCESS_SOUND_PATH =
+  `${import.meta.env.BASE_URL}sounds/qr_result_chime.wav?v=20260904-v2`;
+
+const RECORDED_ERROR_SOUND_PATH =
+  `${import.meta.env.BASE_URL}sounds/qr_gate_error_chime_v1.wav?v=20260904-v2`;
+
+const RECEPTION_SOUND_CACHE_NAME =
+  "qr-reception-sounds-v2";
+
+const RECEPTION_SOUND_PATHS = [
+  QR_DETECTED_SOUND_PATH,
+  RECORDED_SUCCESS_SOUND_PATH,
+  RECORDED_ERROR_SOUND_PATH,
+] as const;
+
+const receptionSoundObjectUrls =
+  new Map<string, string>();
+
+let receptionSoundPreloadPromise:
+  Promise<void> | null = null;
+
+async function preloadReceptionSoundsInternal() {
+  if (
+    typeof window === "undefined" ||
+    !("caches" in window)
+  ) {
+    return;
+  }
+
+  const cache = await window.caches.open(
+    RECEPTION_SOUND_CACHE_NAME
+  );
+
+  await Promise.all(
+    RECEPTION_SOUND_PATHS.map(
+      async (soundPath) => {
+        try {
+          let response =
+            await cache.match(soundPath);
+
+          if (!response || !response.ok) {
+            response = await fetch(soundPath, {
+              cache: "no-store",
+            });
+
+            if (!response.ok) {
+              throw new Error(
+                `音声ファイルの取得に失敗しました: ${response.status}`
+              );
+            }
+
+            await cache.put(
+              soundPath,
+              response.clone()
+            );
+          }
+
+          const blob = await response.blob();
+          const objectUrl = URL.createObjectURL(blob);
+
+          const previousObjectUrl =
+            receptionSoundObjectUrls.get(soundPath);
+
+          if (previousObjectUrl) {
+            URL.revokeObjectURL(previousObjectUrl);
+          }
+
+          receptionSoundObjectUrls.set(
+            soundPath,
+            objectUrl
+          );
+        } catch (error) {
+          console.warn(
+            "受付音声の端末保存に失敗しました。通常の音声読み込みへフォールバックします。",
+            soundPath,
+            error
+          );
+        }
+      }
+    )
+  );
+}
+
+function preloadReceptionSounds() {
+  if (receptionSoundPreloadPromise === null) {
+    receptionSoundPreloadPromise =
+      preloadReceptionSoundsInternal().catch(
+        (error) => {
+          console.warn(
+            "受付音声の先読みを開始できませんでした。",
+            error
+          );
+        }
+      );
+  }
+
+  return receptionSoundPreloadPromise;
+}'''
+
+          if old_paths not in text:
+              raise SystemExit("expected sound path block was not found")
+
+          text = text.replace(old_paths, new_paths, 1)
+
+          old_create = '''function createRecordedAudio(
+  soundPath: string
+): HTMLAudioElement {
+  const audio =
+    new Audio(
+      soundPath
+    );
+
+  audio.preload =
+    "auto";
+
+  audio.volume =
+    1;
+
+  audio.load();
+
+  return audio;
+}'''
+
+          new_create = '''function createRecordedAudio(
+  soundPath: string
+): HTMLAudioElement {
+  const cachedObjectUrl =
+    receptionSoundObjectUrls.get(
+      soundPath
+    );
+
+  const audio =
+    new Audio(
+      cachedObjectUrl ?? soundPath
+    );
+
+  audio.preload =
+    "auto";
+
+  audio.volume =
+    1;
+
+  audio.load();
+
+  return audio;
+}'''
+
+          if old_create not in text:
+              raise SystemExit("expected createRecordedAudio function was not found")
+
+          text = text.replace(old_create, new_create, 1)
+
+          old_unlock = '''export async function unlockReceptionSound():
+  Promise<boolean> {
+  /*
+    ユーザー操作中に両方の再生開始を要求して、
+    iPad・Safariの自動再生制限を解除します。
+  */
+  const recordedSoundPromise ='''
+
+          new_unlock = '''export async function unlockReceptionSound():
+  Promise<boolean> {
+  /*
+    ユーザー操作中に両方の再生開始を要求して、
+    iPad・Safariの自動再生制限を解除します。
+  */
+  await preloadReceptionSounds();
+
+  const recordedSoundPromise ='''
+
+          if old_unlock not in text:
+              raise SystemExit("expected unlock function header was not found")
+
+          text = text.replace(old_unlock, new_unlock, 1)
+
+          old_play = '''async function playRecordedSound(
+  audio:
+    HTMLAudioElement |
+    null
+):
+  Promise<boolean> {
+  if (
+    audio ===
+    null
+  ) {
+    return false;
+  }
+
+  try {'''
+
+          new_play = '''async function playRecordedSound(
+  audio:
+    HTMLAudioElement |
+    null
+):
+  Promise<boolean> {
+  if (
+    audio ===
+    null
+  ) {
+    return false;
+  }
+
+  await preloadReceptionSounds();
+
+  try {'''
+
+          if old_play not in text:
+              raise SystemExit("expected playRecordedSound function was not found")
+
+          text = text.replace(old_play, new_play, 1)
+
+          close_marker = '''export function stopReceptionSounds() {
+  stopActiveSounds();'''
+
+          preload_call = '''void preloadReceptionSounds();
+
+export function stopReceptionSounds() {
+  stopActiveSounds();'''
+
+          if close_marker not in text:
+              raise SystemExit("expected stopReceptionSounds marker was not found")
+
+          text = text.replace(close_marker, preload_call, 1)
+
+          old_close_tail = '''  const context =
+    audioContext;
+
+  audioContext =
+    null;'''
+
+          new_close_tail = '''  receptionSoundObjectUrls.forEach(
+    (objectUrl) => {
+      URL.revokeObjectURL(
+        objectUrl
+      );
+    }
+  );
+
+  receptionSoundObjectUrls.clear();
+
+  const context =
+    audioContext;
+
+  audioContext =
+    null;'''
+
+          if old_close_tail not in text:
+              raise SystemExit("expected closeReceptionAudio tail was not found")
+
+          text = text.replace(old_close_tail, new_close_tail, 1)
+
+          path.write_text(text, encoding="utf-8")
+
+      - name: Verify source build
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+
+      - name: Commit migration and remove one-time workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/temporary-cache-reception-sounds.yml
+          git add src/receptionSound.ts .github/workflows/temporary-cache-reception-sounds.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "Cache reception sounds on device"
+          git push
