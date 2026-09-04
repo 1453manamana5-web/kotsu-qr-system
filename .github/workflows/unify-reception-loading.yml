@@ -1,0 +1,52 @@
+name: One-time reception loading migration
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Convert reception pages to eager imports
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("src/App.tsx")
+          text = path.read_text(encoding="utf-8")
+
+          old = '''import HomePage from "./pages/HomePage";\n\nconst loadEntryPage = () =>\n  import("./pages/EntryPage");\n\nconst loadExitPage = () =>\n  import("./pages/ExitPage");\n\nconst EntryPage = lazy(\n  loadEntryPage\n);\n\nconst ExitPage = lazy(\n  loadExitPage\n);'''
+
+          new = '''import HomePage from "./pages/HomePage";\nimport EntryPage from "./pages/EntryPage";\nimport ExitPage from "./pages/ExitPage";'''
+
+          if old not in text:
+              raise SystemExit("expected import block was not found")
+
+          text = text.replace(old, new, 1)
+
+          preload = '''  useEffect(() => {\n    const preloadTimer =\n      window.setTimeout(\n        () => {\n          void Promise.all([\n            loadEntryPage(),\n            loadExitPage(),\n          ]);\n        },\n        1200\n      );\n\n    return () => {\n      window.clearTimeout(\n        preloadTimer\n      );\n    };\n  }, []);\n\n'''
+
+          if preload not in text:
+              raise SystemExit("expected preload effect was not found")
+
+          text = text.replace(preload, "", 1)
+          path.write_text(text, encoding="utf-8")
+
+      - name: Commit migrated App.tsx and remove one-time workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/unify-reception-loading.yml
+          git add src/App.tsx .github/workflows/unify-reception-loading.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "Unify reception page loading"
+          git push
