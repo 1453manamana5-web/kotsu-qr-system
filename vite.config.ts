@@ -325,13 +325,6 @@ export default defineConfig({
           "**/manualPrintSupport-*.js",
           "**/AnalysisPage-*.{js,css}",
           "**/PastDataPage-*.{js,css}",
-          "**/SettingsPage-*.{js,css}",
-          "**/DeviceManagementPage-*.{js,css}",
-          "**/CreateEventPage-*.{js,css}",
-          "**/EventManagementPage-*.{js,css}",
-          "**/MembersPage-*.{js,css}",
-          "**/TicketsPage-*.{js,css}",
-          "**/ControlPage-*.{js,css}",
           "**/FirebaseTestPage-*.js",
         ],
 
