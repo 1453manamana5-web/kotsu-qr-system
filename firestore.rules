@@ -1,5 +1,4 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() {
@@ -10,24 +9,18 @@ service cloud.firestore {
       return request.auth.uid;
     }
 
-    function devicePath(uid) {
-      return /databases/$(database)/documents/system/device-access/devices/$(uid);
-    }
-
     function configPath() {
       return /databases/$(database)/documents/system/device-access;
     }
 
-    function currentDeviceExists() {
-      return signedIn() && exists(devicePath(currentUid()));
-    }
-
     function currentDevice() {
-      return get(devicePath(currentUid())).data;
+      return get(/databases/$(database)/documents/system/device-access/devices/$(currentUid())).data;
     }
 
     function activeDevice() {
-      return currentDeviceExists() && currentDevice().active == true;
+      return signedIn()
+        && exists(/databases/$(database)/documents/system/device-access/devices/$(currentUid()))
+        && currentDevice().active == true;
     }
 
     function memberDevice() {
@@ -35,120 +28,68 @@ service cloud.firestore {
         && (currentDevice().role == 'member' || currentDevice().role == 'control');
     }
 
-    function receptionDevice() {
-      return activeDevice() && currentDevice().role == 'reception';
-    }
-
-    function shortText(value) {
-      return value is string && value.size() > 0 && value.size() <= 60;
-    }
-
     function validRole(value) {
       return value == 'member'
         || value == 'reception'
-        // v2.8.0初期版で承認済みの管制端末を壊さないための互換値です。
         || value == 'control';
+    }
+
+    function shortText(value) {
+      return value is string
+        && value.size() > 0
+        && value.size() <= 120;
+    }
+
+    function validDevice(data) {
+      return data.keys().hasOnly([
+          'role', 'displayName', 'deviceName', 'deviceType', 'active',
+          'createdAt', 'approvedAt', 'approvedByUid', 'approvedByName'
+        ])
+        && data.keys().hasAll([
+          'role', 'displayName', 'deviceName', 'deviceType', 'active',
+          'createdAt', 'approvedAt', 'approvedByUid', 'approvedByName'
+        ])
+        && validRole(data.role)
+        && shortText(data.displayName)
+        && shortText(data.deviceName)
+        && data.deviceType is string
+        && data.active is bool
+        && data.createdAt is timestamp
+        && data.approvedAt is timestamp
+        && data.approvedByUid is string
+        && data.approvedByName is string;
     }
 
     function validRequestType(value) {
       return value == 'initial' || value == 'upgrade';
     }
 
-    function validDeviceType(value) {
-      return value in [
-        'ipad', 'iphone', 'android', 'windows', 'mac', 'other', 'unknown'
-      ];
+    function validRequestStatus(value) {
+      return value == 'pending' || value == 'approved' || value == 'rejected';
     }
 
-    function validDevice(data) {
-      return data.keys().hasAll([
-          'role', 'displayName', 'deviceName', 'active', 'createdAt',
-          'approvedAt', 'approvedByUid', 'approvedByName'
-        ])
-        && data.keys().hasOnly([
-          'role', 'displayName', 'deviceName', 'deviceType', 'active', 'createdAt',
-          'approvedAt', 'approvedByUid', 'approvedByName', 'disabledAt',
-          'disabledByUid', 'disabledByName'
-        ])
-        && validRole(data.role)
-        && shortText(data.displayName)
-        && shortText(data.deviceName)
-        && (!('deviceType' in data) || validDeviceType(data.deviceType))
-        && data.active is bool
-        && data.createdAt is timestamp
-        && data.approvedAt is timestamp
-        && data.approvedByUid is string
-        && data.approvedByName is string
-        && (!('disabledAt' in data) || data.disabledAt is timestamp)
-        && (!('disabledByUid' in data) || data.disabledByUid is string)
-        && (!('disabledByName' in data) || data.disabledByName is string);
-    }
-
-    function validPendingRequest(data, uid) {
-      return signedIn()
-        && uid == currentUid()
-        && data.keys().hasOnly([
+    function validRequest(data) {
+      return data.keys().hasOnly([
           'requestType', 'requestedRole', 'displayName', 'deviceName', 'deviceType',
-          'status', 'requestedAt', 'decidedAt', 'decidedByUid',
-          'decidedByName', 'pairingCode', 'pairingExpiresAt'
+          'status', 'requestedAt', 'decidedAt', 'decidedByUid', 'decidedByName',
+          'pairingCode', 'pairingExpiresAt'
         ])
         && data.keys().hasAll([
           'requestType', 'requestedRole', 'displayName', 'deviceName', 'deviceType',
-          'status', 'requestedAt', 'decidedAt', 'decidedByUid',
-          'decidedByName'
+          'status', 'requestedAt', 'decidedAt', 'decidedByUid', 'decidedByName'
         ])
         && validRequestType(data.requestType)
         && validRole(data.requestedRole)
-        && data.requestedRole != 'control'
         && shortText(data.displayName)
         && shortText(data.deviceName)
-        && validDeviceType(data.deviceType)
+        && data.deviceType is string
         && data.status == 'pending'
         && data.requestedAt == request.time
         && data.decidedAt == null
         && data.decidedByUid == ''
         && data.decidedByName == ''
-        && (
-          (
-            !('pairingCode' in data)
-            && !('pairingExpiresAt' in data)
-          )
-          ||
-          (
-            data.pairingCode is string
-            && data.pairingCode.matches('^[A-HJ-NP-Z2-9]{8}$')
-            && data.pairingExpiresAt is timestamp
-            && data.pairingExpiresAt > request.time
-            && data.pairingExpiresAt <= request.time + duration.value(15, 'm')
-            && data.requestType == 'initial'
-            && data.requestedRole == 'member'
-          )
-        )
-        && (
-          (
-            data.requestType == 'initial'
-            && (!currentDeviceExists() || currentDevice().active != true)
-          )
-          ||
-          (
-            data.requestType == 'upgrade'
-            && receptionDevice()
-            && data.requestedRole == 'member'
-          )
-        );
-    }
-
-    function validDecision(data) {
-      return resource.data.status == 'pending'
-        && (!('pairingExpiresAt' in resource.data)
-          || resource.data.pairingExpiresAt > request.time)
-        && data.diff(resource.data).affectedKeys().hasOnly([
-          'status', 'decidedAt', 'decidedByUid', 'decidedByName'
-        ])
-        && (data.status == 'approved' || data.status == 'rejected')
-        && data.decidedAt == request.time
-        && data.decidedByUid == currentUid()
-        && data.decidedByName == currentDevice().displayName;
+        && (!('pairingCode' in data) || data.pairingCode is string)
+        && (!('pairingExpiresAt' in data) || data.pairingExpiresAt is timestamp);
     }
 
     function validAudit(data) {
@@ -262,47 +203,23 @@ service cloud.firestore {
         && request.resource.data.deviceId == deviceId
         && request.resource.data.registeredDeviceId == currentUid()
         && request.resource.data.deviceName == currentDevice().deviceName
-        && (
-          !('deviceType' in currentDevice())
-          || request.resource.data.deviceType == currentDevice().deviceType
-        )
+        && (!('deviceType' in currentDevice()) || request.resource.data.deviceType == currentDevice().deviceType)
         && request.resource.data.role == currentDevice().role
         && request.resource.data.mode in ['entry', 'exit']
         && request.resource.data.appVersion is string
         && request.resource.data.appVersion.size() > 0
         && request.resource.data.appVersion.size() <= 20
-        && (request.resource.data.lastSeenAt is int
-          || request.resource.data.lastSeenAt is float)
+        && (request.resource.data.lastSeenAt is int || request.resource.data.lastSeenAt is float)
         && request.resource.data.lastSuccessfulSyncAt == request.time
         && request.resource.data.pendingCount is int
         && request.resource.data.pendingCount >= 0
         && request.resource.data.cameraState in ['starting', 'ready', 'error']
-        && (!('receptionPaused' in request.resource.data)
-          || request.resource.data.receptionPaused is bool)
-        && (!('firebaseLatencyMs' in request.resource.data)
-          || (
-            request.resource.data.firebaseLatencyMs is int
-            && request.resource.data.firebaseLatencyMs >= 0
-            && request.resource.data.firebaseLatencyMs <= 120000
-          ))
-        && (!('downloadMbps' in request.resource.data)
-          || (
-            (request.resource.data.downloadMbps is int
-              || request.resource.data.downloadMbps is float)
-            && request.resource.data.downloadMbps >= 0
-            && request.resource.data.downloadMbps <= 10000
-          ))
-        && (!('networkMeasuredAt' in request.resource.data)
-          || (
-            request.resource.data.networkMeasuredAt is string
-            && request.resource.data.networkMeasuredAt.size() <= 60
-          ))
+        && (!('receptionPaused' in request.resource.data) || request.resource.data.receptionPaused is bool)
+        && (!('firebaseLatencyMs' in request.resource.data) || (request.resource.data.firebaseLatencyMs is int && request.resource.data.firebaseLatencyMs >= 0 && request.resource.data.firebaseLatencyMs <= 120000))
+        && (!('downloadMbps' in request.resource.data) || (((request.resource.data.downloadMbps is int || request.resource.data.downloadMbps is float) && request.resource.data.downloadMbps >= 0 && request.resource.data.downloadMbps <= 10000)))
+        && (!('networkMeasuredAt' in request.resource.data) || (request.resource.data.networkMeasuredAt is string && request.resource.data.networkMeasuredAt.size() <= 60))
         && request.resource.data.screen in ['entry-reception', 'exit-reception']
-        && (!('viewState' in request.resource.data)
-          || request.resource.data.viewState in [
-            'waiting', 'processing', 'success-animation',
-            'ticket-success', 'member-success', 'error'
-          ])
+        && (!('viewState' in request.resource.data) || request.resource.data.viewState in ['waiting', 'processing', 'success-animation', 'ticket-success', 'member-success', 'error'])
         && request.resource.data.sessionStartedAt is string
         && request.resource.data.sessionStartedAt.size() <= 60
         && request.resource.data.lastScanAt is string
@@ -311,10 +228,7 @@ service cloud.firestore {
     }
 
     function validRemoteCommandType(value) {
-      return value in [
-        'pause-reception', 'resume-reception', 'restart-camera',
-        'sync-pending', 'play-sound', 'reload-app'
-      ];
+      return value in ['pause-reception', 'resume-reception', 'restart-camera', 'sync-pending', 'play-sound', 'reload-app'];
     }
 
     function validRemoteCommandCreate(data) {
@@ -358,29 +272,9 @@ service cloud.firestore {
         && data.updatedAt == request.time
         && data.errorMessage is string
         && data.errorMessage.size() <= 160
-        && (
-          (
-            resource.data.status == 'pending'
-            && data.status == 'received'
-            && data.receivedAt == request.time
-            && data.completedAt == null
-            && data.errorMessage == ''
-          )
-          ||
-          (
-            resource.data.status == 'pending'
-            && data.status == 'failed'
-            && data.receivedAt == null
-            && data.completedAt == request.time
-          )
-          ||
-          (
-            resource.data.status == 'received'
-            && data.status in ['completed', 'failed']
-            && data.receivedAt == resource.data.receivedAt
-            && data.completedAt == request.time
-          )
-        );
+        && ((resource.data.status == 'pending' && data.status == 'received' && data.receivedAt == request.time && data.completedAt == null && data.errorMessage == '')
+          || (resource.data.status == 'pending' && data.status == 'failed' && data.receivedAt == null && data.completedAt == request.time)
+          || (resource.data.status == 'received' && data.status in ['completed', 'failed'] && data.receivedAt == resource.data.receivedAt && data.completedAt == request.time));
     }
 
     match /authorized-users/{document=**} {
@@ -390,24 +284,31 @@ service cloud.firestore {
     match /system/device-access {
       allow read: if signedIn();
 
-      // 新規環境で最初の部員端末を登録するときだけ作成できます。
       allow create: if signedIn()
-        && request.resource.data.keys().hasOnly([
-          'initialized', 'memberDeviceCount', 'createdAt', 'updatedAt'
-        ])
+        && request.resource.data.keys().hasOnly(['initialized', 'memberDeviceCount', 'createdAt', 'updatedAt'])
         && request.resource.data.initialized == true
         && request.resource.data.memberDeviceCount == 1
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time;
 
-      allow update: if memberDevice()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'memberDeviceCount', 'updatedAt'
-        ])
-        && request.resource.data.initialized == true
-        && request.resource.data.memberDeviceCount is int
-        && request.resource.data.memberDeviceCount >= 1
-        && request.resource.data.updatedAt == request.time;
+      allow update: if (
+          memberDevice()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberDeviceCount', 'updatedAt'])
+          && request.resource.data.initialized == true
+          && request.resource.data.memberDeviceCount is int
+          && request.resource.data.memberDeviceCount >= 1
+          && request.resource.data.updatedAt == request.time
+        )
+        || (
+          signedIn()
+          && resource.data.initialized == false
+          && resource.data.memberDeviceCount == 0
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['initialized', 'memberDeviceCount', 'createdAt', 'updatedAt'])
+          && request.resource.data.initialized == true
+          && request.resource.data.memberDeviceCount == 1
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time
+        );
 
       allow delete: if false;
 
@@ -415,163 +316,79 @@ service cloud.firestore {
         allow read: if memberDevice() || (signedIn() && deviceId == currentUid());
 
         allow create: if validDevice(request.resource.data)
-          && (
-            memberDevice()
-            || (
-              signedIn()
+          && (memberDevice()
+            || (signedIn()
               && deviceId == currentUid()
               && request.resource.data.role == 'member'
               && request.resource.data.active == true
-              && !exists(configPath())
               && getAfter(configPath()).data.initialized == true
-              && getAfter(configPath()).data.memberDeviceCount == 1
-            )
-          );
+              && getAfter(configPath()).data.memberDeviceCount == 1));
 
-        allow update: if validDevice(request.resource.data)
-          && (
-            (
-              activeDevice()
-              && deviceId == currentUid()
-              && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-                'deviceType'
-              ])
-              && validDeviceType(request.resource.data.deviceType)
-            )
-            ||
-            (
-              memberDevice()
-              &&
-              deviceId == currentUid()
-              &&
-              request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-                'deviceName'
-              ])
-              && shortText(request.resource.data.deviceName)
-            )
-            || (
-              memberDevice()
-              &&
-              deviceId != currentUid()
-              && request.resource.data.active == true
-            )
-          );
-
-        allow delete: if memberDevice()
-          && deviceId != currentUid()
-          && (
-            resource.data.role != 'member'
-            || resource.data.active != true
-            || (
-              getAfter(configPath()).data.memberDeviceCount
-                == get(configPath()).data.memberDeviceCount - 1
-              && getAfter(configPath()).data.memberDeviceCount >= 1
-            )
-          );
+        allow update: if memberDevice() && validDevice(request.resource.data);
+        allow delete: if memberDevice() && deviceId != currentUid();
       }
 
-      match /requests/{requestUid} {
-        allow read: if memberDevice() || (signedIn() && requestUid == currentUid());
-        allow create: if validPendingRequest(request.resource.data, requestUid);
-        allow update: if validPendingRequest(request.resource.data, requestUid)
-          || (memberDevice() && requestUid != currentUid() && validDecision(request.resource.data));
-        allow delete: if false;
+      match /requests/{requestId} {
+        allow read: if memberDevice() || (signedIn() && requestId == currentUid());
+        allow create: if signedIn() && requestId == currentUid() && validRequest(request.resource.data);
+        allow update: if memberDevice();
+        allow delete: if memberDevice() || (signedIn() && requestId == currentUid());
       }
 
       match /audit/{auditId} {
         allow read: if memberDevice();
-        allow create: if validAudit(request.resource.data)
-          && (
-            memberDevice()
-            || (
-              signedIn()
-              && request.resource.data.action == 'request-created'
-              && request.resource.data.actorUid == currentUid()
-              && request.resource.data.targetUid == currentUid()
-            )
-            || (
-              signedIn()
-              && request.resource.data.action == 'bootstrap-member'
-              && request.resource.data.actorUid == currentUid()
-              && request.resource.data.targetUid == currentUid()
-              && !exists(configPath())
-              && getAfter(configPath()).data.initialized == true
-            )
-          );
+        allow create: if signedIn() && validAudit(request.resource.data);
         allow update, delete: if false;
       }
     }
 
-    match /system/{systemDocument} {
-      allow read: if memberDevice()
-        || (activeDevice() && systemDocument == 'current-event');
-      allow create, update, delete: if memberDevice()
-        && systemDocument != 'device-access';
-    }
-
-    match /events/{eventId} {
-      allow read: if activeDevice();
-      allow create, update, delete: if memberDevice();
-    }
-
-    match /member-cards/{memberId} {
-      allow read: if memberDevice() || receptionDevice();
-      allow create, update, delete: if memberDevice();
+    match /system/{document=**} {
+      allow read, write: if false;
     }
 
     match /event-data/{eventId} {
-      allow read, create, update, delete: if memberDevice();
+      allow read: if memberDevice();
+      allow create, update: if memberDevice();
+      allow delete: if memberDevice();
 
       match /tickets/{ticketId} {
-        allow read: if memberDevice() || receptionDevice();
-        allow create, delete: if memberDevice();
-        allow update: if memberDevice()
-          || (receptionDevice() && validReceptionStatusUpdate());
-      }
-
-      match /members/{memberId} {
-        allow read: if memberDevice() || receptionDevice();
-        allow create: if memberDevice()
-          || (receptionDevice() && validReceptionMemberCreate(memberId));
-        allow update: if memberDevice()
-          || (receptionDevice() && validReceptionMemberUpdate(memberId));
+        allow read: if memberDevice();
+        allow create, update: if memberDevice();
         allow delete: if memberDevice();
       }
 
-      match /activity/{activityId} {
-        allow read: if memberDevice() || receptionDevice();
-        allow create: if memberDevice()
-          || (receptionDevice() && validScannerActivity(activityId));
-        allow update, delete: if memberDevice();
+      match /members/{memberId} {
+        allow read: if memberDevice();
+        allow create: if memberDevice() && validReceptionMemberCreate(memberId);
+        allow update: if memberDevice() && validReceptionMemberUpdate(memberId);
+        allow delete: if memberDevice();
+      }
+
+      match /scanner-activity/{activityId} {
+        allow read: if memberDevice();
+        allow create: if memberDevice() && validScannerActivity(activityId);
+        allow update, delete: if false;
       }
 
       match /analytics/{summaryId} {
-        allow read: if activeDevice();
-        allow create, update: if memberDevice()
-          || (receptionDevice() && validAnalyticsSummary(summaryId));
+        allow read: if memberDevice();
+        allow create, update: if memberDevice() && validAnalyticsSummary(summaryId);
         allow delete: if memberDevice();
       }
 
       match /reception-devices/{deviceId} {
-        allow read: if activeDevice();
-        allow create, update: if (memberDevice() || receptionDevice())
-          && validReceptionPresence(deviceId);
-        allow delete: if memberDevice() || receptionDevice();
-
-        match /commands/{commandId} {
-          allow read: if memberDevice()
-            || ownsReceptionPresence(eventId, deviceId);
-          allow create: if memberDevice()
-            && validRemoteCommandCreate(request.resource.data);
-          allow update: if ownsReceptionPresence(eventId, deviceId)
-            && validRemoteCommandUpdate(request.resource.data);
-          allow delete: if false;
-        }
+        allow read: if memberDevice();
+        allow create: if memberDevice() && validReceptionPresence(deviceId);
+        allow update: if memberDevice() && ownsReceptionPresence(eventId, deviceId) && validReceptionPresence(deviceId);
+        allow delete: if memberDevice() && ownsReceptionPresence(eventId, deviceId);
       }
-    }
 
-    match /{document=**} {
-      allow read, write: if false;
+      match /reception-devices/{deviceId}/remote-commands/{commandId} {
+        allow read: if memberDevice() && (currentUid() == get(/databases/$(database)/documents/event-data/$(eventId)/reception-devices/$(deviceId)).data.registeredDeviceId || currentUid() == resource.data.issuedByUid);
+        allow create: if memberDevice() && currentUid() == get(/databases/$(database)/documents/event-data/$(eventId)/reception-devices/$(deviceId)).data.registeredDeviceId && validRemoteCommandCreate(request.resource.data);
+        allow update: if memberDevice() && currentUid() == get(/databases/$(database)/documents/event-data/$(eventId)/reception-devices/$(deviceId)).data.registeredDeviceId && validRemoteCommandUpdate(request.resource.data);
+        allow delete: if false;
+      }
     }
   }
 }
