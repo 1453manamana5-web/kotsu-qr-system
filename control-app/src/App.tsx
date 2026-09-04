@@ -1,6 +1,4 @@
 import {
-  lazy,
-  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -41,8 +39,8 @@ import {
   type ReceptionRemoteCommandType,
 } from "../../src/receptionRemoteControlFirestore";
 
-const AnalysisPage = lazy(() => import("../../src/pages/AnalysisPage"));
-const PastDataPage = lazy(() => import("../../src/pages/PastDataPage"));
+import AnalysisPage from "../../src/pages/AnalysisPage";
+import PastDataPage from "../../src/pages/PastDataPage";
 
 const CONTROL_VERSION = "1.0.0";
 const EXPECTED_RECEPTION_VERSION = "2.8.0";
