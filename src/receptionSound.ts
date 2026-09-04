@@ -4,8 +4,7 @@ type AudioContextConstructor =
 type SafariWindow =
   Window &
   typeof globalThis & {
-    webkitAudioContext?:
-      AudioContextConstructor;
+    webkitAudioContext?: AudioContextConstructor;
   };
 
 type ScheduledTone = {
@@ -17,196 +16,254 @@ type ScheduledTone = {
 };
 
 const QR_DETECTED_SOUND_PATH =
-  `${import.meta.env.BASE_URL}sounds/qr_scan_detected.wav?v=20260816-v1`;
+  `${import.meta.env.BASE_URL}sounds/qr_scan_detected.wav?v=20260904-v2`;
 
 const RECORDED_SUCCESS_SOUND_PATH =
-  `${import.meta.env.BASE_URL}sounds/qr_result_chime.wav?v=20260816-v1`;
+  `${import.meta.env.BASE_URL}sounds/qr_result_chime.wav?v=20260904-v2`;
 
 const RECORDED_ERROR_SOUND_PATH =
-  `${import.meta.env.BASE_URL}sounds/qr_gate_error_chime_v1.wav?v=20260816-v1`;
+  `${import.meta.env.BASE_URL}sounds/qr_gate_error_chime_v1.wav?v=20260904-v2`;
 
-let audioContext:
-  AudioContext |
-  null = null;
+const RECEPTION_SOUND_CACHE_NAME =
+  "qr-reception-sounds-v2";
 
-let recordedSuccessAudio:
-  HTMLAudioElement |
-  null = null;
+const RECEPTION_SOUND_PATHS = [
+  QR_DETECTED_SOUND_PATH,
+  RECORDED_SUCCESS_SOUND_PATH,
+  RECORDED_ERROR_SOUND_PATH,
+] as const;
 
-let qrDetectedAudio:
-  HTMLAudioElement |
-  null = null;
+let audioContext: AudioContext | null = null;
 
-let recordedErrorAudio:
-  HTMLAudioElement |
-  null = null;
+let recordedSuccessAudio: HTMLAudioElement | null = null;
+let qrDetectedAudio: HTMLAudioElement | null = null;
+let recordedErrorAudio: HTMLAudioElement | null = null;
 
-let unlockListenersInstalled =
-  false;
+let unlockListenersInstalled = false;
+let soundUnlocked = false;
+let warnedAboutBlockedSound = false;
 
-let soundUnlocked =
-  false;
+let receptionSoundPreloadPromise: Promise<void> | null = null;
 
-let warnedAboutBlockedSound =
-  false;
+const receptionSoundObjectUrls = new Map<string, string>();
+const activeOscillators = new Set<OscillatorNode>();
 
-const activeOscillators =
-  new Set<OscillatorNode>();
-
-function getAudioContextConstructor():
-  AudioContextConstructor |
-  null {
-  if (
-    typeof window ===
-    "undefined"
-  ) {
+function getAudioContextConstructor(): AudioContextConstructor | null {
+  if (typeof window === "undefined") {
     return null;
   }
 
   return (
     window.AudioContext ??
-    (
-      window as
-        SafariWindow
-    ).webkitAudioContext ??
+    (window as SafariWindow).webkitAudioContext ??
     null
   );
 }
 
-function getAudioContext():
-  AudioContext |
-  null {
-  if (
-    audioContext !==
-    null
-  ) {
+function getAudioContext(): AudioContext | null {
+  if (audioContext !== null) {
     return audioContext;
   }
 
-  const AudioContextClass =
-    getAudioContextConstructor();
+  const AudioContextClass = getAudioContextConstructor();
 
-  if (
-    AudioContextClass ===
-    null
-  ) {
+  if (AudioContextClass === null) {
     console.warn(
       "このブラウザは合成音の再生に対応していません。"
     );
-
     return null;
   }
 
   try {
-    audioContext =
-      new AudioContextClass();
-
+    audioContext = new AudioContextClass();
     return audioContext;
   } catch (error) {
     console.error(
       "音声機能を開始できませんでした。",
       error
     );
-
     return null;
   }
 }
+
+function updateAudioSourceFromCache(
+  audio: HTMLAudioElement | null,
+  soundPath: string
+) {
+  if (audio === null) {
+    return;
+  }
+
+  const cachedObjectUrl =
+    receptionSoundObjectUrls.get(soundPath);
+
+  if (
+    cachedObjectUrl === undefined ||
+    audio.src === cachedObjectUrl
+  ) {
+    return;
+  }
+
+  audio.pause();
+  audio.currentTime = 0;
+  audio.src = cachedObjectUrl;
+  audio.load();
+}
+
+async function preloadReceptionSoundsInternal() {
+  if (
+    typeof window === "undefined" ||
+    !("caches" in window)
+  ) {
+    return;
+  }
+
+  const cache = await window.caches.open(
+    RECEPTION_SOUND_CACHE_NAME
+  );
+
+  await Promise.all(
+    RECEPTION_SOUND_PATHS.map(
+      async (soundPath) => {
+        try {
+          let response = await cache.match(soundPath);
+
+          if (!response || !response.ok) {
+            response = await fetch(soundPath, {
+              cache: "no-store",
+            });
+
+            if (!response.ok) {
+              throw new Error(
+                `音声ファイルの取得に失敗しました: ${response.status}`
+              );
+            }
+
+            await cache.put(
+              soundPath,
+              response.clone()
+            );
+          }
+
+          const blob = await response.blob();
+          const objectUrl = URL.createObjectURL(blob);
+          const previousObjectUrl =
+            receptionSoundObjectUrls.get(soundPath);
+
+          if (previousObjectUrl) {
+            URL.revokeObjectURL(previousObjectUrl);
+          }
+
+          receptionSoundObjectUrls.set(
+            soundPath,
+            objectUrl
+          );
+        } catch (error) {
+          console.warn(
+            "受付音声の端末保存に失敗しました。通常の音声読み込みへフォールバックします。",
+            soundPath,
+            error
+          );
+        }
+      }
+    )
+  );
+
+  updateAudioSourceFromCache(
+    qrDetectedAudio,
+    QR_DETECTED_SOUND_PATH
+  );
+  updateAudioSourceFromCache(
+    recordedSuccessAudio,
+    RECORDED_SUCCESS_SOUND_PATH
+  );
+  updateAudioSourceFromCache(
+    recordedErrorAudio,
+    RECORDED_ERROR_SOUND_PATH
+  );
+}
+
+function preloadReceptionSounds() {
+  if (receptionSoundPreloadPromise === null) {
+    receptionSoundPreloadPromise =
+      preloadReceptionSoundsInternal().catch(
+        (error) => {
+          console.warn(
+            "受付音声の先読みを開始できませんでした。",
+            error
+          );
+        }
+      );
+  }
+
+  return receptionSoundPreloadPromise;
+}
+
 function createRecordedAudio(
   soundPath: string
 ): HTMLAudioElement {
-  const audio =
-    new Audio(
-      soundPath
-    );
+  const cachedObjectUrl =
+    receptionSoundObjectUrls.get(soundPath);
 
-  audio.preload =
-    "auto";
+  const audio = new Audio(
+    cachedObjectUrl ?? soundPath
+  );
 
-  audio.volume =
-    1;
-
+  audio.preload = "auto";
+  audio.volume = 1;
   audio.load();
 
   return audio;
 }
 
-function getQrDetectedAudio():
-  HTMLAudioElement |
-  null {
-  if (
-    typeof window ===
-    "undefined"
-  ) {
+function getQrDetectedAudio(): HTMLAudioElement | null {
+  if (typeof window === "undefined") {
     return null;
   }
 
-  if (
-    qrDetectedAudio ===
-    null
-  ) {
-    qrDetectedAudio =
-      createRecordedAudio(
-        QR_DETECTED_SOUND_PATH
-      );
+  if (qrDetectedAudio === null) {
+    qrDetectedAudio = createRecordedAudio(
+      QR_DETECTED_SOUND_PATH
+    );
   }
 
   return qrDetectedAudio;
 }
 
-function getRecordedSuccessAudio():
-  HTMLAudioElement |
-  null {
-  if (
-    typeof window ===
-    "undefined"
-  ) {
+function getRecordedSuccessAudio(): HTMLAudioElement | null {
+  if (typeof window === "undefined") {
     return null;
   }
 
-  if (
-    recordedSuccessAudio !==
-    null
-  ) {
+  if (recordedSuccessAudio !== null) {
     return recordedSuccessAudio;
   }
 
-  recordedSuccessAudio =
-    createRecordedAudio(
-      RECORDED_SUCCESS_SOUND_PATH
-    );
+  recordedSuccessAudio = createRecordedAudio(
+    RECORDED_SUCCESS_SOUND_PATH
+  );
 
   return recordedSuccessAudio;
 }
 
-function getRecordedErrorAudio():
-  HTMLAudioElement |
-  null {
-  if (
-    typeof window ===
-    "undefined"
-  ) {
+function getRecordedErrorAudio(): HTMLAudioElement | null {
+  if (typeof window === "undefined") {
     return null;
   }
 
-  if (
-    recordedErrorAudio !==
-    null
-  ) {
+  if (recordedErrorAudio !== null) {
     return recordedErrorAudio;
   }
 
-  recordedErrorAudio =
-    createRecordedAudio(
-      RECORDED_ERROR_SOUND_PATH
-    );
+  recordedErrorAudio = createRecordedAudio(
+    RECORDED_ERROR_SOUND_PATH
+  );
 
   return recordedErrorAudio;
 }
 
 function removeUnlockListeners() {
-  if (
-    !unlockListenersInstalled
-  ) {
+  if (!unlockListenersInstalled) {
     return;
   }
 
@@ -214,61 +271,47 @@ function removeUnlockListeners() {
     "pointerdown",
     handleUnlockInteraction
   );
-
   document.removeEventListener(
     "touchend",
     handleUnlockInteraction
   );
-
   document.removeEventListener(
     "keydown",
     handleUnlockInteraction
   );
 
-  unlockListenersInstalled =
-    false;
+  unlockListenersInstalled = false;
 }
 
 async function handleUnlockInteraction() {
-  const unlocked =
-    await unlockReceptionSound();
+  const unlocked = await unlockReceptionSound();
 
-  if (
-    unlocked
-  ) {
+  if (unlocked) {
     removeUnlockListeners();
   }
 }
 
 export function installReceptionSoundUnlock() {
   if (
-    typeof document ===
-      "undefined" ||
+    typeof document === "undefined" ||
     unlockListenersInstalled ||
     soundUnlocked
   ) {
     return;
   }
 
-  unlockListenersInstalled =
-    true;
+  unlockListenersInstalled = true;
 
   document.addEventListener(
     "pointerdown",
     handleUnlockInteraction,
-    {
-      passive: true,
-    }
+    { passive: true }
   );
-
   document.addEventListener(
     "touchend",
     handleUnlockInteraction,
-    {
-      passive: true,
-    }
+    { passive: true }
   );
-
   document.addEventListener(
     "keydown",
     handleUnlockInteraction
@@ -276,147 +319,87 @@ export function installReceptionSoundUnlock() {
 }
 
 async function unlockRecordedAudio(
-  audio:
-    HTMLAudioElement |
-    null
-):
-  Promise<boolean> {
-  if (
-    audio ===
-    null
-  ) {
+  audio: HTMLAudioElement | null
+): Promise<boolean> {
+  if (audio === null) {
     return false;
   }
 
   audio.pause();
-
-  audio.currentTime =
-    0;
-
-  audio.volume =
-    0.01;
+  audio.currentTime = 0;
+  audio.volume = 0.01;
 
   try {
     await audio.play();
-
     audio.pause();
-
-    audio.currentTime =
-      0;
-
-    audio.volume =
-      1;
-
+    audio.currentTime = 0;
+    audio.volume = 1;
     return true;
   } catch (error) {
-    audio.volume =
-      1;
-
+    audio.volume = 1;
     console.warn(
       "QR受付音の有効化に失敗しました。",
       error
     );
-
     return false;
   }
 }
 
-async function unlockAudioContext():
-  Promise<boolean> {
-  const context =
-    getAudioContext();
+async function unlockAudioContext(): Promise<boolean> {
+  const context = getAudioContext();
 
-  if (
-    context ===
-    null
-  ) {
+  if (context === null) {
     return false;
   }
 
   try {
-    if (
-      context.state !==
-      "running"
-    ) {
+    if (context.state !== "running") {
       await context.resume();
     }
 
-    const oscillator =
-      context.createOscillator();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    const currentTime = context.currentTime;
 
-    const gain =
-      context.createGain();
-
-    const currentTime =
-      context.currentTime;
-
-    oscillator.type =
-      "sine";
-
+    oscillator.type = "sine";
     oscillator.frequency.setValueAtTime(
       440,
       currentTime
     );
-
     gain.gain.setValueAtTime(
       0.00001,
       currentTime
     );
 
-    oscillator.connect(
-      gain
-    );
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(currentTime);
+    oscillator.stop(currentTime + 0.015);
 
-    gain.connect(
-      context.destination
-    );
-
-    oscillator.start(
-      currentTime
-    );
-
-    oscillator.stop(
-      currentTime +
-        0.015
-    );
-
-    return (
-      context.state ===
-      "running"
-    );
+    return context.state === "running";
   } catch (error) {
     console.warn(
       "合成音の有効化に失敗しました。",
       error
     );
-
     return false;
   }
 }
 
-export async function unlockReceptionSound():
-  Promise<boolean> {
+export async function unlockReceptionSound(): Promise<boolean> {
   /*
-    ユーザー操作中に両方の再生開始を要求して、
-    iPad・Safariの自動再生制限を解除します。
+    まず端末内の受付音声キャッシュを完成させてから、
+    ユーザー操作中に再生開始を要求し、iPad・Safariの自動再生制限を解除します。
   */
-  const recordedSoundPromise =
-    Promise.all([
-      unlockRecordedAudio(
-        getQrDetectedAudio()
-      ),
+  await preloadReceptionSounds();
 
-      unlockRecordedAudio(
-        getRecordedSuccessAudio()
-      ),
+  const recordedSoundPromise = Promise.all([
+    unlockRecordedAudio(getQrDetectedAudio()),
+    unlockRecordedAudio(getRecordedSuccessAudio()),
+    unlockRecordedAudio(getRecordedErrorAudio()),
+  ]);
 
-      unlockRecordedAudio(
-        getRecordedErrorAudio()
-      ),
-    ]);
-
-  const audioContextPromise =
-    unlockAudioContext();
+  const audioContextPromise = unlockAudioContext();
 
   const [
     recordedSoundResults,
@@ -427,41 +410,25 @@ export async function unlockReceptionSound():
   ]);
 
   soundUnlocked =
-    recordedSoundResults.some(
-      Boolean
-    ) ||
+    recordedSoundResults.some(Boolean) ||
     audioContextReady;
 
-  if (
-    soundUnlocked
-  ) {
-    warnedAboutBlockedSound =
-      false;
+  if (soundUnlocked) {
+    warnedAboutBlockedSound = false;
   }
 
   return soundUnlocked;
 }
 
-async function prepareAudioContext():
-  Promise<
-    AudioContext |
-    null
-  > {
-  const context =
-    getAudioContext();
+async function prepareAudioContext(): Promise<AudioContext | null> {
+  const context = getAudioContext();
 
-  if (
-    context ===
-    null
-  ) {
+  if (context === null) {
     return null;
   }
 
   try {
-    if (
-      context.state !==
-      "running"
-    ) {
+    if (context.state !== "running") {
       await context.resume();
     }
   } catch (error) {
@@ -471,102 +438,66 @@ async function prepareAudioContext():
     );
   }
 
-  if (
-    context.state !==
-    "running"
-  ) {
-    if (
-      !warnedAboutBlockedSound
-    ) {
+  if (context.state !== "running") {
+    if (!warnedAboutBlockedSound) {
       console.warn(
         "ブラウザの音声制限により再生できません。画面を一度タップしてください。"
       );
-
-      warnedAboutBlockedSound =
-        true;
+      warnedAboutBlockedSound = true;
     }
-
     return null;
   }
 
-  soundUnlocked =
-    true;
-
+  soundUnlocked = true;
   return context;
 }
 
 async function playRecordedSound(
-  audio:
-    HTMLAudioElement |
-    null
-):
-  Promise<boolean> {
-  if (
-    audio ===
-    null
-  ) {
+  audio: HTMLAudioElement | null
+): Promise<boolean> {
+  if (audio === null) {
     return false;
   }
 
+  await preloadReceptionSounds();
+
   try {
     audio.pause();
-
-    audio.currentTime =
-      0;
-
-    audio.volume =
-      1;
-
+    audio.currentTime = 0;
+    audio.volume = 1;
     await audio.play();
 
-    soundUnlocked =
-      true;
-
-    warnedAboutBlockedSound =
-      false;
-
+    soundUnlocked = true;
+    warnedAboutBlockedSound = false;
     return true;
   } catch (error) {
-    if (
-      !warnedAboutBlockedSound
-    ) {
+    if (!warnedAboutBlockedSound) {
       console.warn(
         "QR受付音を再生できません。画面を一度タップしてください。",
         error
       );
-
-      warnedAboutBlockedSound =
-        true;
+      warnedAboutBlockedSound = true;
     }
 
     installReceptionSoundUnlock();
-
     return false;
   }
 }
 
 function stopActiveSounds() {
-  activeOscillators.forEach(
-    (oscillator) => {
-      try {
-        oscillator.stop();
-      } catch {
-        /*
-          すでに停止済みの場合は
-          何もしません。
-        */
-      }
-
-      try {
-        oscillator.disconnect();
-      } catch {
-        /*
-          すでに切断済みの場合は
-          何もしません。
-        */
-      }
+  activeOscillators.forEach((oscillator) => {
+    try {
+      oscillator.stop();
+    } catch {
+      /* already stopped */
     }
-  );
+
+    try {
+      oscillator.disconnect();
+    } catch {
+      /* already disconnected */
+    }
+  });
 
   activeOscillators.clear();
 }
@@ -575,343 +506,189 @@ function scheduleTone(
   context: AudioContext,
   tone: ScheduledTone
 ) {
-  const oscillator =
-    context.createOscillator();
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  const startTime = context.currentTime + tone.startDelay;
+  const endTime = startTime + tone.duration;
 
-  const gain =
-    context.createGain();
-
-  const startTime =
-    context.currentTime +
-    tone.startDelay;
-
-  const endTime =
-    startTime +
-    tone.duration;
-
-  oscillator.type =
-    tone.wave;
-
+  oscillator.type = tone.wave;
   oscillator.frequency.setValueAtTime(
     tone.frequency,
     startTime
   );
 
-  gain.gain.setValueAtTime(
-    0.0001,
-    startTime
-  );
-
+  gain.gain.setValueAtTime(0.0001, startTime);
   gain.gain.exponentialRampToValueAtTime(
     tone.volume,
-    startTime +
-      0.012
+    startTime + 0.012
   );
-
   gain.gain.setValueAtTime(
     tone.volume,
     Math.max(
-      startTime +
-        0.012,
-      endTime -
-        0.025
+      startTime + 0.012,
+      endTime - 0.025
     )
   );
-
   gain.gain.exponentialRampToValueAtTime(
     0.0001,
     endTime
   );
 
-  oscillator.connect(
-    gain
-  );
-
-  gain.connect(
-    context.destination
-  );
-
-  activeOscillators.add(
-    oscillator
-  );
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  activeOscillators.add(oscillator);
 
   oscillator.addEventListener(
     "ended",
     () => {
-      activeOscillators.delete(
-        oscillator
-      );
-
+      activeOscillators.delete(oscillator);
       try {
         oscillator.disconnect();
         gain.disconnect();
       } catch {
-        /*
-          すでに切断済みの場合は
-          何もしません。
-        */
+        /* already disconnected */
       }
     },
-    {
-      once: true,
-    }
+    { once: true }
   );
 
-  oscillator.start(
-    startTime
-  );
-
-  oscillator.stop(
-    endTime +
-      0.01
-  );
+  oscillator.start(startTime);
+  oscillator.stop(endTime + 0.01);
 }
 
-async function playToneSequence(
-  tones:
-    ScheduledTone[]
-) {
-  const context =
-    await prepareAudioContext();
+async function playToneSequence(tones: ScheduledTone[]) {
+  const context = await prepareAudioContext();
 
-  if (
-    context ===
-    null
-  ) {
+  if (context === null) {
     return false;
   }
 
   stopActiveSounds();
 
-  tones.forEach(
-    (tone) => {
-      scheduleTone(
-        context,
-        tone
-      );
-    }
-  );
+  tones.forEach((tone) => {
+    scheduleTone(context, tone);
+  });
 
   return true;
 }
 
-/*
-  QRコードを読み取った瞬間の短い確認音。
-*/
+/* QRコードを読み取った瞬間の短い確認音。 */
 export async function playQrDetectedSound() {
-  return playRecordedSound(
-    getQrDetectedAudio()
-  );
+  return playRecordedSound(getQrDetectedAudio());
 }
 
-/*
-  来場者チケットの通常受付成功音。
-  結果画面へ切り替わる瞬間にチャイムを再生します。
-*/
+/* 来場者チケットの通常受付成功音。 */
 export async function playReceptionSuccessSound() {
-  return playRecordedSound(
-    getRecordedSuccessAudio()
-  );
+  return playRecordedSound(getRecordedSuccessAudio());
 }
 
-/*
-  再入場も来場者チケットの正常通過なので、
-  通常受付と同じ大阪メトロQR改札音を再生します。
-*/
+/* 再入場は通常受付と同じ成功音を再生します。 */
 export async function playReEntrySound() {
-  return playRecordedSound(
-    getRecordedSuccessAudio()
-  );
+  return playRecordedSound(getRecordedSuccessAudio());
 }
 
-/*
-  部員受付は来場者と聞き分けられるよう、
-  従来の柔らかい3音を残します。
-*/
+/* 部員受付は従来の柔らかい3音を残します。 */
 export async function playMemberSuccessSound() {
   return playToneSequence([
     {
-      frequency:
-        1175,
-
-      startDelay:
-        0,
-
-      duration:
-        0.1,
-
-      volume:
-        0.15,
-
-      wave:
-        "sine",
+      frequency: 1175,
+      startDelay: 0,
+      duration: 0.1,
+      volume: 0.15,
+      wave: "sine",
     },
-
     {
-      frequency:
-        1397,
-
-      startDelay:
-        0.14,
-
-      duration:
-        0.1,
-
-      volume:
-        0.16,
-
-      wave:
-        "sine",
+      frequency: 1397,
+      startDelay: 0.14,
+      duration: 0.1,
+      volume: 0.16,
+      wave: "sine",
     },
-
     {
-      frequency:
-        1568,
-
-      startDelay:
-        0.28,
-
-      duration:
-        0.11,
-
-      volume:
-        0.17,
-
-      wave:
-        "sine",
+      frequency: 1568,
+      startDelay: 0.28,
+      duration: 0.11,
+      volume: 0.17,
+      wave: "sine",
     },
   ]);
 }
 
-/*
-  QR受付エラー時は、下降するオリジナルチャイムを再生します。
-*/
+/* QR受付エラー時は下降するオリジナルチャイムを再生します。 */
 export async function playReceptionErrorSound() {
-  return playRecordedSound(
-    getRecordedErrorAudio()
-  );
+  return playRecordedSound(getRecordedErrorAudio());
 }
 
-/*
-  管理者認証成功音。
-*/
+/* 管理者認証成功音。 */
 export async function playAdminAuthSuccessSound() {
   return playToneSequence([
     {
-      frequency:
-        1047,
-
-      startDelay:
-        0,
-
-      duration:
-        0.1,
-
-      volume:
-        0.14,
-
-      wave:
-        "sine",
+      frequency: 1047,
+      startDelay: 0,
+      duration: 0.1,
+      volume: 0.14,
+      wave: "sine",
     },
-
     {
-      frequency:
-        1319,
-
-      startDelay:
-        0.13,
-
-      duration:
-        0.1,
-
-      volume:
-        0.15,
-
-      wave:
-        "sine",
+      frequency: 1319,
+      startDelay: 0.13,
+      duration: 0.1,
+      volume: 0.15,
+      wave: "sine",
     },
-
     {
-      frequency:
-        1568,
-
-      startDelay:
-        0.26,
-
-      duration:
-        0.13,
-
-      volume:
-        0.17,
-
-      wave:
-        "sine",
+      frequency: 1568,
+      startDelay: 0.26,
+      duration: 0.13,
+      volume: 0.17,
+      wave: "sine",
     },
   ]);
 }
+
+/* 受付アプリ読み込み時に音声を端末へ先読み保存します。 */
+void preloadReceptionSounds();
 
 export function stopReceptionSounds() {
   stopActiveSounds();
 
-  if (
-    qrDetectedAudio !==
-    null
-  ) {
+  if (qrDetectedAudio !== null) {
     qrDetectedAudio.pause();
-
-    qrDetectedAudio.currentTime =
-      0;
+    qrDetectedAudio.currentTime = 0;
   }
 
-  if (
-    recordedSuccessAudio !==
-    null
-  ) {
+  if (recordedSuccessAudio !== null) {
     recordedSuccessAudio.pause();
-
-    recordedSuccessAudio.currentTime =
-      0;
+    recordedSuccessAudio.currentTime = 0;
   }
 
-  if (
-    recordedErrorAudio !==
-    null
-  ) {
+  if (recordedErrorAudio !== null) {
     recordedErrorAudio.pause();
-
-    recordedErrorAudio.currentTime =
-      0;
+    recordedErrorAudio.currentTime = 0;
   }
 }
 
 export async function closeReceptionAudio() {
   removeUnlockListeners();
-
   stopReceptionSounds();
 
-  recordedSuccessAudio =
-    null;
+  recordedSuccessAudio = null;
+  qrDetectedAudio = null;
+  recordedErrorAudio = null;
 
-  qrDetectedAudio =
-    null;
+  receptionSoundObjectUrls.forEach((objectUrl) => {
+    URL.revokeObjectURL(objectUrl);
+  });
+  receptionSoundObjectUrls.clear();
+  receptionSoundPreloadPromise = null;
 
-  recordedErrorAudio =
-    null;
-
-  const context =
-    audioContext;
-
-  audioContext =
-    null;
-
-  soundUnlocked =
-    false;
+  const context = audioContext;
+  audioContext = null;
+  soundUnlocked = false;
 
   if (
-    context ===
-      null ||
-    context.state ===
-      "closed"
+    context === null ||
+    context.state === "closed"
   ) {
     return;
   }
