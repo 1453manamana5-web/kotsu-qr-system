@@ -9,20 +9,8 @@ import {
 import "./App.css";
 
 import HomePage from "./pages/HomePage";
-
-const loadEntryPage = () =>
-  import("./pages/EntryPage");
-
-const loadExitPage = () =>
-  import("./pages/ExitPage");
-
-const EntryPage = lazy(
-  loadEntryPage
-);
-
-const ExitPage = lazy(
-  loadExitPage
-);
+import EntryPage from "./pages/EntryPage";
+import ExitPage from "./pages/ExitPage";
 
 const AdminPage = lazy(() =>
   import("./pages/AdminPage")
@@ -436,25 +424,6 @@ function App() {
     isMemberDevice,
     requestAdminAccess,
   } = useDeviceAccess();
-
-  useEffect(() => {
-    const preloadTimer =
-      window.setTimeout(
-        () => {
-          void Promise.all([
-            loadEntryPage(),
-            loadExitPage(),
-          ]);
-        },
-        1200
-      );
-
-    return () => {
-      window.clearTimeout(
-        preloadTimer
-      );
-    };
-  }, []);
 
   const [
     eventStore,
