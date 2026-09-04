@@ -1,0 +1,47 @@
+name: Fix control eager-load render
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: ${{ !contains(github.event.head_commit.message, 'Fix control eager-load render') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Remove obsolete Suspense wrappers
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('control-app/src/App.tsx')
+          text = path.read_text()
+          old = '''  if (view === "analysis") {\n    return (\n      <Suspense fallback={<AnalysisLoading label="分析画面を読み込んでいます" />}>\n        <AnalysisPage\n          setPage={handleAnalysisNavigation}\n          eventData={currentEvent}\n        />\n      </Suspense>\n    );\n  }\n\n  if (view === "past-data") {\n    return (\n      <Suspense fallback={<AnalysisLoading label="過去データを読み込んでいます" />}>\n        <PastDataPage\n          setPage={handleAnalysisNavigation}\n          events={events}\n        />\n      </Suspense>\n    );\n  }'''
+          new = '''  if (view === "analysis") {\n    return (\n      <AnalysisPage\n        setPage={handleAnalysisNavigation}\n        eventData={currentEvent}\n      />\n    );\n  }\n\n  if (view === "past-data") {\n    return (\n      <PastDataPage\n        setPage={handleAnalysisNavigation}\n        events={events}\n      />\n    );\n  }'''
+          if old not in text:
+              raise SystemExit('Expected obsolete Suspense render block not found')
+          text = text.replace(old, new, 1)
+          path.write_text(text)
+          PY
+
+      - name: Verify control app imports and renders eagerly
+        run: |
+          ! grep -n 'Suspense\|lazy(() => import' control-app/src/App.tsx
+          grep -n 'import AnalysisPage from' control-app/src/App.tsx
+          grep -n 'import PastDataPage from' control-app/src/App.tsx
+
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add control-app/src/App.tsx
+          git commit -m "Fix control eager-load render"
+          git push
